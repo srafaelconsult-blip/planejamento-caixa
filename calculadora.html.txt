@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>📊 Planejamento de Caixa</h2>
+    <p>Bem-vindo, {{ username }}!</p>
+
+    <!-- Aqui você implementará a interface completa de calculadora -->
+    <!-- Similar à do Streamlit, mas com HTML/JavaScript -->
+    
+    <div id="calculadora-app">
+        <p>Interface de calculadora em desenvolvimento...</p>
+    </div>
+
+    <a href="/logout" class="btn btn-secondary">Sair</a>
+</div>
+{% endblock %}

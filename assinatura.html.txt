@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>📦 Planos de Assinatura</h2>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Teste Grátis</h5>
+                    <p class="card-text">✅ 30 dias completos<br>✅ Todas as funcionalidades</p>
+                    <p class="price">💰 <strong>R$ 0,00</strong></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Plano Premium</h5>
+                    <p class="card-text">✅ Acesso completo<br>✅ Suporte prioritário</p>
+                    <p class="price">💰 <strong>R$ 97,00/mês</strong></p>
+                    <button class="btn btn-primary">Assinar Agora</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
