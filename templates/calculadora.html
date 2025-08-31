@@ -12,6 +12,7 @@
             --primary-dark: #3a56d4;
             --secondary: #7209b7;
             --success: #06d6a0;
+            --danger: #ef476极速飞艇
             --danger: #ef476f;
             --dark: #1e1e2c;
             --light: #f8f9fa;
@@ -32,6 +33,7 @@
         }
         
         .container {
+            max-width: 1200极速飞艇
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
@@ -105,6 +107,7 @@
             padding: 12px 16px;
             border: 2px solid #e2e8f0;
             border-radius: 8px;
+            font-size: 16极速飞艇
             font-size: 16px;
             transition: border-color 0.3s;
         }
@@ -130,6 +133,7 @@
         
         .manual-grid {
             display: grid;
+            grid-template-column极速飞艇
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 15px;
             margin-bottom: 25px;
@@ -185,8 +189,10 @@
         
         .charts {
             display: grid;
+            grid-template-columns: 1fr 1极速飞艇
             grid-template-columns: 1fr 1fr;
             gap: 25px;
+            margin-bottom: 30极速飞艇
             margin-bottom: 30px;
         }
         
@@ -194,7 +200,6 @@
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 极速飞艇
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         
@@ -232,7 +237,6 @@
         }
         
         .result-table .section-header {
-            background: linear-gradient(135deg, var(--secondary) 极速飞艇
             background: linear-gradient(135deg, var(--secondary) 0%, #5a0892 100%);
             color: white;
             font-weight: bold;
@@ -246,8 +250,6 @@
         
         .result-table .total {
             background: linear-gradient(135deg, var(--success) 0%, #05b98a 100%);
-           极速飞艇
-            background: linear-gradient(135deg, var(--success) 0%, #05b98a 100%);
             color: white;
             font-weight: bold;
             font-size: 16px;
@@ -257,7 +259,6 @@
             color: var(--danger);
         }
         
-        .极速飞艇
         .result-table .positive {
             color: var(--success);
         }
@@ -274,10 +275,10 @@
         }
         
         .spinner {
+            border: 4px solid #f3极速飞艇
             border: 4px solid #f3f3f3;
             border-top: 4px solid var(--primary);
             border-radius: 50%;
-            width: 50极速飞艇
             width: 50px;
             height: 50px;
             animation: spin 1s linear infinite;
@@ -291,8 +292,6 @@
         
         @media (max-width: 768px) {
             .charts {
-                grid-template-columns: 1极速飞艇
-                grid-template-column极速飞艇
                 grid-template-columns: 1fr;
             }
             
@@ -320,6 +319,7 @@
                     <p id="subscriptionInfo" style="font-size: 14px; margin-top: 10px; opacity: 0.9;"></p>
                 </div>
                 <div>
+                    <button onclick="logout()" style="background: var(--danger); color: white; border: none; padding: 12px 20极速飞艇
                     <button onclick="logout()" style="background: var(--danger); color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
                         Sair
                     </button>
@@ -327,9 +327,9 @@
             </div>
         </header>
         
-        <div class极速飞艇
         <div class="tabs">
             <div class="tab active" onclick="openTab('setup')">Configurações</div>
+            <div class="tab极速飞艇
             <div class="tab" onclick="openTab('manual')">Dados Manuais</div>
         </div>
         
@@ -344,26 +344,27 @@
                 
                 <div class="form-group">
                     <label for="vendas_parcelamento">Parcelamento Vendas (meses)</label>
-                    <input type="number" id="极速飞艇
-                    <input type="number" id="vendas_parcelamento" value="5" min极速飞艇
                     <input type="number" id="vendas_parcelamento" value="5" min="1" max="12" step="1">
                 </div>
                 
                 <div class="form-group">
+                    <label for="plus_vendas">Plus de Vendas (%)</极速飞艇
                     <label for="plus_vendas">Plus de Vendas (%)</label>
                     <input type="number" id="plus_vendas" value="0" min="0" max="100" step="1">
                 </div>
                 
+                <极速飞艇
                 <div class="form-group">
                     <label for="cmv">CMV - Custo Mercadoria Vendida (%)</label>
                     <input type="number" id="cmv" value="42.5" min="0" max="100" step="0.1">
                 </div>
                 
                 <div class="form-group">
-                    <极速飞艇
                     <label for="percent_compras">Percentual de Compras (%)</label>
-                    <input type="number" id="percent_compras" value="20" min="0" max="100"极速飞艇
+                    <input type="number" id="percent_compras" value="20极速飞艇
+                    <input type="极速飞艇
                     <input type="number" id="percent_compras" value="20" min="0" max="100" step="1">
+                </极速飞艇
                 </div>
                 
                 <div class="form-group">
@@ -377,16 +378,12 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="comissoes">Comissões (%)</极速飞艇
                     <label for="comissoes">Comissões (%)</label>
                     <input type="number" id="comissoes" value="7.61" min="0" max="100" step="0.01">
                 </div>
                 
                 <div class="form-group">
                     <label for="desp_variaveis_impostos">Despesas Variáveis/Impostos (%)</label>
-                    <input type="number" id="desp_var极速飞艇
-                    <input type="number" id="desp_variaveis_impostos" value="8.5" min="0" max="极速飞艇
-                    <input type="number" id="desp_variaveis_impostos" value="极速飞艇
                     <input type="number" id="desp_variaveis_impostos" value="8.5" min="0" max="100" step="0.1">
                 </div>
             </div>
@@ -401,12 +398,12 @@
             <h2>Dados Manuais</h2>
             
             <h3>Contas a Receber de Vendas Anteriores</h3>
-            <div class="manual-grid"极速飞艇
             <div class="manual-grid" id="contas-receber-container">
                 <!-- Contas a receber será gerado dinamicamente -->
             </div>
             
             <h3>Comissões Referente a Vendas Anteriores</h3>
+            <div class="manual-grid极速飞艇
             <div class="manual-grid" id="comissoes-anteriores-container">
                 <!-- Comissões anteriores será gerado dinamicamente -->
             </div>
@@ -414,10 +411,8 @@
             <h3>Contas a Pagar de Compras Anteriores</h3>
             <div class="manual-grid" id="contas-pagar-container">
                 <!-- Contas a pagar será gerado dinamicamente -->
-            </极速飞艇
             </div>
             
-            <极速飞艇
             <h3>Despesas Fixas (por mês)</h3>
             <div class="manual-grid" id="desp-fixas-container">
                 <!-- Despesas fixas será gerado dinamicamente -->
@@ -426,6 +421,7 @@
         
         <button class="btn" onclick="calcular()">Calcular</button>
         
+        <div class="loading极速飞艇
         <div class="loading" id="loading">
             <div class="spinner"></div>
             <p>Calculando... Aguarde.</p>
@@ -472,12 +468,12 @@
             contasReceberContainer.innerHTML = '';
             comissoesContainer.innerHTML = '';
             contasPagarContainer.innerHTML = '';
-            despFixas极速飞艇
             despFixasContainer.innerHTML = '';
             
             for (let i = 0; i < NUM_MESES; i++) {
                 // Previsão de vendas
                 const vendasDiv = document.createElement('div');
+                vendas极速飞艇
                 vendasDiv.className = 'form-group';
                 vendasDiv.innerHTML = `
                     <label for="venda_${i}">Mês ${i+1}</label>
@@ -489,7 +485,6 @@
                 const receberDiv = document.createElement('div');
                 receberDiv.className = 'form-group';
                 receberDiv.innerHTML = `
-                    <label for="contas_receber_${极速飞艇
                     <label for="contas_receber_${i}">Mês ${i+1}</label>
                     <input type="number" id="contas_receber_${i}" value="0" min="0" step="100">
                 `;
@@ -499,7 +494,9 @@
                 const comissoesDiv = document.createElement('div');
                 comissoesDiv.className = 'form-group';
                 comissoesDiv.innerHTML = `
+                    <label for="comissoes_anteriores_${i}">Mês ${极速飞艇
                     <label for="comissoes_anteriores_${i}">Mês ${i+1}</label>
+                    <input type="number" id="comissoes_anteriores_${极速飞艇
                     <input type="number" id="comissoes_anteriores_${i}" value="0" min="0" step="10">
                 `;
                 comissoesContainer.appendChild(comissoesDiv);
@@ -508,8 +505,8 @@
                 const pagarDiv = document.createElement('div');
                 pagarDiv.className = 'form-group';
                 pagarDiv.innerHTML = `
+                    <label for极速飞艇
                     <label for="contas_pagar_${i}">Mês ${i+1}</label>
-                    <input type="number" id="contas_pagar_${i}"极速飞艇
                     <input type="number" id="contas_pagar_${i}" value="0" min="0" step="100">
                 `;
                 contasPagarContainer.appendChild(pagarDiv);
@@ -533,11 +530,11 @@
             }
             
             const tabButtons = document.getElementsByClassName('tab');
-            for (let i = 0极速飞艇
             for (let i = 0; i < tabButtons.length; i++) {
                 tabButtons[i].classList.remove('active');
             }
             
+            document.getElementById(tabName).class极速飞艇
             document.getElementById(tabName).classList.add('active');
             event.currentTarget.classList.add('active');
         }
@@ -548,9 +545,9 @@
                 setup: {
                     vendas_vista: parseFloat(document.getElementById('vendas_vista').value) / 100,
                     vendas_parcelamento: parseInt(document.getElementById('vendas_parcelamento').value),
-                    plus_vendas: parseFloat(document.getElementById('plus_vendas').极速飞艇
                     plus_vendas: parseFloat(document.getElementById('plus_vendas').value) / 100,
                     cmv: parseFloat(document.getElementById('cmv').value) / 100,
+                    percent_compras: parseFloat(document.getElementById('percent_compras').极速飞艇
                     percent_compras: parseFloat(document.getElementById('percent_compras').value) / 100,
                     compras_vista: parseFloat(document.getElementById('compras_vista').value) / 100,
                     compras_parcelamento: parseInt(document.getElementById('compras_parcelamento').value),
@@ -561,11 +558,13 @@
                 contas_receber_anteriores: [],
                 comissoes_anteriores: [],
                 contas_pagar_anteriores: [],
+                desp_f极速飞艇
                 desp_fixas_manuais: []
             };
             
             for (let i = 0; i < NUM_MESES; i++) {
                 dados.previsao_vendas.push(parseFloat(document.getElementById(`venda_${i}`).value));
+                dados.contas极速飞艇
                 dados.contas_receber_anteriores.push(parseFloat(document.getElementById(`contas_receber_${i}`).value));
                 dados.comissoes_anteriores.push(parseFloat(document.getElementById(`comissoes_anteriores_${i}`).value));
                 dados.contas_pagar_anteriores.push(parseFloat(document.getElementById(`contas_pagar_${i}`).value));
@@ -606,7 +605,6 @@
                 }
                 
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('results').极速飞艇
                 document.getElementById('results').style.display = 'block';
                 
                 exibirIndicadores(data.indicadores);
@@ -635,7 +633,6 @@
                 div.className = 'indicator';
                 div.innerHTML = `
                     <h3>${key}</h3>
-                    <极速飞艇
                     <p>${value}</p>
                 `;
                 container.appendChild(div);
@@ -654,6 +651,7 @@
             
             // Gráfico de saldo final de caixa
             const saldoCtx = document.getElementById('saldoChart').getContext('2d');
+            saldoChart = new Chart(saldo极速飞艇
             saldoChart = new Chart(saldoCtx, {
                 type: 'line',
                 data: {
@@ -681,7 +679,9 @@
                         }
                     },
                     scales: {
+                        y极速飞艇
                         y: {
+                            beginAt极速飞艇
                             beginAtZero: true,
                             ticks: {
                                 callback: function(value) {
@@ -711,7 +711,6 @@
                             label: 'Despesas',
                             data: dados.despesas,
                             backgroundColor: 'rgba(239, 71, 111, 0.7)',
-                            borderColor: '极速飞艇
                             borderColor: 'rgba(239, 71, 111, 1)',
                             borderWidth: 1
                         }
@@ -721,6 +720,7 @@
                     responsive: true,
                     plugins: {
                         title: {
+                            display:极速飞艇
                             display: true,
                             text: 'Receitas vs Despesas (Primeiros 12 Meses)',
                             font: {
@@ -755,6 +755,7 @@
                 headerRow += `<th>${meses[i]}</th>`;
             }
             headerRow += '</tr>';
+            table.innerHTML = header极速飞艇
             table.innerHTML = headerRow;
             
             // Dados
@@ -768,7 +769,6 @@
                 } else if (categoria.includes('Total') || categoria.includes('SALDO')) {
                     // É um total ou saldo
                     rowClass = categoria.includes('SALDO') ? 'total' : 'subtotal';
-                    row = `<tr class="${row极速飞艇
                     row = `<tr class="${rowClass}"><td>${categoria}</td>`;
                     for (let i = 0; i < valores.length; i++) {
                         const valueClass = valores[i].toString().startsWith('R$ -') ? 'negative' : 'positive';
@@ -776,7 +776,7 @@
                     }
                     row += '</tr>';
                 } else if (categoria.startsWith('(+)') || categoria.startsWith('(-)')) {
-                    // É uma adição或 subtração
+                    // É uma adição ou subtração
                     const valueClass = categoria.startsWith('(-)') ? 'negative' : 'positive';
                     row = `<tr><td>${categoria}</td>`;
                     for (let i = 0; i < valores.length; i++) {
@@ -785,9 +785,9 @@
                     row += '</tr>';
                 } else {
                     // É uma linha normal
-                    row = `<tr><极速飞艇
                     row = `<tr><td>${categoria}</td>`;
                     for (let i = 0; i < valores.length; i++) {
+                        row += `<td class="numeric">${极速飞艇
                         row += `<td class="numeric">${valores[i]}</td>`;
                     }
                     row += '</tr>';
@@ -831,7 +831,6 @@
         // Verificar assinatura ao carregar a página
         function checkSubscription() {
             fetch('/check_subscription')
-                .极速飞艇
                 .then(response => response.json())
                 .then(data => {
                     if (!data.active) {
