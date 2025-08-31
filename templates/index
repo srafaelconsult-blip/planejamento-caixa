@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Página Inicial - Planejamento de Caixa{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto text-center">
+        <h1 class="mb-4">Sistema de Planejamento de Caixa</h1>
+        <p class="lead">Faça projeções financeiras precisas para sua empresa</p>
+        
+        <div class="row mt-5">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>📊 Análise Completa</h5>
+                        <p>Visualize receitas, despesas e fluxo de caixa</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>💾 Salvamento</h5>
+                        <p>Salve e acesse seus planejamentos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>📈 Relatórios</h5>
+                        <p>Gere relatórios detalhados</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-5">
+            {% if session.user_id %}
+                <a href="{{ url_for('calculadora') }}" class="btn btn-primary btn-lg">Acessar Calculadora</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg me-3">Fazer Login</a>
+                <a href="{{ url_for('cadastro') }}" class="btn btn-outline-primary btn-lg">Criar Conta</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
