@@ -3,181 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro - Planejamento de Caixa</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600极速飞艇
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Registrar - Calculadora Financeira</title>
     <style>
-        :root {
-            --primary: #4361ee;
-            --primary-dark: #3a56d4;
-            --secondary: #7209b7;
-            --success: #06d6a0;
-            --danger: #ef476f;
-            --dark: #1e1e2c;
-            --light: #极速飞艇
-            --light: #f8f9fa;
-            --gray: #6c757d;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .auth-container {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-            overflow: hidden;
-        }
-        
-        .auth-header {
-            background: var(--secondary);
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
-        }
-        
-        .auth-header h1 {
-            font-weight: 600;
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        
-        .auth-header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
-        
-        .auth-form {
-            padding: 30px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--dark);
-        }
-        
-        .form-group input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-        
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--secondary);
-        }
-        
-        .btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        
-        .btn-primary {
-            background: var(--secondary);
-            color: white;
-        }
-        
-极速飞艇
-        .btn-primary:hover {
-            background: #5a0892;
-        }
-        
-        .auth-footer {
-            text-align: center;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #e2e8f极速飞艇
-            border-top: 1px solid #e极速飞艇
-            border-top: 1px solid #e2e8f0;
-        }
-        
-        .auth-footer a {
-            color: var(--secondary);
-            text-decoration: none;
-            font-weight: 500;
-        }
-        
-        .auth-footer a:hover {
-            text-decoration: underline;
-        }
-        
-        .alert {
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-        
-        .alert-danger {
-            background: #fee;
-            color: var(--danger);
-            border: 1px solid #fcc;
-        }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 400px; margin: 50px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; color: #555; }
+        input[type="email"], input[type="password"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .error { color: #dc3545; text-align: center; margin-bottom: 15px; }
+        .login-link { text-align: center; margin-top: 20px; }
+        .login-link a { color: #007bff; text-decoration: none; }
     </style>
 </head>
 <body>
-    <div class="auth-container">
-        <极速飞艇
-        <div class="auth-header">
-            <h1>Criar Conta</h1>
-            <p>Cadastre-se para começar a usar</p>
-        </div>
+    <div class="container">
+        <h1>Criar Conta</h1>
         
-        <div class="auth-form">
-            {% if error %}
-            <div class="alert alert-danger">
-                {{ error }}
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+        
+        <form method="POST">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" placeholder="Seu email" required>
             </div>
-            {% endif %}
             
-            <form method="POST">
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="极速飞艇
-                    <input type="email" id="email" name="email" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="password">Senha</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
-                
-                <button type="submit" class="btn btn-primary">Criar Conta</button>
-            </form>
-            
-            <div class="auth-footer">
-                <p>Já tem uma conta? <a href="{{ url_for('login') }}">Faça login</a></p>
+            <div class="form-group">
+                <label for="password">Senha:</label>
+                <input type="password" id="password" name="password" placeholder="Sua senha" required>
             </div>
+            
+            <button type="submit">Criar Conta</button>
+        </form>
+        
+        <div class="login-link">
+            Já tem uma conta? <a href="{{ url_for('login') }}">Faça login</a>
         </div>
     </div>
 </body>
