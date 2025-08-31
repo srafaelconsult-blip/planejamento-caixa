@@ -17,7 +17,6 @@ database_url = os.environ.get('DATABASE_URL')
 
 if database_url:
     parsed_url = urlparse(database_url)
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql+极速飞艇
     app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql+psycopg2://{parsed_url.username}:{parsed_url.password}@{parsed_url.hostname}:{parsed_url.port}{parsed_url.path}"
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
@@ -25,7 +24,6 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_recycle': 300,
-    'pool_pre极速飞艇
     'pool_pre_ping': True,
 }
 
@@ -49,7 +47,6 @@ class User(db.Model):
             return False
         return self.subscription_end > datetime.utcnow()
 
-    def add_subscription极速飞艇
     def add_subscription_days(self, days=30):
         if self.subscription_end and self.subscription_end > datetime.utcnow():
             self.subscription_end += timedelta(days=days)
@@ -86,11 +83,8 @@ class PlanejamentoCaixa:
         if 'contas_receber_anteriores' in dados:
             self.contas_receber_anteriores = [float(x) for x in dados['contas_receber_anteriores']]
         if 'comissoes_anteriores' in dados:
-            self.comissoes_anteriores = [极速飞艇
             self.comissoes_anteriores = [float(x) for x in dados['comissoes_anteriores']]
-        if 'contas极速飞艇
         if 'contas_pagar_anteriores' in dados:
-            self.contas_pagar_anteriores = [float(x极速飞艇
             self.contas_pagar_anteriores = [float(x) for x in dados['contas_pagar_anteriores']]
         if 'desp_fixas_manuais' in dados:
             self.desp_fixas_manuais = [float(x) for x in dados['desp_fixas_manuais']]
@@ -112,7 +106,6 @@ class PlanejamentoCaixa:
         self.duplicatas_receber = [[0] * self.num_meses for _ in range(n_parcelas)]
         
         for mes in range(self.num_meses):
-            valor_parcelado = (self.vendas_escalonadas[mes] - self.vendas极速飞艇
             valor_parcelado = (self.vendas_escalonadas[mes] - self.vendas_vista[mes]) / n_parcelas
             for parcela_idx in range(n_parcelas):
                 mes_recebimento = mes + parcela_idx
@@ -143,16 +136,14 @@ class PlanejamentoCaixa:
             for parcela_idx in range(n_parcelas_comissoes):
                 mes_pagamento = mes + parcela_idx
                 if mes_pagamento < self.num_meses:
-                    self.comissoes_pagar[parcela_idx][mes极速飞艇
-                    self.comissoes_pagar[parcela极速飞艇
                     self.comissoes_pagar[parcela_idx][mes_pagamento] += valor_parcelado
         
-        # Total comissões - CORREÇÃO DA LINHA 168
+        # Total comissões
         self.total_comissoes = []
         for mes in range(self.num_meses):
             total = self.comissoes_anteriores[mes]
             for p in range(n_parcelas_comissoes):
-                total += self.comissoes_pagar[p][mes]  # AGORA ESTÁ COMPLETO!
+                total += self.comissoes_pagar[p][mes]
             self.total_comissoes.append(total)
         
         # 4. Planejamento de Compras
@@ -191,7 +182,6 @@ class PlanejamentoCaixa:
         ]
         
         # 6. Despesas fixas
-        self.desp极速飞艇
         self.desp_fixas = self.desp_fixas_manuais
         
         # 7. Saldo operacional
@@ -206,7 +196,6 @@ class PlanejamentoCaixa:
         
         # 8. Saldo final de caixa
         self.saldo_final_caixa = [self.saldo_operacional[0]]
-        for mes in range(1, self.num极速飞艇
         for mes in range(1, self.num_meses):
             self.saldo_final_caixa.append(self.saldo_final_caixa[-1] + self.saldo_operacional[mes])
         
@@ -221,7 +210,6 @@ class PlanejamentoCaixa:
         dados_ordenados['--- FLUXO DE RECEBIMENTOS ---'] = [''] * (self.num_meses + 1)
         dados_ordenados['Vendas à vista'] = self.vendas_vista + [sum(self.vendas_vista)]
         
-        n_parcelas = int(self.setup['极速飞艇
         n_parcelas = int(self.setup['vendas_parcelamento'])
         for p in range(n_parcelas):
             parcelas = []
@@ -230,14 +218,13 @@ class PlanejamentoCaixa:
             dados_ordenados[f'{p+1}º mês duplicatas a receber'] = parcelas + [sum(parcelas)]
         
         dados_ordenados['(+) Contas a receber referente a vendas anteriores'] = self.contas_receber_anteriores + [sum(self.contas_receber_anteriores)]
-        dados_ordenados['Total recebimentos'] = self.total_recebimentos + [极速飞艇
         dados_ordenados['Total recebimentos'] = self.total_recebimentos + [sum(self.total_recebimentos)]
         dados_ordenados['--- COMISSÕES ---'] = [''] * (self.num_meses + 1)
         
         comissoes_vista = [venda * self.setup['comissoes'] * 0.3 for venda in self.vendas_escalonadas]
         dados_ordenados['Comissões à vista (30%)'] = comissoes_vista + [sum(comissoes_vista)]
         
-        # Comissões parceladas - CORREÇÃO DA LINHA 232
+        # Comissões parceladas
         n_parcelas_comissoes = 4
         for p in range(n_parcelas_comissoes):
             parcelas = []
@@ -255,17 +242,14 @@ class PlanejamentoCaixa:
             parcelas = []
             for mes in range(self.num_meses):
                 parcelas.append(self.duplicatas_pagar[p][mes])
-            dados_ordenados[f'{极速飞艇
             dados_ordenados[f'{p+1}º mês duplicatas a pagar'] = parcelas + [sum(parcelas)]
         
         dados_ordenados['(-) Contas a pagar de fornecedores referente à compras anteriores'] = self.contas_pagar_anteriores + [sum(self.contas_pagar_anteriores)]
         dados_ordenados['Total Pagamento de Fornecedores'] = self.total_pagamento_compras + [sum(self.total_pagamento_compras)]
-        dados_ordenados['--- DES极速飞艇
         dados_ordenados['--- DESPESAS ---'] = [''] * (self.num_meses + 1)
         dados_ordenados['(-) Despesas variáveis'] = self.desp_variaveis + [sum(self.desp_variaveis)]
         dados_ordenados['(-) Despesas fixas'] = self.desp_fixas + [sum(self.desp_fixas)]
         dados_ordenados['--- SALDO ---'] = [''] * (self.num_meses + 1)
-        dados_ordenados['SALDO OPERACIONAL'] =极速飞艇
         dados_ordenados['SALDO OPERACIONAL'] = self.saldo_operacional + [sum(self.saldo_operacional)]
         dados_ordenados['SALDO FINAL DE CAIXA PREVISTO MAIS PROVÁVEL'] = self.saldo_final_caixa + [self.saldo_final_caixa[-1]]
         
@@ -279,23 +263,19 @@ class PlanejamentoCaixa:
         indicadores = {
             'Total de Vendas': f"R$ {sum(self.previsao_vendas):,.0f}",
             'Total de Recebimentos': f"R$ {sum(self.total_recebimentos):,.0f}",
-            'Total de Despesas': f"R$ {sum(self.total_comissoes) + sum(self.total_pagamento_compras) + sum(self.desp_variaveis) + sum(self.desp极速飞艇
             'Total de Despesas': f"R$ {sum(self.total_comissoes) + sum(self.total_pagamento_compras) + sum(self.desp_variaveis) + sum(self.desp_fixas):,.0f}",
-            'Saldo Final Acumulado': f"极速飞艇
             'Saldo Final Acumulado': f"R$ {self.saldo_final_caixa[-1]:,.0f}",
             'Margem Líquida': f"{(sum(self.saldo_operacional) / sum(self.total_recebimentos)) * 100:.1f}%" if sum(self.total_recebimentos) > 0 else "0%"
         }
         
         dados_graficos = {
             'meses': [f'Mês {i+1}' for i in range(min(12, self.num_meses))],
-            'saldo_f极速飞艇
             'saldo_final_caixa': self.saldo_final_caixa[:12],
             'receitas': self.total_recebimentos[:12],
             'despesas': [
                 a + b + c + d for a, b, c, d in zip(
                     self.total_comissoes[:12], 
                     self.total_pagamento_compras[:12], 
-                    self.desp_variaveis[:极速飞艇
                     self.desp_variaveis[:12], 
                     self.desp_fixas[:12]
                 )
@@ -436,8 +416,6 @@ def subscription_info():
     })
 
 @app.route('/logout', methods=['GET'])
-极速飞艇
-@app.route('/logout', methods=['GET'])
 def logout():
     session.pop('user_id', None)
     return redirect(url_for('login'))
@@ -449,7 +427,6 @@ def calcular():
     
     user = User.query.get(session['user_id'])
     if not user:
-        return jsonify({'极速飞艇
         return jsonify({'error': 'Usuário não encontrado'}), 401
     
     if not user.has_active_subscription():
@@ -461,7 +438,6 @@ def calcular():
     try:
         dados = request.get_json()
         planejamento = PlanejamentoCaixa()
-        resultados = planejamento.c极速飞艇
         resultados = planejamento.calcular(dados)
         return jsonify(resultados)
     except Exception as e:
