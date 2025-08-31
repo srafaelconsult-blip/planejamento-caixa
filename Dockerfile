@@ -11,5 +11,5 @@ RUN mkdir -p templates
 
 EXPOSE 5000
 
-# Comando corrigido - use o arquivo init_db.py
+# Comando corrigido
 CMD python init_db.py && gunicorn --bind 0.0.0.0:5000 app:app
