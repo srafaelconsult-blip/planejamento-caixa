@@ -6,11 +6,28 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import json
 import os
+import psycopg2
+from urllib.parse import urlparse
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///users.db')
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-12345')
+
+# Configuração do banco de dados
+database_url = os.environ.get('DATABASE_URL')
+
+if database_url:
+    # Parse da URL do PostgreSQL
+    parsed_url = urlparse(database_url)
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql+psycopg2://{parsed_url.username}:{parsed_url.password}@{parsed_url.hostname}:{parsed_url.port}{parsed_url.path}"
+else:
+    # Fallback para SQLite (desenvolvimento local)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_recycle': 300,
+    'pool_pre_ping': True,
+}
 
 db = SQLAlchemy(app)
 
@@ -130,7 +147,7 @@ class PlanejamentoCaixa:
         ]
         
         # Comissões a pagar (parceladas)
-        n_parcelas_comissoes = 4  # Fixo em 4 meses conforme solicitado
+        n_parcelas_comissoes = 4
         self.comissoes_pagar = [[0] * self.num_meses for _ in range(n_parcelas_comissoes)]
         
         for mes in range(self.num_meses):
@@ -145,7 +162,7 @@ class PlanejamentoCaixa:
         # Total comissões
         self.total_comissoes = []
         for mes in range(self.num_meses):
-            total = self.comissoes_anteriores[mes]  # Comissões anteriores
+            total = self.comissoes_anteriores[mes]
             
             for p in range(n_parcelas_comissoes):
                 total += self.comissoes_pagar[p][mes]
@@ -304,7 +321,7 @@ class PlanejamentoCaixa:
         # Formatar números para exibição
         resultados_formatados = {}
         for key, values in dados_ordenados.items():
-            if '---' in key:  # Manter os separadores como estão
+            if '---' in key:
                 resultados_formatados[key] = values
             else:
                 resultados_formatados[key] = [f"R$ {x:,.0f}" if isinstance(x, (int, float)) and not isinstance(x, bool) else x for x in values]
@@ -347,7 +364,11 @@ def index():
         return redirect(url_for('login'))
     
     user = User.query.get(session['user_id'])
-    if not user or not user.has_active_subscription():
+    if not user:
+        session.pop('user_id', None)
+        return redirect(url_for('login'))
+    
+    if not user.has_active_subscription():
         return redirect(url_for('payment'))
     
     return render_template('calculadora.html')
@@ -403,26 +424,54 @@ def payment():
 
 @app.route('/process_payment', methods=['POST'])
 def process_payment():
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'message': 'Usuário não autenticado'})
+        
+        user = User.query.get(session['user_id'])
+        if not user:
+            return jsonify({'success': False, 'message': 'Usuário não encontrado'})
+        
+        # Simular processamento de pagamento
+        user.add_subscription_days(30)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Pagamento processado com sucesso!',
+            'redirect_url': '/'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Erro no servidor: {str(e)}'})
+
+@app.route('/check_subscription')
+def check_subscription():
     if 'user_id' not in session:
-        return jsonify({'success': False, 'message': 'Usuário não autenticado'})
+        return jsonify({'active': False})
     
     user = User.query.get(session['user_id'])
     if not user:
-        return jsonify({'success': False, 'message': 'Usuário não encontrado'})
+        return jsonify({'active': False})
     
-    # Simular processamento de pagamento
-    # Em um sistema real, aqui você integraria com um gateway de pagamento
-    user.add_subscription_days(30)
-    db.session.commit()
+    return jsonify({'active': user.has_active_subscription()})
+
+@app.route('/subscription_info')
+def subscription_info():
+    if 'user_id' not in session:
+        return jsonify({'active': False})
     
-    # Retornar URL para redirecionamento
+    user = User.query.get(session['user_id'])
+    if not user:
+        return jsonify({'active': False})
+    
     return jsonify({
-        'success': True, 
-        'message': 'Pagamento processado com sucesso',
-        'redirect_url': url_for('index')
+        'active': user.has_active_subscription(),
+        'end_date': user.subscription_end.isoformat() if user.subscription_end else None
     })
 
-@app.route('/logout')
+@app.route('/logout', methods=['GET'])
 def logout():
     session.pop('user_id', None)
     return redirect(url_for('login'))
@@ -433,8 +482,14 @@ def calcular():
         return jsonify({'error': 'Usuário não autenticado'}), 401
     
     user = User.query.get(session['user_id'])
-    if not user or not user.has_active_subscription():
-        return jsonify({'error': 'Assinatura expirada'}), 403
+    if not user:
+        return jsonify({'error': 'Usuário não encontrado'}), 401
+    
+    if not user.has_active_subscription():
+        return jsonify({
+            'error': 'Assinatura expirada',
+            'redirect_url': '/payment'
+        }), 403
     
     try:
         dados = request.get_json()
@@ -450,4 +505,3 @@ with app.app_context():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
-
