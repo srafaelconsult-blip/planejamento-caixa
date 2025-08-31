@@ -31,7 +31,7 @@
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
@@ -83,14 +83,15 @@
         
         .main-content {
             display: grid;
-            grid-template-columns: 400px 1fr;
-            min-height: 600px;
+            grid-template-columns: 500px 1fr;
+            min-height: 800px;
         }
         
         .sidebar {
             background: var(--light);
             padding: 20px;
             border-right: 1px solid #dee2e6;
+            overflow-y: auto;
         }
         
         .form-group {
@@ -118,6 +119,27 @@
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        
+        .vendas-mes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .vendas-mes input {
+            text-align: right;
+        }
+        
+        .section-title {
+            background: var(--primary);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0 15px 0;
+            font-weight: 600;
+            font-size: 16px;
         }
         
         .calculate-btn {
@@ -211,10 +233,11 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 14px;
         }
         
         th, td {
-            padding: 12px;
+            padding: 8px 12px;
             text-align: right;
             border-bottom: 1px solid #dee2e6;
         }
@@ -223,13 +246,20 @@
             background: var(--light);
             font-weight: 600;
             text-align: left;
+            position: sticky;
+            left: 0;
+            z-index: 1;
+        }
+        
+        th:first-child {
+            min-width: 250px;
         }
         
         tr:hover {
             background: #f8f9fa;
         }
         
-        .section-title {
+        .result-section-title {
             background: var(--primary);
             color: white;
             padding: 10px 15px;
@@ -257,12 +287,22 @@
             margin-bottom: 15px;
             text-align: center;
         }
+        
+        .empty-row {
+            height: 10px;
+            background: transparent;
+        }
+        
+        .total-row {
+            font-weight: bold;
+            background: #e9ecef;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>📊 Calculadora de Planejamento de Caixa</h1>
+            <h1>📊 Calculadora de Planejamento de Caixa - 5 Meses</h1>
             <div class="user-info">
                 <span id="user-email">Usuário</span>
                 <button class="btn btn-danger" onclick="logout()">Sair</button>
@@ -272,6 +312,32 @@
         <div class="main-content">
             <div class="sidebar">
                 <h2>⚙️ Configurações</h2>
+                
+                <div class="section-title">Previsão de Vendas por Mês</div>
+                <div class="vendas-mes">
+                    <div class="form-group">
+                        <label for="venda_mes1">Mês 1 (R$):</label>
+                        <input type="number" id="venda_mes1" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="venda_mes2">Mês 2 (R$):</label>
+                        <input type="number" id="venda_mes2" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="venda_mes3">Mês 3 (R$):</label>
+                        <input type="number" id="venda_mes3" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="venda_mes4">Mês 4 (R$):</label>
+                        <input type="number" id="venda_mes4" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="venda_mes5">Mês 5 (R$):</label>
+                        <input type="number" id="venda_mes5" step="100" min="0" value="0">
+                    </div>
+                </div>
+                
+                <div class="section-title">Parâmetros do Negócio</div>
                 
                 <div class="form-group">
                     <label for="vendas_vista">% Vendas à Vista:</label>
@@ -330,9 +396,9 @@
             
             <div class="content">
                 <div id="loading" class="loading">
-                    <h2>📈 Calculadora de Planejamento de Caixa</h2>
-                    <p>Preencha as configurações ao lado e clique em "Calcular Projeção" para gerar sua análise financeira.</p>
-                    <p>Esta ferramenta irá projetar seu fluxo de caixa para os próximos 24 meses.</p>
+                    <h2>📈 Calculadora de Planejamento de Caixa - 5 Meses</h2>
+                    <p>Preencha as vendas mensais e as configurações ao lado e clique em "Calcular Projeção" para gerar sua análise financeira.</p>
+                    <p>Esta ferramenta irá projetar seu fluxo de caixa para os próximos 5 meses.</p>
                 </div>
                 
                 <div id="results" class="results-section">
@@ -346,17 +412,17 @@
                     
                     <div class="graficos">
                         <div class="grafico-container">
-                            <div class="section-title">📊 Saldo de Caixa (12 meses)</div>
+                            <div class="result-section-title">📊 Saldo de Caixa (5 meses)</div>
                             <canvas id="graficoSaldo"></canvas>
                         </div>
                         <div class="grafico-container">
-                            <div class="section-title">📈 Receitas vs Despesas (12 meses)</div>
+                            <div class="result-section-title">📈 Receitas vs Despesas (5 meses)</div>
                             <canvas id="graficoReceitasDespesas"></canvas>
                         </div>
                     </div>
                     
                     <div class="tabela-container">
-                        <div class="section-title">📋 Resultados Detalhados</div>
+                        <div class="result-section-title">📋 Resultados Detalhados - Projeção 5 Meses</div>
                         <div id="tabela-resultados">
                             <!-- Tabela será preenchida via JavaScript -->
                         </div>
@@ -416,12 +482,21 @@
             const calculateBtn = document.querySelector('.calculate-btn');
             
             // Mostrar loading
-            loading.innerHTML = '<h2>⏳ Calculando... Aguarde.</h2><p>Processando sua projeção financeira...</p>';
+            loading.innerHTML = '<h2>⏳ Calculando... Aguarde.</h2><p>Processando sua projeção financeira para 5 meses...</p>';
             errorMessage.style.display = 'none';
             calculateBtn.disabled = true;
             calculateBtn.textContent = 'Calculando...';
             
             try {
+                // Coletar vendas dos 5 meses
+                const vendasMensais = [
+                    parseFloat(document.getElementById('venda_mes1').value) || 0,
+                    parseFloat(document.getElementById('venda_mes2').value) || 0,
+                    parseFloat(document.getElementById('venda_mes3').value) || 0,
+                    parseFloat(document.getElementById('venda_mes4').value) || 0,
+                    parseFloat(document.getElementById('venda_mes5').value) || 0
+                ];
+                
                 // Coletar dados do formulário
                 const dados = {
                     setup: {
@@ -435,11 +510,11 @@
                         comissoes: parseFloat(document.getElementById('comissoes').value),
                         desp_variaveis_impostos: parseFloat(document.getElementById('desp_variaveis_impostos').value)
                     },
-                    previsao_vendas: Array(24).fill(1200), // Exemplo: R$ 1200/mês
-                    contas_receber_anteriores: Array(24).fill(0),
-                    comissoes_anteriores: Array(24).fill(0),
-                    contas_pagar_anteriores: Array(24).fill(0),
-                    desp_fixas_manuais: Array(24).fill(parseFloat(document.getElementById('desp_fixas').value))
+                    previsao_vendas: vendasMensais,
+                    contas_receber_anteriores: [0, 0, 0, 0, 0],
+                    comissoes_anteriores: [0, 0, 0, 0, 0],
+                    contas_pagar_anteriores: [0, 0, 0, 0, 0],
+                    desp_fixas_manuais: Array(5).fill(parseFloat(document.getElementById('desp_fixas').value) || 0)
                 };
                 
                 // Fazer requisição para o backend
@@ -478,9 +553,9 @@
                 
                 // Restaurar loading inicial
                 loading.innerHTML = `
-                    <h2>📈 Calculadora de Planejamento de Caixa</h2>
-                    <p>Preencha as configurações ao lado e clique em "Calcular Projeção" para gerar sua análise financeira.</p>
-                    <p>Esta ferramenta irá projetar seu fluxo de caixa para os próximos 24 meses.</p>
+                    <h2>📈 Calculadora de Planejamento de Caixa - 5 Meses</h2>
+                    <p>Preencha as vendas mensais e as configurações ao lado e clique em "Calcular Projeção" para gerar sua análise financeira.</p>
+                    <p>Esta ferramenta irá projetar seu fluxo de caixa para os próximos 5 meses.</p>
                 `;
             } finally {
                 calculateBtn.disabled = false;
@@ -530,7 +605,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Evolução do Saldo de Caixa'
+                            text: 'Evolução do Saldo de Caixa - 5 Meses'
                         }
                     },
                     scales: {
@@ -573,7 +648,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Receitas vs Despesas'
+                            text: 'Receitas vs Despesas - 5 Meses'
                         }
                     },
                     scales: {
@@ -601,11 +676,11 @@
             });
             html += '</tr>';
             
-            // Dados
+            // Dados na ordem correta
             for (const [key, values] of Object.entries(resultados)) {
-                if (key.includes('---')) {
-                    // Seção
-                    html += `<tr class="section-row"><td colspan="${meses.length + 1}"><strong>${key}</strong></td></tr>`;
+                if (key === '') {
+                    // Linha em branco
+                    html += `<tr class="empty-row"><td colspan="${meses.length + 1}"></td></tr>`;
                 } else {
                     // Dados normais
                     html += `<tr><td>${key}</td>`;
