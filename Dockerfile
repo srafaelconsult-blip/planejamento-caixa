@@ -11,6 +11,5 @@ RUN mkdir -p templates
 
 EXPOSE 5000
 
-# Comando corrigido - executar em duas etapas separadas
-CMD python -c "from app import db, app; with app.app_context(): db.create_all()" && \
-    gunicorn --bind 0.0.0.0:5000 app:app
+# Comando simplificado e corrigido
+CMD python -c "from app import db, app; with app.app_context(): db.create_all()" && gunicorn --bind 0.0.0.0:5000 app:app
