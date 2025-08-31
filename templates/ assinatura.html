@@ -1,28 +1,66 @@
 {% extends "base.html" %}
 
+{% block title %}Assinatura - Planejamento de Caixa{% endblock %}
+
 {% block content %}
-<div class="container">
-    <h2>📦 Planos de Assinatura</h2>
-    
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Teste Grátis</h5>
-                    <p class="card-text">✅ 30 dias completos<br>✅ Todas as funcionalidades</p>
-                    <p class="price">💰 <strong>R$ 0,00</strong></p>
-                </div>
+<div class="row">
+    <div class="col-md-12 text-center">
+        <h2>Escolha seu Plano</h2>
+        <p class="lead">Selecione o plano que melhor atende suas necessidades</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header text-center">
+                <h4>Starter</h4>
+                <h3>R$ 97/mês</h3>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li>✓ 1 usuário</li>
+                    <li>✓ Cálculos básicos</li>
+                    <li>✓ Suporte por email</li>
+                    <li>✗ Relatórios avançados</li>
+                </ul>
+                <button class="btn btn-outline-primary w-100">Selecionar</button>
             </div>
         </div>
-        
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Plano Premium</h5>
-                    <p class="card-text">✅ Acesso completo<br>✅ Suporte prioritário</p>
-                    <p class="price">💰 <strong>R$ 97,00/mês</strong></p>
-                    <button class="btn btn-primary">Assinar Agora</button>
-                </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white text-center">
+                <h4>Professional</h4>
+                <h3>R$ 197/mês</h3>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li>✓ 3 usuários</li>
+                    <li>✓ Cálculos completos</li>
+                    <li>✓ Suporte prioritário</li>
+                    <li>✓ Relatórios PDF</li>
+                </ul>
+                <button class="btn btn-primary w-100">Selecionar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header text-center">
+                <h4>Enterprise</h4>
+                <h3>R$ 497/mês</h3>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li>✓ 10 usuários</li>
+                    <li>✓ Personalização</li>
+                    <li>✓ Suporte 24/7</li>
+                    <li>✓ API acesso</li>
+                </ul>
+                <button class="btn btn-outline-primary w-100">Selecionar</button>
             </div>
         </div>
     </div>
