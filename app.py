@@ -415,7 +415,12 @@ def process_payment():
     user.add_subscription_days(30)
     db.session.commit()
     
-    return jsonify({'success': True, 'message': 'Pagamento processado com sucesso'})
+    # Retornar URL para redirecionamento
+    return jsonify({
+        'success': True, 
+        'message': 'Pagamento processado com sucesso',
+        'redirect_url': url_for('index')
+    })
 
 @app.route('/logout')
 def logout():
@@ -445,3 +450,4 @@ with app.app_context():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+
