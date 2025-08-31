@@ -1,3 +1,4 @@
 #!/bin/bash
-pip install --upgrade pip
+# build.sh
+echo "Instalando dependências..."
 pip install -r requirements.txt
