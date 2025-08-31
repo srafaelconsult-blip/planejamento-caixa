@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento - Planejamento de Caixa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --success: #06d6a0;
+            --danger: #ef476f;
+            --dark: #1e1e2c;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .payment-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+        }
+        
+        .payment-header {
+            background: var(--success);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        .payment-header h1 {
+            font-weight: 600;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .payment-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .payment-content {
+            padding: 30px;
+        }
+        
+        .plan-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .plan-price {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 10px 0;
+        }
+        
+        .plan-features {
+            list-style: none;
+            margin: 20px 0;
+        }
+        
+        .plan-features li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .plan-features li:last-child {
+            border-bottom: none;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #05b98a;
+        }
+        
+        .payment-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .payment-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .payment-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        #paymentMessage {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+        
+        .success {
+            background: #e8f5e8;
+            color: var(--success);
+            border: 1px solid #c3e6c3;
+        }
+        
+        .error {
+            background: #fee;
+            color: var(--danger);
+            border: 1px solid #fcc;
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-container">
+        <div class="payment-header">
+            <h1>Assinatura Premium</h1>
+            <p>Acesso completo por 30 dias</p>
+        </div>
+        
+        <div class="payment-content">
+            <div class="plan-card">
+                <h3>Plano Mensal</h3>
+                <div class="plan-price">R$ 97,00</div>
+                <p>Acesso completo à ferramenta de planejamento de caixa</p>
+                
+                <ul class="plan-features">
+                    <li>✅ Cálculos avançados de fluxo de caixa</li>
+                    <li>✅ Relatórios detalhados e gráficos</li>
+                    <li>✅ Suporte prioritário</li>
+                    <li>✅ Atualizações gratuitas</li>
+                </ul>
+                
+                <button id="payButton" class="btn btn-success">Assinar Agora</button>
+                
+                <div id="paymentMessage"></div>
+            </div>
+            
+            <div class="payment-footer">
+                <p><a href="{{ url_for('logout') }}">Sair</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('payButton').addEventListener('click', function() {
+            const button = this;
+            const message = document.getElementById('paymentMessage');
+            
+            button.disabled = true;
+            button.textContent = 'Processando...';
+            message.style.display = 'none';
+            
+            fetch('/process_payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    message.className = 'success';
+                    message.textContent = 'Pagamento processado com sucesso! Redirecionando...';
+                    message.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    message.className = 'error';
+                    message.textContent = data.message || 'Erro ao processar pagamento';
+                    message.style.display = 'block';
+                    button.disabled = false;
+                    button.textContent = 'Assinar Agora';
+                }
+            })
+            .catch(error => {
+                message.className = 'error';
+                message.textContent = 'Erro ao processar pagamento';
+                message.style.display = 'block';
+                button.disabled = false;
+                button.textContent = 'Assinar Agora';
+            });
+        });
+    </script>
+</body>
+</html>
