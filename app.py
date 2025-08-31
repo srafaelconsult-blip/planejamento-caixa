@@ -1,12 +1,25 @@
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import pandas as pd
 import numpy as np
-from flask import Flask, render_template, request, jsonify, session
 import json
 from datetime import datetime
 import os
+from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-123')
+app.config['STATIC_FOLDER'] = 'static'
+
+# Simulação de banco de dados de usuários (em produção use um banco real)
+users = {}
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 class PlanejamentoCaixa:
     def __init__(self):
@@ -29,49 +42,53 @@ class PlanejamentoCaixa:
         self.desp_fixas_manuais = [438, 438, 438, 438, 438]
 
     def calcular_tudo(self, dados_usuario):
-        # Atualizar valores com dados do usuário
-        for key in self.setup:
-            if key in dados_usuario:
-                self.setup[key] = float(dados_usuario[key])
-        
-        self.previsao_vendas = [float(x) for x in dados_usuario.get('previsao_vendas', self.previsao_vendas)]
-        
-        # Cálculos (mesma lógica anterior)
-        plus = self.setup['plus_vendas']
-        self.vendas_escalonadas = [
-            venda * (1 + plus) if plus > 0 else venda
-            for venda in self.previsao_vendas
-        ]
-        
-        n_parcelas = int(self.setup['vendas_parcelamento'])
-        self.vendas_vista = [venda * self.setup['vendas_vista'] for venda in self.vendas_escalonadas]
-        
-        self.duplicatas_receber = [[0] * 5 for _ in range(n_parcelas)]
-        for mes in range(5):
-            valor_parcelado = (self.vendas_escalonadas[mes] - self.vendas_vista[mes]) / n_parcelas
-            for parcela_idx in range(n_parcelas):
-                mes_recebimento = mes + parcela_idx
-                if mes_recebimento < 5:
-                    self.duplicatas_receber[parcela_idx][mes_recebimento] += valor_parcelado
-        
-        self.total_recebimentos = []
-        for mes in range(5):
-            total = self.vendas_vista[mes]
-            for p in range(n_parcelas):
-                total += self.duplicatas_receber[p][mes]
-            total += self.contas_receber_anteriores[mes]
-            self.total_recebimentos.append(total)
-        
-        # ... (restante dos cálculos)
-        
-        return self.gerar_resultados()
+        try:
+            # Atualizar valores com dados do usuário
+            for key in self.setup:
+                if key in dados_usuario:
+                    self.setup[key] = float(dados_usuario[key])
+            
+            if 'previsao_vendas' in dados_usuario:
+                self.previsao_vendas = [float(x) for x in dados_usuario['previsao_vendas']]
+            
+            # Cálculos
+            plus = self.setup['plus_vendas']
+            self.vendas_escalonadas = [
+                venda * (1 + plus) if plus > 0 else venda
+                for venda in self.previsao_vendas
+            ]
+            
+            n_parcelas = int(self.setup['vendas_parcelamento'])
+            self.vendas_vista = [venda * self.setup['vendas_vista'] for venda in self.vendas_escalonadas]
+            
+            self.duplicatas_receber = [[0] * 5 for _ in range(n_parcelas)]
+            for mes in range(5):
+                valor_parcelado = (self.vendas_escalonadas[mes] - self.vendas_vista[mes]) / n_parcelas
+                for parcela_idx in range(n_parcelas):
+                    mes_recebimento = mes + parcela_idx
+                    if mes_recebimento < 5:
+                        self.duplicatas_receber[parcela_idx][mes_recebimento] += valor_parcelado
+            
+            self.total_recebimentos = []
+            for mes in range(5):
+                total = self.vendas_vista[mes]
+                for p in range(n_parcelas):
+                    total += self.duplicatas_receber[p][mes]
+                total += self.contas_receber_anteriores[mes]
+                self.total_recebimentos.append(total)
+            
+            return self.gerar_resultados()
+            
+        except Exception as e:
+            raise Exception(f"Erro no cálculo: {str(e)}")
 
     def gerar_resultados(self):
         return {
             'vendas_escalonadas': self.vendas_escalonadas,
             'vendas_vista': self.vendas_vista,
             'total_recebimentos': self.total_recebimentos,
-            'saldo_final_caixa': [sum(self.total_recebimentos[:i+1]) for i in range(5)]
+            'saldo_final_caixa': [sum(self.total_recebimentos[:i+1]) for i in range(5)],
+            'parcelas_receber': self.duplicatas_receber
         }
 
 # Rotas Flask
@@ -79,7 +96,54 @@ class PlanejamentoCaixa:
 def index():
     return render_template('index.html')
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        # Verificação simples (em produção use bcrypt)
+        if email in users and users[email]['password'] == password:
+            session['user_id'] = email
+            return redirect(url_for('calculadora'))
+        else:
+            return render_template('login.html', error="Credenciais inválidas")
+    
+    return render_template('login.html')
+
+@app.route('/cadastro', methods=['GET', 'POST'])
+def cadastro():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        name = request.form.get('name')
+        
+        if email in users:
+            return render_template('cadastro.html', error="Email já cadastrado")
+        
+        users[email] = {
+            'password': password,  # Em produção, usar hash!
+            'name': name,
+            'plano': 'free'
+        }
+        
+        session['user_id'] = email
+        return redirect(url_for('calculadora'))
+    
+    return render_template('cadastro.html')
+
+@app.route('/calculadora')
+@login_required
+def calculadora():
+    return render_template('calculadora.html')
+
+@app.route('/assinatura')
+@login_required
+def assinatura():
+    return render_template('assinatura.html')
+
 @app.route('/api/calcular', methods=['POST'])
+@login_required
 def calcular():
     try:
         dados = request.get_json()
@@ -89,11 +153,29 @@ def calcular():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
+
 @app.route('/health')
 def health():
-    return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
+    return jsonify({
+        'status': 'healthy', 
+        'timestamp': datetime.now().isoformat(),
+        'python_version': os.environ.get('PYTHON_VERSION', '3.11.9')
+    })
+
+# Error handlers
+@app.errorhandler(404)
+def not_found(error):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('500.html'), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=os.environ.get('DEBUG', 'False').lower() == 'true')
-
+    debug = os.environ.get('DEBUG', 'False').lower() == 'true'
+    app.run(host='0.0.0.0', port=port, debug=debug)
