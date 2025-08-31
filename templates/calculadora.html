@@ -1,240 +1,56 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planejamento de Caixa</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .card {
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+<script>
+    // ... código anterior ...
+
+    function mostrarResultados(dados) {
+        document.getElementById('resultados').style.display = 'block';
+        
+        // Construir tabela de resultados - VERIFICANDO se os dados existem
+        const tabelaHTML = `
+            <tr><td>Previsão Vendas</td>${addLinhaTabela(dados.previsao_vendas)}</tr>
+            <tr><td>Vendas c/ Plus</td>${addLinhaTabela(dados.vendas_escalonadas)}</tr>
+            <tr><td>Vendas à Vista</td>${addLinhaTabela(dados.vendas_vista)}</tr>
+            <tr><td>Total Recebimentos</td>${addLinhaTabela(dados.total_recebimentos)}</tr>
+            <tr><td>Comissões</td>${addLinhaTabela(dados.total_comissoes)}</tr>
+            <tr><td>Compras Planejadas</td>${addLinhaTabela(dados.compras_planejadas)}</tr>
+            <tr><td>Compras à Vista</td>${addLinhaTabela(dados.compras_vista)}</tr>
+            <tr><td>Total Pag. Compras</td>${addLinhaTabela(dados.total_pagamento_compras)}</tr>
+            <tr><td>Desp. Variáveis</td>${addLinhaTabela(dados.desp_variaveis)}</tr>
+            <tr><td>Desp. Fixas</td>${addLinhaTabela(dados.desp_fixas)}</tr>
+            <tr><td>Saldo Operacional</td>${addLinhaTabela(dados.saldo_operacional)}</tr>
+            <tr><td>Saldo Final Caixa</td>${addLinhaTabela(dados.saldo_final_caixa)}</tr>
+        `;
+        
+        document.getElementById('tabela-resultados').innerHTML = tabelaHTML;
+        
+        // Criar gráficos
+        criarGraficos(dados);
+    }
+
+    function addLinhaTabela(valores) {
+        // VERIFICAÇÃO DE SEGURANÇA - se valores é undefined ou não é array
+        if (!valores || !Array.isArray(valores)) {
+            console.error('Valores inválidos:', valores);
+            return '<td>Erro</td><td>Erro</td><td>Erro</td><td>Erro</td><td>Erro</td><td>Erro</td>';
         }
-        .table-responsive {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        .result-section {
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="/">
-                <i class="fas fa-calculator"></i> Planejamento de Caixa
-            </a>
-        </div>
-    </nav>
-
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0">Calculadora de Planejamento de Caixa</h4>
-                    </div>
-                    <div class="card-body">
-                        <form id="calculadora-form">
-                            <div class="row">
-                                <!-- Configurações -->
-                                <div class="col-md-6">
-                                    <h5>Configurações (SETUP)</h5>
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">% Vendas à Vista</label>
-                                            <input type="number" class="form-control" name="vendas_vista" value="30" min="0" max="100" step="1">
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">Parcelamento Vendas (meses)</label>
-                                            <input type="number" class="form-control" name="vendas_parcelamento" value="5" min="1" max="12">
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">Plus de Vendas (%)</label>
-                                            <input type="number" class="form-control" name="plus_vendas" value="0" min="0" max="100" step="1">
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">CMV (%)</label>
-                                            <input type="number" class="form-control" name="cmv" value="42.5" min="0" max="100" step="0.1">
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">% Compras</label>
-                                            <input type="number" class="form-control" name="percent_compras" value="20" min="0" max="100" step="1">
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">% Compras à Vista</label>
-                                            <input type="number" class="form-control" name="compras_vista" value="20" min="0" max="100" step="1">
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">Parcelamento Compras (meses)</label>
-                                            <input type="number" class="form-control" name="compras_parcelamento" value="6" min="1" max="12">
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">Comissões (%)</label>
-                                            <input type="number" class="form-control" name="comissoes" value="7.61" min="0" max="100" step="0.01">
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">Desp. Variáveis (%)</label>
-                                            <input type="number" class="form-control" name="desp_variaveis_impostos" value="8.5" min="0" max="100" step="0.1">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Previsão de Vendas -->
-                                <div class="col-md-6">
-                                    <h5>Previsão de Vendas (5 meses)</h5>
-                                    {% for i in range(5) %}
-                                    <div class="mb-3">
-                                        <label class="form-label">Mês {{ i+1 }}</label>
-                                        <input type="number" class="form-control" name="previsao_vendas[]" value="{% if i==0 %}1200{% elif i==1 %}1100{% elif i==2 %}1200{% elif i==3 %}1100{% else %}700{% endif %}">
-                                    </div>
-                                    {% endfor %}
-
-                                    <h5 class="mt-4">Dados Manuais</h5>
-                                    {% for i in range(5) %}
-                                    <div class="row">
-                                        <div class="col-md-4 mb-2">
-                                            <small class="form-label">Contas Rec. Mês {{ i+1 }}</small>
-                                            <input type="number" class="form-control" name="contas_receber_anteriores[]" value="0">
-                                        </div>
-                                        <div class="col-md-4 mb-2">
-                                            <small class="form-label">Comissões Ant. Mês {{ i+1 }}</small>
-                                            <input type="number" class="form-control" name="comissoes_anteriores[]" value="0">
-                                        </div>
-                                        <div class="col-md-4 mb-2">
-                                            <small class="form-label">Contas Pagar Mês {{ i+1 }}</small>
-                                            <input type="number" class="form-control" name="contas_pagar_anteriores[]" value="0">
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-
-                            <button type="submit" class="btn btn-success btn-lg">
-                                <i class="fas fa-calculator"></i> Calcular
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Resultados -->
-                <div id="resultados" class="result-section">
-                    <div class="card">
-                        <div class="card-header bg-success text-white">
-                            <h4 class="mb-0">Resultados do Planejamento</h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-striped table-bordered">
-                                    <thead class="table-dark">
-                                        <tr>
-                                            <th>Descrição</th>
-                                            <th>Mês 1</th>
-                                            <th>Mês 2</th>
-                                            <th>Mês 3</th>
-                                            <th>Mês 4</th>
-                                            <th>Mês 5</th>
-                                            <th>TOTAL</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tabela-resultados">
-                                        <!-- Os resultados serão inseridos aqui via JavaScript -->
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <div class="row mt-4">
-                                <div class="col-md-6">
-                                    <canvas id="grafico-caixa" height="250"></canvas>
-                                </div>
-                                <div class="col-md-6">
-                                    <canvas id="grafico-comparativo" height="250"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        document.getElementById('calculadora-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const dados = {
-                vendas_vista: parseFloat(formData.get('vendas_vista')) / 100,
-                vendas_parcelamento: parseInt(formData.get('vendas_parcelamento')),
-                plus_vendas: parseFloat(formData.get('plus_vendas')) / 100,
-                cmv: parseFloat(formData.get('cmv')) / 100,
-                percent_compras: parseFloat(formData.get('percent_compras')) / 100,
-                compras_vista: parseFloat(formData.get('compras_vista')) / 100,
-                compras_parcelamento: parseInt(formData.get('compras_parcelamento')),
-                comissoes: parseFloat(formData.get('comissoes')) / 100,
-                desp_variaveis_impostos: parseFloat(formData.get('desp_variaveis_impostos')) / 100,
-                previsao_vendas: Array.from(formData.getAll('previsao_vendas[]')).map(Number),
-                contas_receber_anteriores: Array.from(formData.getAll('contas_receber_anteriores[]')).map(Number),
-                comissoes_anteriores: Array.from(formData.getAll('comissoes_anteriores[]')).map(Number),
-                contas_pagar_anteriores: Array.from(formData.getAll('contas_pagar_anteriores[]')).map(Number)
-            };
-            
-            try {
-                const response = await fetch('/api/calcular', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(dados)
-                });
-                
-                const resultado = await response.json();
-                
-                if (resultado.success) {
-                    mostrarResultados(resultado.data);
-                } else {
-                    alert('Erro: ' + resultado.error);
-                }
-            } catch (error) {
-                alert('Erro ao calcular: ' + error.message);
-            }
-        });
-
-        function mostrarResultados(dados) {
-            document.getElementById('resultados').style.display = 'block';
-            
-            // Construir tabela de resultados
-            const tabelaHTML = `
-                <tr><td>Previsão Vendas</td>${addLinhaTabela(dados.previsao_vendas)}</tr>
-                <tr><td>Vendas c/ Plus</td>${addLinhaTabela(dados.vendas_escalonadas)}</tr>
-                <tr><td>Vendas à Vista</td>${addLinhaTabela(dados.vendas_vista)}</tr>
-                <tr><td>Total Recebimentos</td>${addLinhaTabela(dados.total_recebimentos)}</tr>
-                <tr><td>Comissões</td>${addLinhaTabela(dados.total_comissoes)}</tr>
-                <tr><td>Compras Planejadas</td>${addLinhaTabela(dados.compras_planejadas)}</tr>
-                <tr><td>Compras à Vista</td>${addLinhaTabela(dados.compras_vista)}</tr>
-                <tr><td>Total Pag. Compras</td>${addLinhaTabela(dados.total_pagamento_compras)}</tr>
-                <tr><td>Desp. Variáveis</td>${addLinhaTabela(dados.desp_variaveis)}</tr>
-                <tr><td>Desp. Fixas</td>${addLinhaTabela(dados.desp_fixas)}</tr>
-                <tr><td>Saldo Operacional</td>${addLinhaTabela(dados.saldo_operacional)}</tr>
-                <tr><td>Saldo Final Caixa</td>${addLinhaTabela(dados.saldo_final_caixa)}</tr>
-            `;
-            
-            document.getElementById('tabela-resultados').innerHTML = tabelaHTML;
-            
-            // Criar gráficos
-            criarGraficos(dados);
-        }
-
-        function addLinhaTabela(valores) {
+        
+        try {
             const total = valores.reduce((sum, val) => sum + val, 0);
             return valores.map(v => `<td>R$ ${v.toFixed(2)}</td>`).join('') + `<td><strong>R$ ${total.toFixed(2)}</strong></td>`;
+        } catch (error) {
+            console.error('Erro ao calcular total:', error, valores);
+            return '<td>Erro</td><td>Erro</td><td>Erro</td><td>Erro</td><td>Erro</td><td>Erro</td>';
+        }
+    }
+
+    function criarGraficos(dados) {
+        // VERIFICAÇÃO DE SEGURANÇA para os gráficos
+        if (!dados.saldo_final_caixa || !Array.isArray(dados.saldo_final_caixa)) {
+            console.error('Dados inválidos para gráficos:', dados);
+            return;
         }
 
-        function criarGraficos(dados) {
-            // Gráfico de evolução do saldo de caixa
+        // Gráfico de evolução do saldo de caixa
+        try {
             new Chart(document.getElementById('grafico-caixa'), {
                 type: 'line',
                 data: {
@@ -257,8 +73,12 @@
                     }
                 }
             });
+        } catch (error) {
+            console.error('Erro ao criar gráfico de caixa:', error);
+        }
 
-            // Gráfico comparativo
+        // Gráfico comparativo
+        try {
             new Chart(document.getElementById('grafico-comparativo'), {
                 type: 'bar',
                 data: {
@@ -266,14 +86,14 @@
                     datasets: [
                         {
                             label: 'Receitas',
-                            data: dados.total_recebimentos,
+                            data: dados.total_recebimentos || [],
                             backgroundColor: 'green'
                         },
                         {
                             label: 'Despesas',
-                            data: dados.total_comissoes.map((v, i) => 
+                            data: dados.total_comissoes ? dados.total_comissoes.map((v, i) => 
                                 v + dados.total_pagamento_compras[i] + dados.desp_variaveis[i] + dados.desp_fixas[i]
-                            ),
+                            ) : [],
                             backgroundColor: 'red'
                         }
                     ]
@@ -288,9 +108,8 @@
                     }
                 }
             });
+        } catch (error) {
+            console.error('Erro ao criar gráfico comparativo:', error);
         }
-    </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    }
+</script>
