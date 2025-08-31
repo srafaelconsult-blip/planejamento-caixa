@@ -464,18 +464,12 @@ def calcular():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-# Rota para resetar banco em desenvolvimento (remova em produção)
-@app.route('/reset-db')
-def reset_db():
-    if os.environ.get('FLASK_ENV') == 'development':
-        db.drop_all()
-        db.create_all()
-        return 'Banco resetado'
-    return 'Não permitido em produção'
-
 # Criar tabelas do banco de dados
+print("🔄 Criando tabelas do banco de dados...")
 with app.app_context():
     db.create_all()
+    print("✅ Tabelas criadas com sucesso!")
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
