@@ -206,13 +206,13 @@
             .then(data => {
                 if (data.success) {
                     message.className = 'success';
-                    message.textContent = 'Pagamento processado com sucesso! Redirecionando...';
+                    message.textContent = data.message + ' Redirecionando...';
                     message.style.display = 'block';
                     
-                    // Redirecionar para a URL fornecida pelo servidor
+                    // Redirecionar após 2 segundos
                     setTimeout(() => {
                         window.location.href = data.redirect_url || '/';
-                    }, 1500);
+                    }, 2000);
                 } else {
                     throw new Error(data.message || 'Erro ao processar pagamento');
                 }
