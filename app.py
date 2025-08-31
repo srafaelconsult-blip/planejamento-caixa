@@ -8,6 +8,7 @@ import json
 import os
 import psycopg2
 from urllib.parse import urlparse
+import re
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-12345')
@@ -35,6 +36,11 @@ class User(db.Model):
     password_hash = db.Column(db.String(128), nullable=False)
     subscription_end = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __init__(self, email):
+        if not email:
+            raise ValueError("Email não pode ser vazio")
+        self.email = email
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -289,6 +295,11 @@ class PlanejamentoCaixa:
             'meses': meses
         }
 
+# Função de validação de email
+def validate_email(email):
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
 # Rotas de autenticação
 @app.route('/')
 def index():
@@ -315,6 +326,9 @@ def login():
         email = request.form.get('email')
         password = request.form.get('password')
         
+        if not email or not password:
+            return render_template('login.html', error='Email e senha são obrigatórios')
+        
         user = User.query.filter_by(email=email).first()
         
         if user and user.check_password(password):
@@ -333,6 +347,13 @@ def register():
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
+        
+        # Validação crítica
+        if not email or not password:
+            return render_template('register.html', error='Email e senha são obrigatórios')
+        
+        if not validate_email(email):
+            return render_template('register.html', error='Email inválido')
         
         if User.query.filter_by(email=email).first():
             return render_template('register.html', error='Email já cadastrado')
@@ -442,6 +463,15 @@ def calcular():
         return jsonify(resultados)
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+
+# Rota para resetar banco em desenvolvimento (remova em produção)
+@app.route('/reset-db')
+def reset_db():
+    if os.environ.get('FLASK_ENV') == 'development':
+        db.drop_all()
+        db.create_all()
+        return 'Banco resetado'
+    return 'Não permitido em produção'
 
 # Criar tabelas do banco de dados
 with app.app_context():
