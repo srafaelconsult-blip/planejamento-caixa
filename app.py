@@ -211,6 +211,7 @@ class PlanejamentoCaixa:
         meses = [f'Mês {i+1}' for i in range(self.num_meses)] + ['TOTAL']
         dados_ordenados = {}
         
+        # RECEITAS
         dados_ordenados['Previsão das Vendas'] = self.previsao_vendas + [sum(self.previsao_vendas)]
         dados_ordenados['Escalonamento das Vendas com Plus'] = self.vendas_escalonadas + [sum(self.vendas_escalonadas)]
         dados_ordenados['--- FLUXO DE RECEBIMENTOS ---'] = [''] * (self.num_meses + 1)
@@ -225,12 +226,13 @@ class PlanejamentoCaixa:
         
         dados_ordenados['(+) Contas a receber referente a vendas anteriores'] = self.contas_receber_anteriores + [sum(self.contas_receber_anteriores)]
         dados_ordenados['Total recebimentos'] = self.total_recebimentos + [sum(self.total_recebimentos)]
+        
+        # COMISSÕES
         dados_ordenados['--- COMISSÕES ---'] = [''] * (self.num_meses + 1)
         
         comissoes_vista = [venda * self.setup['comissoes'] * 0.3 for venda in self.vendas_escalonadas]
         dados_ordenados['Comissões à vista (30%)'] = comissoes_vista + [sum(comissoes_vista)]
         
-        # Comissões parceladas
         n_parcelas_comissoes = 4
         for p in range(n_parcelas_comissoes):
             parcelas = []
@@ -240,6 +242,8 @@ class PlanejamentoCaixa:
         
         dados_ordenados['(+) Comissões a pagar referente a vendas anteriores'] = self.comissoes_anteriores + [sum(self.comissoes_anteriores)]
         dados_ordenados['Total de Comissões a pagar'] = self.total_comissoes + [sum(self.total_comissoes)]
+        
+        # PLANEJAMENTO DE COMPRAS
         dados_ordenados['--- PLANEJAMENTO DE COMPRAS ---'] = [''] * (self.num_meses + 1)
         dados_ordenados['Compras à vista'] = self.compras_vista + [sum(self.compras_vista)]
         
@@ -252,9 +256,13 @@ class PlanejamentoCaixa:
         
         dados_ordenados['(-) Contas a pagar de fornecedores referente à compras anteriores'] = self.contas_pagar_anteriores + [sum(self.contas_pagar_anteriores)]
         dados_ordenados['Total Pagamento de Fornecedores'] = self.total_pagamento_compras + [sum(self.total_pagamento_compras)]
+        
+        # DESPESAS
         dados_ordenados['--- DESPESAS ---'] = [''] * (self.num_meses + 1)
         dados_ordenados['(-) Despesas variáveis'] = self.desp_variaveis + [sum(self.desp_variaveis)]
         dados_ordenados['(-) Despesas fixas'] = self.desp_fixas + [sum(self.desp_fixas)]
+        
+        # SALDO
         dados_ordenados['--- SALDO ---'] = [''] * (self.num_meses + 1)
         dados_ordenados['SALDO OPERACIONAL'] = self.saldo_operacional + [sum(self.saldo_operacional)]
         dados_ordenados['SALDO FINAL DE CAIXA PREVISTO MAIS PROVÁVEL'] = self.saldo_final_caixa + [self.saldo_final_caixa[-1]]
