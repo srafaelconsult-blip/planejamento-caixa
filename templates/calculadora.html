@@ -1,33 +1,319 @@
-function addLinhaTabela(valores, isMonetary = true) {
-    if (!valores || !Array.isArray(valores)) {
-        console.error('Valores inválidos:', valores);
-        return '<td>N/A</td>'.repeat(5) + '<td><strong>N/A</strong></td>';
-    }
-    
-    try {
-        // Garantir que todos os valores são números
-        const valoresNumericos = valores.map(v => {
-            const num = typeof v === 'number' ? v : parseFloat(v);
-            return isNaN(num) ? 0 : num;
-        });
-        
-        const total = valoresNumericos.reduce((sum, val) => sum + val, 0);
-        
-        const celulas = valoresNumericos.map(v => {
-            if (isMonetary) {
-                return `<td>${formatarMoeda(v)}</td>`;
-            } else {
-                return `<td>${v.toFixed(2)}</td>`;
-            }
-        }).join('');
-        
-        if (isMonetary) {
-            return celulas + `<td><strong>${formatarMoeda(total)}</strong></td>`;
-        } else {
-            return celulas + `<td><strong>${total.toFixed(2)}</strong></td>`;
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora - Planejamento de Caixa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
         }
-    } catch (error) {
-        console.error('Erro ao processar valores:', error, valores);
-        return '<td>Erro</td>'.repeat(5) + '<td><strong>Erro</strong></td>';
-    }
-}
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+            font-weight: 600;
+        }
+        
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .table th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            border: none;
+        }
+        
+        .table td {
+            vertical-align: middle;
+            padding: 15px;
+        }
+        
+        .result-section {
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .config-badge {
+            font-size: 0.8rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+        
+        .btn-calculate {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-calculate:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .result-positive {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+        
+        .result-negative {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        
+        .section-title {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--secondary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-calculator me-2"></i>FinanceSAS
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">
+                    <i class="fas fa-user me-1"></i>Usuário Premium
+                </span>
+                <a class="btn btn-outline-light btn-sm" href="/logout">
+                    <i class="fas fa-sign-out-alt me-1"></i>Sair
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Loading indicator -->
+        <div id="loading" class="loading">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p class="mt-3 fs-5">Calculando seu planejamento...</p>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="fas fa-calculator me-2"></i>Calculadora de Planejamento de Caixa</h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="calculadora-form">
+                            <div class="row">
+                                <!-- Configurações -->
+                                <div class="col-lg-6">
+                                    <h5 class="section-title">⚙️ Configurações</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">% Vendas à Vista</label>
+                                            <input type="number" class="form-control" name="vendas_vista" value="30" min="0" max="100" step="1">
+                                            <small class="text-muted">Percentual de vendas recebidas à vista</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Parcelamento Vendas (meses)</label>
+                                            <input type="number" class="form-control" name="vendas_parcelamento" value="5" min="1" max="12">
+                                            <small class="text-muted">Número de parcelas para vendas</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Plus de Vendas (%)</label>
+                                            <input type="number" class="form-control" name="plus_vendas" value="0" min="0" max="100" step="1">
+                                            <small class="text-muted">Acréscimo percentual nas vendas</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">CMV (%)</label>
+                                            <input type="number" class="form-control" name="cmv" value="42.5" min="0" max="100" step="0.1">
+                                            <small class="text-muted">Custo da Mercadoria Vendida</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">% Compras</label>
+                                            <input type="number" class="form-control" name="percent_compras" value="20" min="0" max="100" step="1">
+                                            <small class="text-muted">Percentual de compras sobre vendas</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">% Compras à Vista</label>
+                                            <input type="number" class="form-control" name="compras_vista" value="20" min="0" max="100" step="1">
+                                            <small class="text-muted">Percentual de compras pagas à vista</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Parcelamento Compras (meses)</label>
+                                            <input type="number" class="form-control" name="compras_parcelamento" value="6" min="1" max="12">
+                                            <small class="text-muted">Número de parcelas para compras</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Comissões (%)</label>
+                                            <input type="number" class="form-control" name="comissoes" value="7.61" min="0" max="100" step="0.01">
+                                            <small class="text-muted">Percentual de comissões sobre vendas</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Desp. Variáveis (%)</label>
+                                            <input type="number" class="form-control" name="desp_variaveis_impostos" value="8.5" min="0" max="100" step="0.1">
+                                            <small class="text-muted">Despesas variáveis e impostos</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Previsão de Vendas -->
+                                <div class="col-lg-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="section-title mb-0">📊 Previsão de Vendas</h5>
+                                        <select id="numero-meses" class="form-select" style="width: auto;">
+                                            <option value="5">5 meses</option>
+                                            <option value="6">6 meses</option>
+                                            <option value="12">12 meses</option>
+                                            <option value="24">24 meses</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div id="container-vendas" class="row">
+                                        <!-- Campos gerados dinamicamente -->
+                                    </div>
+
+                                    <h5 class="section-title mt-4">📋 Dados Manuais</h5>
+                                    <div id="container-manuais">
+                                        <!-- Campos gerados dinamicamente -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-calculate text-white">
+                                    <i class="fas fa-bolt me-2"></i>Calcular Planejamento
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Resultados -->
+                <div id="resultados" class="result-section">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h4 class="mb-0"><i class="fas fa-chart-line me-2"></i>Resultados do Planejamento</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Descrição</th>
+                                            <th>Mês 1</th>
+                                            <th>Mês 2</th>
+                                            <th>Mês 3</th>
+                                            <th>Mês 4</th>
+                                            <th>Mês 5</th>
+                                            <th>TOTAL</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabela-resultados">
+                                        <!-- Resultados serão inseridos aqui -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="chart-container">
+                                        <canvas id="grafico-caixa" height="250"></canvas>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="chart-container">
+                                        <canvas id="grafico-comparativo" height="250"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="chart-container">
+                                        <canvas id="grafico-receitas" height="250"></canvas>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="chart-container">
+                                        <canvas id="grafico-despesas" height="250"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-4 mt-5">
+        <div class="container">
+            <p>&copy; 2024 FinanceSAS - Sistema de Planejamento de Caixa. Todos os direitos reservados.</p>
+            <p class="text-muted">Plano Premium - 24 meses de projeção</p>
+        </div>
+    </footer>
+
+    <script>
+        // Funções JavaScript aqui (serão fornecidas no próximo arquivo)
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
