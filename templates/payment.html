@@ -36,6 +36,7 @@
         .payment-container {
             background: white;
             border-radius: 16px;
+            box-shadow: 0 20极速飞艇
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             width: 100%;
             max-width: 500px;
@@ -147,6 +148,7 @@
         .error {
             background: #fee;
             color: var(--danger);
+            border: 1px solid #极速飞艇
             border: 1px solid #fcc;
         }
     </style>
@@ -159,7 +161,9 @@
         </div>
         
         <div class="payment-content">
+            <div class极速飞艇
             <div class="plan-card">
+                <h3>Plano Mensal</极速飞艇
                 <h3>Plano Mensal</h3>
                 <div class="plan-price">R$ 97,00</div>
                 <p>Acesso completo à ferramenta de planejamento de caixa</p>
@@ -177,7 +181,8 @@
             </div>
             
             <div class="payment-footer">
-                <p><a href="{{ url_for('logout') }}">Sair</a></p>
+                <p><a href="{{ url_for('logout') }}">Sair</a> | 
+                <a href="{{ url_for('index') }}">Voltar</a></p>
             </div>
         </div>
     </div>
@@ -191,6 +196,8 @@
             button.textContent = 'Processando...';
             message.style.display = 'none';
             
+            console.log('🔄 Iniciando processamento de pagamento...');
+            
             fetch('/process_payment', {
                 method: 'POST',
                 headers: {
@@ -198,27 +205,31 @@
                 }
             })
             .then(response => {
+                console.log('📨 Resposta recebida:', response.status, response.statusText);
                 if (!response.ok) {
-                    throw new Error('Erro na resposta do servidor');
+                    throw new Error(`Erro HTTP: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
+                console.log('📊 Dados recebidos:', data);
+                
                 if (data.success) {
                     message.className = 'success';
                     message.textContent = data.message + ' Redirecionando...';
                     message.style.display = 'block';
                     
-                    // Redirecionar após 2 segundos
-                    setTimeout(() => {
-                        window.location.href = data.redirect_url || '/';
-                    }, 2000);
+                    console.log('➡️ Redirecionando para:', data.redirect_url);
+                    
+                    // Redirecionar imediatamente
+                    window.location.href = data.redirect_url || '/';
+                    
                 } else {
                     throw new Error(data.message || 'Erro ao processar pagamento');
                 }
             })
             .catch(error => {
-                console.error('Erro:', error);
+                console.error('❌ Erro completo:', error);
                 message.className = 'error';
                 message.textContent = error.message || 'Erro ao processar pagamento. Tente novamente.';
                 message.style.display = 'block';
