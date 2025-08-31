@@ -1,17 +1,127 @@
 {% extends "base.html" %}
 
+{% block title %}Calculadora - Planejamento de Caixa{% endblock %}
+
 {% block content %}
-<div class="container">
-    <h2>📊 Planejamento de Caixa</h2>
-    <p>Bem-vindo, {{ username }}!</p>
-
-    <!-- Aqui você implementará a interface completa de calculadora -->
-    <!-- Similar à do Streamlit, mas com HTML/JavaScript -->
-    
-    <div id="calculadora-app">
-        <p>Interface de calculadora em desenvolvimento...</p>
+<div class="row">
+    <div class="col-md-12">
+        <h2>Calculadora de Planejamento de Caixa</h2>
+        <p>Preencha os dados abaixo para simular seu fluxo de caixa</p>
+        
+        <div class="card">
+            <div class="card-body">
+                <form id="calculadora-form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>Previsão de Vendas (5 meses)</h4>
+                            {% for i in range(5) %}
+                            <div class="mb-3">
+                                <label for="vendas{{ i+1 }}" class="form-label">Mês {{ i+1 }}</label>
+                                <input type="number" class="form-control" id="vendas{{ i+1 }}" name="vendas{{ i+1 }}" value="1200">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h4>Configurações</h4>
+                            <div class="mb-3">
+                                <label for="vendas_vista" class="form-label">% Vendas à Vista (0-100)</label>
+                                <input type="number" class="form-control" id="vendas_vista" name="vendas_vista" value="30" min="0" max="100">
+                            </div>
+                            <div class="mb-3">
+                                <label for="vendas_parcelamento" class="form-label">Parcelamento (meses)</label>
+                                <input type="number" class="form-control" id="vendas_parcelamento" name="vendas_parcelamento" value="5" min="1" max="12">
+                            </div>
+                            <div class="mb-3">
+                                <label for="plus_vendas" class="form-label">Plus de Vendas (%)</label>
+                                <input type="number" class="form-control" id="plus_vendas" name="plus_vendas" value="0" min="0" max="100">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">Calcular</button>
+                </form>
+            </div>
+        </div>
+        
+        <div id="resultados" class="mt-4" style="display: none;">
+            <h3>Resultados</h3>
+            <div class="card">
+                <div class="card-body">
+                    <div id="tabela-resultados"></div>
+                    <div id="grafico-resultados" class="mt-4"></div>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <a href="/logout" class="btn btn-secondary">Sair</a>
 </div>
+
+<script>
+// JavaScript para calcular e mostrar resultados
+document.getElementById('calculadora-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const dados = {
+        previsao_vendas: [
+            formData.get('vendas1'),
+            formData.get('vendas2'),
+            formData.get('vendas3'),
+            formData.get('vendas4'),
+            formData.get('vendas5')
+        ],
+        vendas_vista: formData.get('vendas_vista') / 100,
+        vendas_parcelamento: formData.get('vendas_parcelamento'),
+        plus_vendas: formData.get('plus_vendas') / 100
+    };
+    
+    try {
+        const response = await fetch('/api/calcular', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dados)
+        });
+        
+        const resultado = await response.json();
+        
+        if (resultado.success) {
+            mostrarResultados(resultado.data);
+        } else {
+            alert('Erro: ' + resultado.error);
+        }
+    } catch (error) {
+        alert('Erro ao calcular: ' + error.message);
+    }
+});
+
+function mostrarResultados(dados) {
+    // Implementar lógica para mostrar resultados
+    document.getElementById('resultados').style.display = 'block';
+    document.getElementById('tabela-resultados').innerHTML = `
+        <h4>Resumo Financeiro</h4>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Mês</th>
+                    <th>Vendas</th>
+                    <th>Recebimentos</th>
+                    <th>Saldo</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${dados.vendas_escalonadas.map((venda, index) => `
+                    <tr>
+                        <td>Mês ${index + 1}</td>
+                        <td>R$ ${venda.toFixed(2)}</td>
+                        <td>R$ ${dados.total_recebimentos[index].toFixed(2)}</td>
+                        <td>R$ ${dados.saldo_final_caixa[index].toFixed(2)}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+</script>
 {% endblock %}
