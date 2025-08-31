@@ -1,8 +1,6 @@
 Flask==2.3.3
-pandas==2.0.3
-numpy==1.24.3
 Flask-SQLAlchemy==3.0.5
 Werkzeug==2.3.7
-psycopg2-binary==2.9.6
-SQLAlchemy==1.4.46
-gunicorn==21.2.0
+psycopg2-binary==2.9.7
+pandas==2.0.3
+numpy==1.24.3
