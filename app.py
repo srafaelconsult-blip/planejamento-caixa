@@ -1,28 +1,16 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify
 import pandas as pd
 import numpy as np
 import json
 from datetime import datetime
 import os
-from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-123')
-app.config['STATIC_FOLDER'] = 'static'
-
-# Simulação de banco de dados de usuários (em produção use um banco real)
-users = {}
-
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
 
 class PlanejamentoCaixa:
     def __init__(self):
+        # Valores iniciais dos SETUPS (células em vermelho)
         self.setup = {
             'vendas_vista': 0.3,
             'vendas_parcelamento': 5,
@@ -35,7 +23,10 @@ class PlanejamentoCaixa:
             'desp_variaveis_impostos': 0.085
         }
         
+        # Previsão de vendas inicial (células em verde)
         self.previsao_vendas = [1200, 1100, 1200, 1100, 700]
+        
+        # Valores manuais para os campos adicionais
         self.contas_receber_anteriores = [0, 0, 0, 0, 0]
         self.comissoes_anteriores = [0, 0, 0, 0, 0]
         self.contas_pagar_anteriores = [0, 0, 0, 0, 0]
@@ -77,6 +68,45 @@ class PlanejamentoCaixa:
                 total += self.contas_receber_anteriores[mes]
                 self.total_recebimentos.append(total)
             
+            self.comissoes_mes = [venda * self.setup['comissoes'] for venda in self.vendas_escalonadas]
+            self.total_comissoes = [self.comissoes_mes[i] + self.comissoes_anteriores[i] for i in range(5)]
+            
+            self.compras_planejadas = [venda * self.setup['cmv'] * self.setup['percent_compras'] for venda in self.vendas_escalonadas]
+            self.compras_vista = [compra * self.setup['compras_vista'] for compra in self.compras_planejadas]
+            
+            n_parcelas_compras = int(self.setup['compras_parcelamento'])
+            self.duplicatas_pagar = [[0] * 5 for _ in range(n_parcelas_compras)]
+            for mes in range(5):
+                valor_parcelado = (self.compras_planejadas[mes] - self.compras_vista[mes]) / n_parcelas_compras
+                for parcela_idx in range(n_parcelas_compras):
+                    mes_pagamento = mes + parcela_idx
+                    if mes_pagamento < 5:
+                        self.duplicatas_pagar[parcela_idx][mes_pagamento] += valor_parcelado
+            
+            self.total_pagamento_compras = []
+            for mes in range(5):
+                total = self.compras_vista[mes]
+                for p in range(n_parcelas_compras):
+                    total += self.duplicatas_pagar[p][mes]
+                total += self.contas_pagar_anteriores[mes]
+                self.total_pagamento_compras.append(total)
+            
+            self.desp_variaveis = [venda * self.setup['desp_variaveis_impostos'] for venda in self.vendas_escalonadas]
+            self.desp_fixas = self.desp_fixas_manuais
+            
+            self.saldo_operacional = []
+            for mes in range(5):
+                saldo = (self.total_recebimentos[mes] - 
+                        self.total_comissoes[mes] - 
+                        self.total_pagamento_compras[mes] - 
+                        self.desp_variaveis[mes] - 
+                        self.desp_fixas[mes])
+                self.saldo_operacional.append(saldo)
+            
+            self.saldo_final_caixa = [self.saldo_operacional[0]]
+            for mes in range(1, 5):
+                self.saldo_final_caixa.append(self.saldo_final_caixa[-1] + self.saldo_operacional[mes])
+            
             return self.gerar_resultados()
             
         except Exception as e:
@@ -87,63 +117,25 @@ class PlanejamentoCaixa:
             'vendas_escalonadas': self.vendas_escalonadas,
             'vendas_vista': self.vendas_vista,
             'total_recebimentos': self.total_recebimentos,
-            'saldo_final_caixa': [sum(self.total_recebimentos[:i+1]) for i in range(5)],
-            'parcelas_receber': self.duplicatas_receber
+            'comissoes_mes': self.comissoes_mes,
+            'total_comissoes': self.total_comissoes,
+            'compras_planejadas': self.compras_planejadas,
+            'compras_vista': self.compras_vista,
+            'total_pagamento_compras': self.total_pagamento_compras,
+            'desp_variaveis': self.desp_variaveis,
+            'desp_fixas': self.desp_fixas,
+            'saldo_operacional': self.saldo_operacional,
+            'saldo_final_caixa': self.saldo_final_caixa,
+            'duplicatas_receber': self.duplicatas_receber,
+            'duplicatas_pagar': self.duplicatas_pagar
         }
 
 # Rotas Flask
 @app.route('/')
 def index():
-    return render_template('index.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        
-        # Verificação simples (em produção use bcrypt)
-        if email in users and users[email]['password'] == password:
-            session['user_id'] = email
-            return redirect(url_for('calculadora'))
-        else:
-            return render_template('login.html', error="Credenciais inválidas")
-    
-    return render_template('login.html')
-
-@app.route('/cadastro', methods=['GET', 'POST'])
-def cadastro():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        name = request.form.get('name')
-        
-        if email in users:
-            return render_template('cadastro.html', error="Email já cadastrado")
-        
-        users[email] = {
-            'password': password,  # Em produção, usar hash!
-            'name': name,
-            'plano': 'free'
-        }
-        
-        session['user_id'] = email
-        return redirect(url_for('calculadora'))
-    
-    return render_template('cadastro.html')
-
-@app.route('/calculadora')
-@login_required
-def calculadora():
     return render_template('calculadora.html')
 
-@app.route('/assinatura')
-@login_required
-def assinatura():
-    return render_template('assinatura.html')
-
 @app.route('/api/calcular', methods=['POST'])
-@login_required
 def calcular():
     try:
         dados = request.get_json()
@@ -153,27 +145,13 @@ def calcular():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('index'))
-
 @app.route('/health')
 def health():
     return jsonify({
         'status': 'healthy', 
         'timestamp': datetime.now().isoformat(),
-        'python_version': os.environ.get('PYTHON_VERSION', '3.11.9')
+        'python_version': '3.11.x'
     })
-
-# Error handlers
-@app.errorhandler(404)
-def not_found(error):
-    return render_template('404.html'), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    return render_template('500.html'), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
