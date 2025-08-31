@@ -11,4 +11,5 @@ RUN mkdir -p templates
 
 EXPOSE 5000
 
-CMD ["sh", "-c", "python -c 'from app import db, app; with app.app_context(): db.create_all()' && gunicorn --bind 0.0.0.0:5000 app:app"]
+# Comando corrigido - separar a criação do banco e a execução do app
+CMD ["sh", "-c", "python -c 'from app import db, app; db.create_all()' && exec gunicorn --bind 0.0.0.0:5000 app:app"]
