@@ -289,11 +289,17 @@
             }
             
             .setup-grid, .vendas-grid, .manual-grid {
+                grid-template
+                 .setup-grid, .vendas-grid, .manual-grid {
                 grid-template-columns: 1fr;
             }
             
             .tabs {
                 flex-direction: column;
+            }
+            
+            .tab {
+                text-align: center;
             }
         }
     </style>
@@ -354,7 +360,8 @@
                     <input type="number" id="compras_vista" value="20" min="0" max="100" step="1">
                 </div>
                 
-                <div class="form-group">
+                <div
+                                    <div class="form-group">
                     <label for="compras_parcelamento">Parcelamento Compras (meses)</label>
                     <input type="number" id="compras_parcelamento" value="6" min="1" max="12" step="1">
                 </div>
@@ -636,29 +643,6 @@
                         fill: true,
                         tension: 0.3
                     }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Evolução do Saldo de Caixa',
-                            font: {
-                                size: 16,
-                                weight: 'bold'
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'R$ ' + value.toLocaleString('pt-BR');
-                                }
-                            }
-                        }
-                    }
                 }
             });
             
@@ -684,29 +668,6 @@
                             borderWidth: 1
                         }
                     ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Receitas vs Despesas (Primeiros 12 Meses)',
-                            font: {
-                                size: 16,
-                                weight: 'bold'
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'R$ ' + value.toLocaleString('pt-BR');
-                                }
-                            }
-                        }
-                    }
                 }
             });
         }
@@ -738,7 +699,7 @@
                     rowClass = categoria.includes('SALDO') ? 'total' : 'subtotal';
                     row = `<tr class="${rowClass}"><td>${categoria}</td>`;
                     for (let i = 0; i < valores.length; i++) {
-                        const valueClass = valores[i].startsWith('R$ -') ? 'negative' : 'positive';
+                        const valueClass = valores[i].toString().startsWith('R$ -') ? 'negative' : 'positive';
                         row += `<td class="numeric ${valueClass}">${valores[i]}</td>`;
                     }
                     row += '</tr>';
@@ -794,10 +755,25 @@
                 });
         }
         
+        // Verificar assinatura ao carregar a página
+        function checkSubscription() {
+            fetch('/check_subscription')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.active) {
+                        window.location.href = '/payment';
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao verificar assinatura:', error);
+                });
+        }
+        
         // Inicializar a página
         window.onload = function() {
             gerarCampos();
             loadSubscriptionInfo();
+            checkSubscription();
         };
     </script>
 </body>
