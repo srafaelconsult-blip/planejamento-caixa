@@ -4,359 +4,174 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Planejamento de Caixa</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --success: #06d6a0;
+            --danger: #ef476f;
+            --dark: #1e1e2c;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
+            font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
+        
         .auth-container {
-            max-width: 500px;
-            margin: 50px auto;
-            padding: 20px;
-        }
-        .planos-container {
-            max-width: 1200px;
-            margin: 50px auto;
-            padding: 20px;
-        }
-        .plano-card {
-            border: 1px solid #ddd;
-            border-radius: 15px;
-            padding: 25px;
-            text-align: center;
-            height: 100%;
-            transition: all 0.3s ease;
             background: white;
-        }
-        .plano-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-        }
-        .plano-destaque {
-            border: 3px solid #007bff;
-            background: linear-gradient(135deg, #f8f9ff 0%, #e3f2fd 100%);
-            position: relative;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
             overflow: hidden;
         }
-        .plano-destaque::before {
-            content: 'MAIS POPULAR';
-            position: absolute;
-            top: 15px;
-            right: -35px;
-            background: #007bff;
+        
+        .auth-header {
+            background: var(--primary);
             color: white;
-            padding: 5px 40px;
-            font-size: 12px;
-            font-weight: bold;
-            transform: rotate(45deg);
+            padding: 30px 20px;
+            text-align: center;
         }
-        .plano-header {
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 20px;
-            margin-bottom: 25px;
-        }
-        .plano-preco {
-            font-size: 2.8rem;
-            font-weight: bold;
-            color: #007bff;
-            margin: 15px 0;
-        }
-        .plano-periodo {
-            color: #666;
-            font-size: 0.9rem;
-        }
-        .plano-lista {
-            list-style: none;
-            padding: 0;
-            text-align: left;
-            margin: 25px 0;
-        }
-        .plano-lista li {
-            padding: 12px 0;
-            border-bottom: 1px solid #f5f5f5;
-            display: flex;
-            align-items: center;
-        }
-        .plano-lista li:last-child {
-            border-bottom: none;
-        }
-        .plano-lista li i {
-            color: #28a745;
-            margin-right: 12px;
-            font-size: 1.1rem;
-        }
-        .btn-plano {
-            margin-top: 25px;
-            padding: 15px 35px;
+        
+        .auth-header h1 {
             font-weight: 600;
-            border-radius: 50px;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
+            font-size: 24px;
+            margin-bottom: 10px;
         }
-        .btn-plano:hover {
-            transform: scale(1.05);
+        
+        .auth-header p {
+            opacity: 0.9;
+            font-size: 14px;
         }
-        .card {
+        
+        .auth-form {
+            padding: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
             border: none;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
         }
-        .form-control {
-            border-radius: 10px;
-            padding: 15px 20px;
-            border: 2px solid #e9ecef;
-            transition: all 0.3s ease;
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
         }
-        .form-control:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
         }
-        .nav-brand {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: white !important;
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .auth-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .alert-danger {
+            background: #fee;
+            color: var(--danger);
+            border: 1px solid #fcc;
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand nav-brand" href="/">
-                <i class="fas fa-calculator me-2"></i>FinanceSAS
-            </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="#" onclick="mostrarLogin()">Login</a>
-                <a class="nav-link" href="#" onclick="mostrarCadastro()">Cadastro</a>
-                <a class="nav-link" href="#" onclick="mostrarPlanos()">Planos</a>
-            </div>
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1>Planejamento de Caixa</h1>
+            <p>Faça login para acessar sua conta</p>
         </div>
-    </nav>
-
-    <div class="container flex-grow-1">
-        <!-- Formulário de Login -->
-        <div id="login-form" class="auth-container">
-            <div class="text-center mb-4">
-                <h2 class="text-white mb-3">🔐 Acesso ao Sistema</h2>
-                <p class="text-light">Faça login para acessar o planejamento de caixa</p>
+        
+        <div class="auth-form">
+            {% if error %}
+            <div class="alert alert-danger">
+                {{ error }}
             </div>
-
-            <div class="card shadow-lg">
-                <div class="card-body p-5">
-                    <h4 class="card-title text-center mb-4 text-primary">Login</h4>
-                    <form id="form-login">
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Email</label>
-                            <input type="email" class="form-control form-control-lg" placeholder="seu@email.com" required>
-                        </div>
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Senha</label>
-                            <input type="password" class="form-control form-control-lg" placeholder="Sua senha" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-lg w-100 py-3">
-                            <i class="fas fa-sign-in-alt me-2"></i>Entrar
-                        </button>
-                    </form>
-                    
-                    <div class="text-center mt-4">
-                        <p class="mb-3">Não tem uma conta?</p>
-                        <div class="d-flex gap-2 justify-content-center">
-                            <a href="#" class="btn btn-outline-primary" onclick="mostrarCadastro()">
-                                Criar conta
-                            </a>
-                            <a href="#" class="btn btn-outline-success" onclick="mostrarPlanos()">
-                                Ver planos
-                            </a>
-                        </div>
-                    </div>
+            {% endif %}
+            
+            <form method="POST">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
                 </div>
-            </div>
-        </div>
-
-        <!-- Formulário de Cadastro -->
-        <div id="cadastro-form" class="auth-container" style="display: none;">
-            <div class="text-center mb-4">
-                <h2 class="text-white mb-3">🎉 Criar Conta</h2>
-                <p class="text-light">Comece agora seu planejamento financeiro</p>
-            </div>
-
-            <div class="card shadow-lg">
-                <div class="card-body p-5">
-                    <h4 class="card-title text-center mb-4 text-success">Nova Conta</h4>
-                    <form id="form-cadastro">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Nome completo</label>
-                                <input type="text" class="form-control" placeholder="Seu nome completo" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Empresa</label>
-                                <input type="text" class="form-control" placeholder="Nome da empresa">
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Email</label>
-                            <input type="email" class="form-control" placeholder="seu@email.com" required>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Senha</label>
-                                <input type="password" class="form-control" placeholder="Mínimo 6 caracteres" required minlength="6">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Confirmar senha</label>
-                                <input type="password" class="form-control" placeholder="Digite novamente" required>
-                            </div>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-success btn-lg w-100 py-3">
-                            <i class="fas fa-user-plus me-2"></i>Criar Conta
-                        </button>
-                    </form>
-                    
-                    <div class="text-center mt-4">
-                        <a href="#" class="text-decoration-none text-primary" onclick="mostrarLogin()">
-                            ← Voltar para login
-                        </a>
-                    </div>
+                
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" name="password" required>
                 </div>
-            </div>
-        </div>
-
-        <!-- Planos de Assinatura -->
-        <div id="planos-form" class="planos-container" style="display: none;">
-            <div class="text-center mb-5">
-                <h2 class="text-white mb-3">💎 Escolha seu Plano</h2>
-                <p class="text-light">Selecione o plano ideal para seu negócio</p>
-            </div>
-
-            <div class="row">
-                <!-- Plano Básico -->
-                <div class="col-md-4 mb-4">
-                    <div class="plano-card h-100">
-                        <div class="plano-header">
-                            <h4 class="text-primary">Básico</h4>
-                            <div class="plano-preco">R$ 97</div>
-                            <div class="plano-periodo">por mês</div>
-                        </div>
-                        <ul class="plano-lista">
-                            <li><i class="fas fa-check-circle"></i>5 meses de projeção</li>
-                            <li><i class="fas fa-check-circle"></i>Relatórios básicos</li>
-                            <li><i class="fas fa-check-circle"></i>Suporte por email</li>
-                            <li><i class="fas fa-check-circle"></i>1 usuário</li>
-                            <li><i class="fas fa-check-circle"></i>Exportação simples</li>
-                        </ul>
-                        <button class="btn btn-outline-primary btn-plano" onclick="selecionarPlano('basico')">
-                            Começar Agora
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Plano Profissional -->
-                <div class="col-md-4 mb-4">
-                    <div class="plano-card plano-destaque h-100">
-                        <div class="plano-header">
-                            <h4 class="text-primary">Profissional</h4>
-                            <div class="plano-preco">R$ 197</div>
-                            <div class="plano-periodo">por mês</div>
-                        </div>
-                        <ul class="plano-lista">
-                            <li><i class="fas fa-check-circle"></i>12 meses de projeção</li>
-                            <li><i class="fas fa-check-circle"></i>Relatórios completos</li>
-                            <li><i class="fas fa-check-circle"></i>Suporte prioritário</li>
-                            <li><i class="fas fa-check-circle"></i>3 usuários</li>
-                            <li><i class="fas fa-check-circle"></i>Exportação PDF/Excel</li>
-                            <li><i class="fas fa-check-circle"></i>Análises avançadas</li>
-                            <li><i class="fas fa-check-circle"></i>Backup automático</li>
-                        </ul>
-                        <button class="btn btn-primary btn-plano" onclick="selecionarPlano('profissional')">
-                            Plano Ideal
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Plano Enterprise -->
-                <div class="col-md-4 mb-4">
-                    <div class="plano-card h-100">
-                        <div class="plano-header">
-                            <h4 class="text-primary">Enterprise</h4>
-                            <div class="plano-preco">R$ 497</div>
-                            <div class="plano-periodo">por mês</div>
-                        </div>
-                        <ul class="plano-lista">
-                            <li><i class="fas fa-check-circle"></i>24 meses de projeção</li>
-                            <li><i class="fas fa-check-circle"></i>Relatórios personalizados</li>
-                            <li><i class="fas fa-check-circle"></i>Suporte 24/7</li>
-                            <li><i class="fas fa-check-circle"></i>Usuários ilimitados</li>
-                            <li><i class="fas fa-check-circle"></i>API acesso</li>
-                            <li><i class="fas fa-check-circle"></i>Consultoria especializada</li>
-                            <li><i class="fas fa-check-circle"></i>White label</li>
-                            <li><i class="fas fa-check-circle"></i>Treinamento incluso</li>
-                        </ul>
-                        <button class="btn btn-outline-primary btn-plano" onclick="selecionarPlano('enterprise')">
-                            Solução Completa
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="text-center mt-5">
-                <a href="#" class="btn btn-outline-light" onclick="mostrarLogin()">
-                    ← Voltar para login
-                </a>
+                
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </form>
+            
+            <div class="auth-footer">
+                <p>Não tem uma conta? <a href="{{ url_for('register') }}">Cadastre-se</a></p>
             </div>
         </div>
     </div>
-
-    <footer class="text-center text-white py-4 mt-auto">
-        <p>&copy; 2024 FinanceSAS. Todos os direitos reservados.</p>
-    </footer>
-
-    <script>
-        function mostrarLogin() {
-            document.getElementById('login-form').style.display = 'block';
-            document.getElementById('cadastro-form').style.display = 'none';
-            document.getElementById('planos-form').style.display = 'none';
-        }
-
-        function mostrarCadastro() {
-            document.getElementById('login-form').style.display = 'none';
-            document.getElementById('cadastro-form').style.display = 'block';
-            document.getElementById('planos-form').style.display = 'none';
-        }
-
-        function mostrarPlanos() {
-            document.getElementById('login-form').style.display = 'none';
-            document.getElementById('cadastro-form').style.display = 'none';
-            document.getElementById('planos-form').style.display = 'block';
-        }
-
-        function selecionarPlano(plano) {
-            alert(`Plano ${plano.toUpperCase()} selecionado! Redirecionando para pagamento...`);
-            // Aqui você integraria com o gateway de pagamento
-            window.location.href = '/calculadora'; // Simulação
-        }
-
-        // Simulação de login
-        document.getElementById('form-login').addEventListener('submit', function(e) {
-            e.preventDefault();
-            window.location.href = '/calculadora';
-        });
-
-        document.getElementById('form-cadastro').addEventListener('submit', function(e) {
-            e.preventDefault();
-            mostrarPlanos();
-        });
-
-        // Mostrar login por padrão
-        document.addEventListener('DOMContentLoaded', function() {
-            mostrarLogin();
-        });
-    </script>
 </body>
 </html>
