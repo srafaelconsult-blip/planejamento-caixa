@@ -6,52 +6,42 @@
     <title>Calculadora Financeira - Planejamento de Caixa</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --primary: #007bff; --secondary: #6c757d; --success: #28a745;
-            --danger: #dc3545; --warning: #ffc107; --info: #17a2b8;
-            --light: #f8f9fa; --dark: #343a40;
-        }
+        :root { --primary: #007bff; --secondary: #6c757d; --success: #28a745; --danger: #dc3545; --light: #f8f9fa; --dark: #343a40; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100% ); min-height: 100vh; padding: 20px; }
-        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
+        .container { max-width: 1600px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
         header { background: var(--primary); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
         .user-info { display: flex; align-items: center; gap: 15px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; transition: all 0.3s ease; }
-        .btn-danger { background: var(--danger); color: white; text-decoration: none; }
-        .btn-danger:hover { background: #c82333; }
+        .btn-danger { background: var(--danger); color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; }
         .main-content { display: grid; grid-template-columns: 450px 1fr; min-height: 800px; }
         .sidebar { background: var(--light); padding: 20px; border-right: 1px solid #dee2e6; overflow-y: auto; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: var(--dark); }
-        .form-group input { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 14px; }
-        .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,123,255,0.25); }
-        .vendas-mes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .vendas-mes input { text-align: right; }
-        .section-title { background: var(--primary); color: white; padding: 10px; border-radius: 5px; margin: 20px 0 15px 0; font-weight: 600; font-size: 16px; }
-        .calculate-btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 20px; transition: background 0.3s ease; }
-        .calculate-btn:hover { background: #0056b3; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 14px; text-align: right; }
+        .input-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+        .section-title { background: var(--primary); color: white; padding: 10px; border-radius: 5px; margin: 20px 0 15px 0; font-weight: 600; }
+        .calculate-btn { width: 100%; padding: 15px; background: var(--success); color: white; border: none; border-radius: 5px; font-size: 18px; font-weight: 600; cursor: pointer; margin-top: 20px; }
         .calculate-btn:disabled { background: var(--secondary); cursor: not-allowed; }
         .content { padding: 20px; overflow-y: auto; }
-        .loading { text-align: center; padding: 50px; color: var(--secondary); }
         .results-section { display: none; }
-        .indicadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .indicadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 30px; }
         .indicador { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; border-left: 4px solid var(--primary); }
         .indicador h3 { font-size: 14px; color: var(--secondary); margin-bottom: 10px; }
         .indicador .valor { font-size: 24px; font-weight: bold; color: var(--dark); }
         .graficos { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-        .grafico-container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .tabela-container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow-x: auto; }
+        .tabela-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th, td { padding: 8px 12px; text-align: right; border-bottom: 1px solid #dee2e6; white-space: nowrap; }
         th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: white; z-index: 1; }
         th { background: var(--light); font-weight: 600; }
-        tr:hover td:not(.empty-cell) { background: #f8f9fa; }
-        .result-section-title { background: var(--primary); color: white; padding: 10px 15px; margin: 0 -20px 20px -20px; font-weight: 600; }
-        .alert { padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .alert-danger { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
         .subscription-info { background: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin-bottom: 15px; text-align: center; display: none; }
         .empty-row td { border: none; height: 10px; background: transparent !important; }
-        .total-row { font-weight: bold; background: #e9ecef; }
+        .sidebar-tabs { display: flex; border-bottom: 1px solid #ccc; margin-bottom: 15px; }
+        .tab-button { flex: 1; padding: 10px; background: #e9ecef; border: none; cursor: pointer; font-weight: bold; }
+        .tab-button.active { background: var(--primary); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
     </style>
 </head>
 <body>
@@ -60,258 +50,41 @@
             <h1>📊 Calculadora de Planejamento de Caixa</h1>
             <div class="user-info">
                 <span id="user-email"></span>
-                <a href="/logout" class="btn btn-danger">Sair</a>
+                <a href="/logout" class="btn-danger">Sair</a>
             </div>
         </header>
         
         <div class="main-content">
             <div class="sidebar">
-                <h2>⚙️ Configurações</h2>
-                
-                <div class="section-title">Previsão de Vendas por Mês</div>
-                <div class="vendas-mes">
-                    <div class="form-group"><label for="venda_mes1">Mês 1 (R$):</label><input type="number" id="venda_mes1" step="100" min="0" value="10000"></div>
-                    <div class="form-group"><label for="venda_mes2">Mês 2 (R$):</label><input type="number" id="venda_mes2" step="100" min="0" value="12000"></div>
-                    <div class="form-group"><label for="venda_mes3">Mês 3 (R$):</label><input type="number" id="venda_mes3" step="100" min="0" value="15000"></div>
-                    <div class="form-group"><label for="venda_mes4">Mês 4 (R$):</label><input type="number" id="venda_mes4" step="100" min="0" value="18000"></div>
-                    <div class="form-group"><label for="venda_mes5">Mês 5 (R$):</label><input type="number" id="venda_mes5" step="100" min="0" value="20000"></div>
+                <div class="sidebar-tabs">
+                    <button class="tab-button active" onclick="showTab('parametros')">Parâmetros</button>
+                    <button class="tab-button" onclick="showTab('anteriores')">Dados Anteriores</button>
                 </div>
-                
-                <div class="section-title">Parâmetros do Negócio</div>
-                <div class="form-group"><label for="vendas_vista">% Vendas à Vista:</label><input type="number" id="vendas_vista" step="0.01" min="0" max="1" value="0.3"></div>
-                <div class="form-group"><label for="vendas_parcelamento">Parcelamento Vendas (meses):</label><input type="number" id="vendas_parcelamento" min="1" value="5"></div>
-                <div class="form-group"><label for="plus_vendas">Plus de Vendas (%):</label><input type="number" id="plus_vendas" step="0.01" value="0"></div>
-                <div class="form-group"><label for="cmv">CMV (%):</label><input type="number" id="cmv" step="0.01" min="0" max="1" value="0.425"></div>
-                <div class="form-group"><label for="percent_compras">% Compras sobre CMV:</label><input type="number" id="percent_compras" step="0.01" min="0" max="1" value="0.2"></div>
-                <div class="form-group"><label for="compras_vista">% Compras à Vista:</label><input type="number" id="compras_vista" step="0.01" min="0" max="1" value="0.2"></div>
-                <div class="form-group"><label for="compras_parcelamento">Parcelamento Compras (meses):</label><input type="number" id="compras_parcelamento" min="1" value="6"></div>
-                <div class="form-group"><label for="comissoes">Comissões (%):</label><input type="number" id="comissoes" step="0.01" value="0.0761"></div>
-                <div class="form-group"><label for="desp_variaveis_impostos">Desp. Variáveis e Impostos (%):</label><input type="number" id="desp_variaveis_impostos" step="0.01" value="0.085"></div>
-                <div class="form-group"><label for="desp_fixas">Despesas Fixas Mensais (R$):</label><input type="number" id="desp_fixas" value="438"></div>
-                
-                <button class="calculate-btn" onclick="calcular()">
-                    🚀 Calcular Projeção
-                </button>
-            </div>
-            
-            <div class="content">
-                <div id="loading" class="loading">
-                    <h2>📈 Calculadora de Planejamento de Caixa</h2>
-                    <p>Preencha as vendas e configurações ao lado e clique em "Calcular Projeção" para gerar sua análise financeira.</p>
-                </div>
-                
-                <div id="results" class="results-section">
-                    <div class="subscription-info" id="subscription-info">
-                        Assinatura ativa até: <span id="subscription-end"></span>
+
+                <div id="tab-parametros" class="tab-content active">
+                    <div class="section-title">Previsão de Vendas</div>
+                    <div class="input-grid">
+                        <div class="form-group"><label>Mês 1 (R$):</label><input type="number" id="venda_mes1" value="10000"></div>
+                        <div class="form-group"><label>Mês 2 (R$):</label><input type="number" id="venda_mes2" value="12000"></div>
+                        <div class="form-group"><label>Mês 3 (R$):</label><input type="number" id="venda_mes3" value="15000"></div>
+                        <div class="form-group"><label>Mês 4 (R$):</label><input type="number" id="venda_mes4" value="18000"></div>
+                        <div class="form-group"><label>Mês 5 (R$):</label><input type="number" id="venda_mes5" value="20000"></div>
                     </div>
-                    <div class="indicadores" id="indicadores"></div>
-                    <div class="graficos">
-                        <div class="grafico-container">
-                            <div class="result-section-title">📊 Saldo de Caixa</div>
-                            <canvas id="graficoSaldo"></canvas>
-                        </div>
-                        <div class="grafico-container">
-                            <div class="result-section-title">📈 Receitas vs Despesas</div>
-                            <canvas id="graficoReceitasDespesas"></canvas>
-                        </div>
+                    
+                    <div class="section-title">Parâmetros do Negócio</div>
+                    <div class="input-grid">
+                        <div class="form-group"><label>% Vendas à Vista:</label><input type="number" id="vendas_vista" step="0.01" value="0.3"></div>
+                        <div class="form-group"><label>Parc. Vendas (meses):</label><input type="number" id="vendas_parcelamento" value="5"></div>
+                        <div class="form-group"><label>Plus Vendas (%):</label><input type="number" id="plus_vendas" step="0.01" value="0"></div>
+                        <div class="form-group"><label>CMV (%):</label><input type="number" id="cmv" step="0.01" value="0.425"></div>
+                        <div class="form-group"><label>% Compras s/ CMV:</label><input type="number" id="percent_compras" step="0.01" value="0.2"></div>
+                        <div class="form-group"><label>% Compras à Vista:</label><input type="number" id="compras_vista" step="0.01" value="0.2"></div>
+                        <div class="form-group"><label>Parc. Compras (meses):</label><input type="number" id="compras_parcelamento" value="6"></div>
+                        <div class="form-group"><label>Comissões (%):</label><input type="number" id="comissoes" step="0.01" value="0.0761"></div>
+                        <div class="form-group"><label>Desp. Var. & Impostos (%):</label><input type="number" id="desp_variaveis_impostos" step="0.01" value="0.085"></div>
                     </div>
-                    <div class="tabela-container">
-                        <div class="result-section-title">📋 Resultados Detalhados</div>
-                        <div id="tabela-resultados"></div>
-                    </div>
-                </div>
-                
-                <div id="error-message" class="alert alert-danger" style="display: none;"></div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let graficoSaldo = null;
-        let graficoReceitasDespesas = null;
-
-        async function checkSubscription() {
-            try {
-                const response = await fetch('/subscription_info');
-                if (!response.ok) throw new Error('Falha ao buscar dados da assinatura.');
-                
-                const data = await response.json();
-                
-                document.getElementById('user-email').textContent = data.email || 'Usuário';
-
-                if (data.active && data.end_date) {
-                    const endDate = new Date(data.end_date);
-                    document.getElementById('subscription-end').textContent = endDate.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-                    document.getElementById('subscription-info').style.display = 'block';
-                }
-            } catch (error) {
-                console.error('Erro ao verificar assinatura:', error);
-                document.getElementById('user-email').textContent = 'Visitante';
-            }
-        }
-
-        async function calcular() {
-            const loading = document.getElementById('loading');
-            const results = document.getElementById('results');
-            const errorMessage = document.getElementById('error-message');
-            const calculateBtn = document.querySelector('.calculate-btn');
-
-            loading.innerHTML = '<h2>⏳ Calculando... Aguarde.</h2>';
-            loading.style.display = 'block';
-            results.style.display = 'none';
-            errorMessage.style.display = 'none';
-            calculateBtn.disabled = true;
-            calculateBtn.textContent = 'Calculando...';
-
-            try {
-                const dados = {
-                    setup: {
-                        vendas_vista: parseFloat(document.getElementById('vendas_vista').value),
-                        vendas_parcelamento: parseInt(document.getElementById('vendas_parcelamento').value),
-                        plus_vendas: parseFloat(document.getElementById('plus_vendas').value),
-                        cmv: parseFloat(document.getElementById('cmv').value),
-                        percent_compras: parseFloat(document.getElementById('percent_compras').value),
-                        compras_vista: parseFloat(document.getElementById('compras_vista').value),
-                        compras_parcelamento: parseInt(document.getElementById('compras_parcelamento').value),
-                        comissoes: parseFloat(document.getElementById('comissoes').value),
-                        desp_variaveis_impostos: parseFloat(document.getElementById('desp_variaveis_impostos').value)
-                    },
-                    previsao_vendas: [
-                        parseFloat(document.getElementById('venda_mes1').value) || 0,
-                        parseFloat(document.getElementById('venda_mes2').value) || 0,
-                        parseFloat(document.getElementById('venda_mes3').value) || 0,
-                        parseFloat(document.getElementById('venda_mes4').value) || 0,
-                        parseFloat(document.getElementById('venda_mes5').value) || 0
-                    ],
-                    contas_receber_anteriores: [0, 0, 0, 0, 0],
-                    comissoes_anteriores: [0, 0, 0, 0, 0],
-                    contas_pagar_anteriores: [0, 0, 0, 0, 0],
-                    desp_fixas_manuais: Array(5).fill(parseFloat(document.getElementById('desp_fixas').value) || 0)
-                };
-
-                const response = await fetch('/calcular', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dados)
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    if (data.redirect_url) {
-                        window.location.href = data.redirect_url;
-                    }
-                    throw new Error(data.error || `Erro ${response.status}`);
-                }
-                
-                loading.style.display = 'none';
-                results.style.display = 'block';
-                
-                atualizarIndicadores(data.indicadores);
-                atualizarGraficos(data.graficos);
-                atualizarTabela(data.resultados, data.meses);
-
-            } catch (error) {
-                console.error('Erro no cálculo:', error);
-                errorMessage.textContent = `Erro: ${error.message}. Verifique os valores e tente novamente.`;
-                errorMessage.style.display = 'block';
-                loading.style.display = 'none';
-            } finally {
-                calculateBtn.disabled = false;
-                calculateBtn.textContent = '🚀 Calcular Projeção';
-            }
-        }
-
-        function atualizarIndicadores(indicadores) {
-            const container = document.getElementById('indicadores');
-            container.innerHTML = Object.entries(indicadores).map(([key, value]) => `
-                <div class="indicador">
-                    <h3>${key}</h3>
-                    <div class="valor">${value}</div>
-                </div>
-            `).join('');
-        }
-
-        function atualizarGraficos(graficos) {
-            if (graficoSaldo) graficoSaldo.destroy();
-            if (graficoReceitasDespesas) graficoReceitasDespesas.destroy();
-
-            graficoSaldo = new Chart(document.getElementById('graficoSaldo').getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: graficos.meses,
-                    datasets: [{
-                        label: 'Saldo de Caixa', data: graficos.saldo_final_caixa,
-                        borderColor: '#007bff', backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                        borderWidth: 2, fill: true, tension: 0.4
-                    }]
-                },
-                options: { responsive: true, scales: { y: { beginAtZero: false } } }
-            });
-
-            graficoReceitasDespesas = new Chart(document.getElementById('graficoReceitasDespesas').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: graficos.meses,
-                    datasets: [
-                        { label: 'Receitas', data: graficos.receitas, backgroundColor: 'rgba(40, 167, 69, 0.8)' },
-                        { label: 'Despesas', data: graficos.despesas, backgroundColor: 'rgba(220, 53, 69, 0.8)' }
-                    ]
-                },
-                options: { responsive: true, scales: { y: { beginAtZero: true } } }
-            });
-        }
-
-        function atualizarTabela(resultados, meses) {
-            const container = document.getElementById('tabela-resultados');
-            let html = '<table><thead><tr><th>Descrição</th>';
-            meses.forEach(mes => { html += `<th>${mes}</th>`; });
-            html += '</tr></thead><tbody>';
-
-            resultados.forEach(linha => {
-                const key = linha[0] || '';
-                if (key.trim() === '') {
-                    html += `<tr class="empty-row"><td class="empty-cell" colspan="${meses.length + 1}"></td></tr>`;
-                } else {
-                    html += `<tr>`;
-                    linha.forEach((celula, index) => {
-                        const isHeader = index === 0;
-                        const isTotal = index === linha.length - 1;
-                        const tag = isHeader ? 'td' : 'td';
-                        const style = (key.startsWith('SALDO') || key.startsWith('Total')) ? 'font-weight: bold;' : '';
-                        html += `<${tag} style="${style}">${celula || ''}</${tag}>`;
-                    });
-                    html += '</tr>';
-                }
-            });
-
-            html += '</tbody></table>';
-            container.innerHTML = html;
-        }
-
-        // --- INÍCIO DA CORREÇÃO ---
-        document.addEventListener('DOMContentLoaded', function() {
-            checkSubscription();
-
-            const calculateBtn = document.querySelector('.calculate-btn');
-            const allInputs = document.querySelectorAll('.sidebar input[type="number"]');
-
-            function validateForm() {
-                // Verifica se todos os inputs têm um valor
-                const allFilled = Array.from(allInputs).every(input => input.value.trim() !== '');
-                calculateBtn.disabled = !allFilled;
-            }
-
-            // Adiciona o listener para cada input
-            allInputs.forEach(input => {
-                input.addEventListener('input', validateForm);
-            });
-
-            // Executa a validação uma vez no carregamento da página
-            validateForm();
-        });
-        // --- FIM DA CORREÇÃO ---
-
-    </script>
-</body>
-</html>
+                     <div class="section-title">Despesas Fixas Mensais</div>
+                     <div class="input-grid">
+                        <div class="form-group"><label>Mês 1 (R$):</label><input type="number" id="desp_fixas_1" value="438"></div>
+                        <div class="form-group"><label>Mês 2 (R$):</label><input type="number" id="desp_fixas_2" value="438"></div>
+                        <div class="form-group"><label>Mês 3 (R$):</label><input type="number" id="desp
