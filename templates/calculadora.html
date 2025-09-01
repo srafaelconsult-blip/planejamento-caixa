@@ -16,7 +16,7 @@
         .main-content { display: grid; grid-template-columns: 450px 1fr; min-height: 800px; }
         .sidebar { background: var(--light); padding: 20px; border-right: 1px solid #dee2e6; overflow-y: auto; }
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: var(--dark); }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: var(--dark); font-size: 14px; }
         .form-group input { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 14px; text-align: right; }
         .input-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
         .section-title { background: var(--primary); color: white; padding: 10px; border-radius: 5px; margin: 20px 0 15px 0; font-weight: 600; }
@@ -38,7 +38,7 @@
         .subscription-info { background: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin-bottom: 15px; text-align: center; display: none; }
         .empty-row td { border: none; height: 10px; background: transparent !important; }
         .sidebar-tabs { display: flex; border-bottom: 1px solid #ccc; margin-bottom: 15px; }
-        .tab-button { flex: 1; padding: 10px; background: #e9ecef; border: none; cursor: pointer; font-weight: bold; }
+        .tab-button { flex: 1; padding: 10px; background: #e9ecef; border: none; cursor: pointer; font-weight: bold; transition: background 0.3s, color 0.3s; }
         .tab-button.active { background: var(--primary); color: white; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -57,8 +57,8 @@
         <div class="main-content">
             <div class="sidebar">
                 <div class="sidebar-tabs">
-                    <button class="tab-button active" onclick="showTab('parametros')">Parâmetros</button>
-                    <button class="tab-button" onclick="showTab('anteriores')">Dados Anteriores</button>
+                    <button id="btn-parametros" class="tab-button active" onclick="showTab('parametros')">Parâmetros</button>
+                    <button id="btn-anteriores" class="tab-button" onclick="showTab('anteriores')">Dados Anteriores</button>
                 </div>
 
                 <div id="tab-parametros" class="tab-content active">
@@ -87,4 +87,215 @@
                      <div class="input-grid">
                         <div class="form-group"><label>Mês 1 (R$):</label><input type="number" id="desp_fixas_1" value="438"></div>
                         <div class="form-group"><label>Mês 2 (R$):</label><input type="number" id="desp_fixas_2" value="438"></div>
-                        <div class="form-group"><label>Mês 3 (R$):</label><input type="number" id="desp
+                        <div class="form-group"><label>Mês 3 (R$):</label><input type="number" id="desp_fixas_3" value="438"></div>
+                        <div class="form-group"><label>Mês 4 (R$):</label><input type="number" id="desp_fixas_4" value="438"></div>
+                        <div class="form-group"><label>Mês 5 (R$):</label><input type="number" id="desp_fixas_5" value="438"></div>
+                    </div>
+                </div>
+
+                <div id="tab-anteriores" class="tab-content">
+                    <div class="section-title">Contas a Receber Anteriores</div>
+                    <div class="input-grid">
+                        <div class="form-group"><label>Mês 1 (R$):</label><input type="number" id="cr_ant_1" value="0"></div>
+                        <div class="form-group"><label>Mês 2 (R$):</label><input type="number" id="cr_ant_2" value="0"></div>
+                        <div class="form-group"><label>Mês 3 (R$):</label><input type="number" id="cr_ant_3" value="0"></div>
+                        <div class="form-group"><label>Mês 4 (R$):</label><input type="number" id="cr_ant_4" value="0"></div>
+                        <div class="form-group"><label>Mês 5 (R$):</label><input type="number" id="cr_ant_5" value="0"></div>
+                    </div>
+
+                    <div class="section-title">Comissões a Pagar Anteriores</div>
+                    <div class="input-grid">
+                        <div class="form-group"><label>Mês 1 (R$):</label><input type="number" id="com_ant_1" value="0"></div>
+                        <div class="form-group"><label>Mês 2 (R$):</label><input type="number" id="com_ant_2" value="0"></div>
+                        <div class="form-group"><label>Mês 3 (R$):</label><input type="number" id="com_ant_3" value="0"></div>
+                        <div class="form-group"><label>Mês 4 (R$):</label><input type="number" id="com_ant_4" value="0"></div>
+                        <div class="form-group"><label>Mês 5 (R$):</label><input type="number" id="com_ant_5" value="0"></div>
+                    </div>
+
+                    <div class="section-title">Fornecedores a Pagar Anteriores</div>
+                    <div class="input-grid">
+                        <div class="form-group"><label>Mês 1 (R$):</label><input type="number" id="forn_ant_1" value="0"></div>
+                        <div class="form-group"><label>Mês 2 (R$):</label><input type="number" id="forn_ant_2" value="0"></div>
+                        <div class="form-group"><label>Mês 3 (R$):</label><input type="number" id="forn_ant_3" value="0"></div>
+                        <div class="form-group"><label>Mês 4 (R$):</label><input type="number" id="forn_ant_4" value="0"></div>
+                        <div class="form-group"><label>Mês 5 (R$):</label><input type="number" id="forn_ant_5" value="0"></div>
+                    </div>
+                </div>
+                
+                <button class="calculate-btn" onclick="calcular()">
+                    🚀 Calcular Projeção
+                </button>
+            </div>
+            
+            <div class="content">
+                <div id="loading" class="loading">
+                    <h2>📈 Calculadora de Planejamento de Caixa</h2>
+                    <p>Preencha os dados e clique em "Calcular Projeção" para gerar sua análise financeira.</p>
+                </div>
+                <div id="results" class="results-section">
+                    <div class="subscription-info" id="subscription-info"></div>
+                    <div id="error-message" class="alert-danger" style="display: none;"></div>
+                    <div class="indicadores" id="indicadores"></div>
+                    <div class="graficos">
+                        <div class="grafico-container"><canvas id="graficoSaldo"></canvas></div>
+                        <div class="grafico-container"><canvas id="graficoReceitasDespesas"></canvas></div>
+                    </div>
+                    <div class="tabela-container">
+                        <div id="tabela-resultados"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let graficoSaldo = null;
+        let graficoReceitasDespesas = null;
+
+        // --- INÍCIO DA CORREÇÃO: LÓGICA DAS ABAS ---
+        function showTab(tabName) {
+            // Esconde todos os conteúdos
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            // Desativa todos os botões
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+
+            // Mostra o conteúdo da aba clicada
+            document.getElementById('tab-' + tabName).classList.add('active');
+            // Ativa o botão da aba clicada
+            document.getElementById('btn-' + tabName).classList.add('active');
+        }
+        // --- FIM DA CORREÇÃO ---
+
+        async function checkSubscription() {
+            try {
+                const response = await fetch('/subscription_info');
+                if (!response.ok) return;
+                const data = await response.json();
+                document.getElementById('user-email').textContent = data.email || 'Usuário';
+                if (data.active && data.end_date) {
+                    const endDate = new Date(data.end_date);
+                    document.getElementById('subscription-info').textContent = `Assinatura ativa até: ${endDate.toLocaleDateString('pt-BR', { timeZone: 'UTC' })}`;
+                    document.getElementById('subscription-info').style.display = 'block';
+                }
+            } catch (error) { console.error('Erro ao verificar assinatura:', error); }
+        }
+
+        function getNumericArray(prefix, count) {
+            const arr = [];
+            for (let i = 1; i <= count; i++) {
+                arr.push(parseFloat(document.getElementById(`${prefix}_${i}`).value) || 0);
+            }
+            return arr;
+        }
+
+        async function calcular() {
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const errorMessage = document.getElementById('error-message');
+            const calculateBtn = document.querySelector('.calculate-btn');
+
+            loading.innerHTML = '<h2>⏳ Calculando...</h2>';
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            errorMessage.style.display = 'none';
+            calculateBtn.disabled = true;
+
+            try {
+                const dados = {
+                    setup: {
+                        vendas_vista: parseFloat(document.getElementById('vendas_vista').value),
+                        vendas_parcelamento: parseInt(document.getElementById('vendas_parcelamento').value),
+                        plus_vendas: parseFloat(document.getElementById('plus_vendas').value),
+                        cmv: parseFloat(document.getElementById('cmv').value),
+                        percent_compras: parseFloat(document.getElementById('percent_compras').value),
+                        compras_vista: parseFloat(document.getElementById('compras_vista').value),
+                        compras_parcelamento: parseInt(document.getElementById('compras_parcelamento').value),
+                        comissoes: parseFloat(document.getElementById('comissoes').value),
+                        desp_variaveis_impostos: parseFloat(document.getElementById('desp_variaveis_impostos').value)
+                    },
+                    previsao_vendas: getNumericArray('venda_mes', 5),
+                    desp_fixas_manuais: getNumericArray('desp_fixas', 5),
+                    contas_receber_anteriores: getNumericArray('cr_ant', 5),
+                    comissoes_anteriores: getNumericArray('com_ant', 5),
+                    fornecedores_anteriores: getNumericArray('forn_ant', 5)
+                };
+
+                const response = await fetch('/calcular', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dados)
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || `Erro ${response.status}`);
+                
+                loading.style.display = 'none';
+                results.style.display = 'block';
+                
+                atualizarIndicadores(data.indicadores);
+                atualizarGraficos(data.graficos);
+                atualizarTabela(data.resultados, data.meses);
+
+            } catch (error) {
+                errorMessage.textContent = `Erro: ${error.message}. Verifique os valores e tente novamente.`;
+                errorMessage.style.display = 'block';
+                loading.style.display = 'none';
+            } finally {
+                calculateBtn.disabled = false;
+            }
+        }
+
+        function atualizarIndicadores(indicadores) {
+            const container = document.getElementById('indicadores');
+            container.innerHTML = Object.entries(indicadores).map(([key, value]) => `
+                <div class="indicador"><h3>${key}</h3><div class="valor">${value}</div></div>`).join('');
+        }
+
+        function atualizarGraficos(graficos) {
+            if (graficoSaldo) graficoSaldo.destroy();
+            if (graficoReceitasDespesas) graficoReceitasDespesas.destroy();
+
+            graficoSaldo = new Chart(document.getElementById('graficoSaldo').getContext('2d'), {
+                type: 'line',
+                data: { labels: graficos.meses, datasets: [{ label: 'Saldo de Caixa', data: graficos.saldo_final_caixa, borderColor: '#007bff', backgroundColor: 'rgba(0, 123, 255, 0.1)', fill: true }] },
+                options: { responsive: true, plugins: { title: { display: true, text: 'Evolução do Saldo de Caixa' } } }
+            });
+
+            graficoReceitasDespesas = new Chart(document.getElementById('graficoReceitasDespesas').getContext('2d'), {
+                type: 'bar',
+                data: { labels: graficos.meses, datasets: [
+                        { label: 'Receitas', data: graficos.receitas, backgroundColor: 'rgba(40, 167, 69, 0.8)' },
+                        { label: 'Despesas', data: graficos.despesas, backgroundColor: 'rgba(220, 53, 69, 0.8)' }
+                    ]},
+                options: { responsive: true, plugins: { title: { display: true, text: 'Receitas vs Despesas' } }, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        function atualizarTabela(resultados, meses) {
+            const container = document.getElementById('tabela-resultados');
+            let html = '<table><thead><tr><th>Descrição</th>';
+            meses.forEach(mes => { html += `<th>${mes}</th>`; });
+            html += '</tr></thead><tbody>';
+
+            resultados.forEach(linha => {
+                const key = linha[0] || '';
+                if (key.trim() === '') {
+                    html += `<tr class="empty-row"><td colspan="${meses.length + 1}"></td></tr>`;
+                } else {
+                    let rowHtml = '<tr>';
+                    linha.forEach((celula, index) => {
+                        const style = (key.startsWith('(=)') || key.startsWith('Total')) ? 'font-weight: bold;' : '';
+                        rowHtml += `<td style="${style}">${celula || ''}</td>`;
+                    });
+                    rowHtml += '</tr>';
+                    html += rowHtml;
+                }
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        document.addEventListener('DOMContentLoaded', checkSubscription);
+    </script>
+</body>
+</html>
