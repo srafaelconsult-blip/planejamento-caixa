@@ -1,253 +1,3 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora Financeira - Planejamento de Caixa</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* ... (seus estilos CSS existentes) ... */
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- ... (seu HTML existente) ... -->
-        
-        <div class="content">
-            <div id="loading" class="loading">
-                <h2>📈 Calculadora de Planejamento de Caixa - 5 Meses</h2>
-                <p>Preencha as vendas mensais e as configurações ao lado e clique em "Calcular Projeção" para gerar sua análise financeira.</p>
-                <p>Esta ferramenta irá projetar seu fluxo de caixa para os próximos 5 meses.</p>
-            </div>
-            
-            <div id="results" class="results-section">
-                <div class="subscription-info" id="subscription-info">
-                    Assinatura ativa até: <span id="subscription-end"></span>
-                </div>
-                
-                <div class="indicadores" id="indicadores">
-                    <!-- Indicadores serão preenchidos via JavaScript -->
-                </div>
-                
-                <div class="graficos">
-                    <div class="grafico-container">
-                        <div class="result-section-title">📊 Saldo de Caixa (5 meses)</div>
-                        <canvas id="graficoSaldo"></canvas>
-                    </div>
-                    <div class="grafico-container">
-                        <div class="result-section-title">📈 Receitas vs Despesas (5 meses)</div>
-                        <canvas id="graficoReceitasDespesas"></canvas>
-                    </div>
-                </div>
-                
-                <div class="tabela-container">
-                    <div class="result-section-title">📋 Resultados Detalhados - Projeção 5 Meses</div>
-                    <div id="tabela-resultados">
-                        <!-- Tabela será preenchida via JavaScript -->
-                    </div>
-                </div>
-            </div>
-            
-            <div id="error-message" class="alert alert-danger" style="display: none;">
-                <!-- Mensagens de erro -->
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let graficoSaldo = null;
-        let graficoReceitasDespesas = null;
-        
-        // Verificar assinatura ao carregar a página
-        async function checkSubscription() {
-            try {
-                const response = await fetch('/subscription_info');
-                const data = await response.json();
-                
-                if (data.active && data.end_date) {
-                    const endDate = new Date(data.end_date);
-                    document.getElementById('subscription-end').textContent = endDate.toLocaleDateString('pt-BR');
-                    document.getElementById('subscription-info').style.display = 'block';
-                } else {
-                    document.getElementById('subscription-info').style.display = 'none';
-                    window.location.href = '/payment';
-                }
-            } catch (error) {
-                console.error('Erro ao verificar assinatura:', error);
-            }
-        }
-        
-        // Obter email do usuário (simulado)
-        function getUserEmail() {
-            return 'usuario@exemplo.com';
-        }
-        
-        // Logout
-        async function logout() {
-            try {
-                await fetch('/logout');
-                window.location.href = '/login';
-            } catch (error) {
-                console.error('Erro ao fazer logout:', error);
-            }
-        }
-        
-        // Calcular projeção
-        async function calcular() {
-            const loading = document.getElementById('loading');
-            const results = document.getElementById('results');
-            const errorMessage = document.getElementById('error-message');
-            const calculateBtn = document.querySelector('.calculate-btn');
-            
-            // Mostrar loading
-            loading.innerHTML = '<h2>⏳ Calculando... Aguarde.</h2><p>Processando sua projeção financeira para 5 meses...</p>';
-            errorMessage.style.display = 'none';
-            calculateBtn.disabled = true;
-            calculateBtn.textContent = 'Calculando...';
-            
-            try {
-                // Coletar vendas dos 5 meses
-                const vendasMensais = [
-                    parseFloat(document.getElementById('venda_mes1').value) || 0,
-                    parseFloat(document.getElementById('venda_mes2').value) || 0,
-                    parseFloat(document.getElementById('venda_mes3').value) || 0,
-                    parseFloat(document.getElementById('venda_mes4').value) || 0,
-                    parseFloat(document.getElementById('venda_mes5').value) || 0
-                ];
-                
-                // Coletar dados do formulário
-                const dados = {
-                    setup: {
-                        vendas_vista: parseFloat(document.getElementById('vendas_vista').value),
-                        vendas_parcelamento: parseInt(document.getElementById('vendas_parcelamento').value),
-                        plus_vendas: parseFloat(document.getElementById('plus_vendas').value),
-                        cmv: parseFloat(document.getElementById('cmv').value),
-                        percent_compras: parseFloat(document.getElementById('percent_compras').value),
-                        compras_vista: parseFloat(document.getElementById('compras_vista').value),
-                        compras_parcelamento: parseInt(document.getElementById('compras_parcelamento').value),
-                        comissoes: parseFloat(document.getElementById('comissoes').value),
-                        desp_variaveis_impostos: parseFloat(document.getElementById('desp_variaveis_impostos').value)
-                    },
-                    previsao_vendas: vendasMensais,
-                    contas_receber_anteriores: [0, 0, 0, 0, 0],
-                    comissoes_anteriores: [0, 0, 0, 0, 0],
-                    contas_pagar_anteriores: [0, 0, 0, 0, 0],
-                    desp_fixas_manuais: Array(5).fill(parseFloat(document.getElementById('desp_fixas').value) || 0)
-                };
-                
-                // Fazer requisição para o backend
-                const response = await fetch('/calcular', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(dados)
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Esconder loading e mostrar resultados
-                    loading.style.display = 'none';
-                    results.style.display = 'block';
-                    
-                    // Atualizar indicadores
-                    atualizarIndicadores(data.indicadores);
-                    
-                    // Atualizar gráficos
-                    atualizarGraficos(data.graficos);
-                    
-                    // Atualizar tabela
-                    atualizarTabela(data.resultados, data.meses);
-                    
-                } else {
-                    throw new Error(data.error || 'Erro ao calcular');
-                }
-                
-            } catch (error) {
-                console.error('Erro:', error);
-                errorMessage.textContent = error.message || 'Erro ao processar cálculo. Verifique sua conexão e tente novamente.';
-                errorMessage.style.display = 'block';
-                
-                // Restaurar loading inicial
-                loading.innerHTML = `
-                    <h2>📈 Calculadora de Planejamento de Caixa - 5 Meses</h2>
-                    <p>Preencha as vendas mensais e as configurações ao lado e clique em "Calcular Projeção" para gerar sua análise financeira.</p>
-                    <p>Esta ferramenta irá projetar seu fluxo de caixa para os próximos 5 meses.</p>
-                `;
-            } finally {
-                calculateBtn.disabled = false;
-                calculateBtn.textContent = '🚀 Calcular Projeção';
-            }
-        }
-        
-        // Atualizar indicadores
-        function atualizarIndicadores(indicadores) {
-            const container = document.getElementById('indicadores');
-            container.innerHTML = '';
-            
-            for (const [key, value] of Object.entries(indicadores)) {
-                container.innerHTML += `
-                    <div class="indicador">
-                        <h3>${key}</h3>
-                        <div class="valor">${value}</div>
-                    </div>
-                `;
-            }
-        }
-        
-        // Atualizar gráficos
-        function atualizarGraficos(graficos) {
-            // Destruir gráficos existentes
-            if (graficoSaldo) graficoSaldo.destroy();
-            if (graficoReceitasDespesas) graficoReceitasDespesas.destroy();
-            
-            // Gráfico de Saldo
-            const ctxSaldo = document.getElementById('graficoSaldo').getContext('2d');
-            graficoSaldo = new Chart(ctxSaldo, {
-                type: 'line',
-                data: {
-                    labels: graficos.meses,
-                    datasets: [{
-                        label: 'Saldo de Caixa',
-                        data: graficos.saldo_final_caixa,
-                        borderColor: '#007bff',
-                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Evolução do Saldo de Caixa - 5 Meses'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Valor (R$)'
-                            }
-                        }
-                    }
-                }
-            });
-            
-            // Gráfico de Receitas vs Despesas
-            const ctxReceitasDespesas = document.getElementById('graficoReceitasDespesas').getContext('2d');
-            graficoReceitasDespesas = new Chart(ctxReceitasDespesas, {
-                type: 'bar',
-                data: {
-                    labels: graficos.meses,
-                    datasets: [
-                        {
-                            label: 'Receitas',
-                            data: graficos.receitas,
                             backgroundColor: 'rgba(40, 167, 69, 0.8)',
                             borderColor: 'rgba(40, 167, 69, 1)',
                             borderWidth: 1
@@ -282,7 +32,7 @@
             });
         }
         
-        // ATUALIZAR TABELA - FUNÇÃO CORRIGIDA
+        // Atualizar tabela - FUNÇÃO CORRIGIDA
         function atualizarTabela(resultados, meses) {
             const container = document.getElementById('tabela-resultados');
             let html = '<table>';
@@ -294,10 +44,24 @@
             });
             html += '</tr>';
             
-            // Dados na ordem correta (resultados é uma lista de arrays)
+            // Verificar se resultados é um array
+            if (!Array.isArray(resultados)) {
+                console.error('Resultados não é um array:', resultados);
+                html += '<tr><td colspan="' + (meses.length + 1) + '">Erro: Formato de dados inválido</td></tr>';
+                container.innerHTML = html;
+                return;
+            }
+            
+            // Dados na ordem correta
             resultados.forEach(linha => {
-                const key = linha[0];
-                const values = linha.slice(1);
+                if (!Array.isArray(linha)) {
+                    console.error('Linha não é um array:', linha);
+                    return;
+                }
+                
+                const key = linha[0] || '';
+                const values = linha.slice(1, meses.length + 1); // Pegar apenas os valores dos meses
+                const total = linha[linha.length - 1]; // Último elemento é o total
                 
                 if (key.trim() === '') {
                     // Linha em branco
@@ -305,9 +69,15 @@
                 } else {
                     // Dados normais
                     html += `<tr><td>${key}</td>`;
+                    
+                    // Valores dos meses
                     values.forEach(valor => {
-                        html += `<td>${valor}</td>`;
+                        html += `<td>${valor || ''}</td>`;
                     });
+                    
+                    // Valor total
+                    html += `<td>${total || ''}</td>`;
+                    
                     html += '</tr>';
                 }
             });
@@ -320,6 +90,16 @@
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('user-email').textContent = getUserEmail();
             checkSubscription();
+            
+            // Adicionar event listeners para os inputs
+            const inputs = document.querySelectorAll('input[type="number"]');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    // Habilitar/desabilitar botão baseado em preenchimento
+                    const todasPreenchidas = Array.from(inputs).every(i => i.value !== '');
+                    document.querySelector('.calculate-btn').disabled = !todasPreenchidas;
+                });
+            });
         });
     </script>
 </body>
