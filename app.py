@@ -9,6 +9,7 @@ import os
 import psycopg2
 from urllib.parse import urlparse
 import re
+from collections import OrderedDict
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-12345')
@@ -218,43 +219,60 @@ class PlanejamentoCaixa:
             for mes in range(self.num_meses):
                 fornecedores_parcelados[mes] += self.duplicatas_pagar[p][mes]
         
-        # ORDEM EXATA SOLICITADA
-        resultados_ordenados = [
-            ('Escalonamento das Vendas com Plus', self.vendas_escalonadas),
-            ('', []),
-            ('Recebimento de vendas à vista', self.vendas_vista),
-            ('', []),
-            ('Contas a receber Parcelado', contas_receber_parcelado),
-            ('', []),
-            ('Contas a receber anteriores', self.contas_receber_anteriores),
-            ('', []),
-            ('Pagamento de comissões à vista', [venda * self.setup['comissoes'] * 0.3 for venda in self.vendas_escalonadas]),
-            ('', []),
-            ('Comissões parceladas', comissoes_parceladas),
-            ('', []),
-            ('Comissões a pagar anteriores', self.comissoes_anteriores),
-            ('', []),
-            ('Total de Comissões a pagar', self.total_comissoes),
-            ('', []),
-            ('Compras à vista', self.compras_vista),
-            ('', []),
-            ('Fornecedores Parcelados', fornecedores_parcelados),
-            ('', []),
-            ('Total Pagamento de Fornecedores', self.total_pagamento_compras),
-            ('', []),
-            ('Despesas variáveis', self.desp_variaveis),
-            ('Despesas fixas', self.desp_fixas),
-            ('', []),
-            ('SALDO OPERACIONAL', self.saldo_operacional),
-            ('SALDO FINAL DE CAIXA PREVISTO', self.saldo_final_caixa)
-        ]
+        comissoes_vista = [venda * self.setup['comissoes'] * 0.3 for venda in self.vendas_escalonadas]
+        
+        # ORDEM EXATA SOLICITADA - usando OrderedDict
+        resultados_ordenados = OrderedDict()
+        
+        # Adicionar na ordem exata solicitada
+        resultados_ordenados['Escalonamento das Vendas com Plus'] = self.vendas_escalonadas
+        resultados_ordenados[' '] = [''] * self.num_meses  # Linha em branco
+        
+        resultados_ordenados['Recebimento de vendas à vista'] = self.vendas_vista
+        resultados_ordenados['  '] = [''] * self.num_meses  # Linha em branco
+        
+        resultados_ordenados['Contas a receber Parcelado'] = contas_receber_parcelado
+        resultados_ordenados['   '] = [''] * self.num_meses  # Linha em branco
+        
+        resultados_ordenados['Contas a receber anteriores'] = self.contas_receber_anteriores
+        resultados_ordenados['    '] = [''] * self.num_meses  # Linha em branco
+        
+        resultados_ordenados['Pagamento de comissões à vista'] = comissoes_vista
+        resultados_ordenados['     '] = [''] * self.num_meses  # Linha em branco
+        
+        resultados_ordenados['Comissões parceladas'] = comissoes_parceladas
+        resultados_ordenados['      '] = [''] * self.num_meses  # Linha em branco
+        
+        resultados_ordenados['Comissões a pagar anteriores'] = self.comissoes_anteriores
+        resultados_ordenados['       '] = [''] * self.num_meses  # Linha em branco
+        
+        resultados_ordenados['Total de Comissões a pagar'] = self.total_comissoes
+        resultados_ordenados['        '] = [''] * self.num_meses  # Linha em branco
+        
+        resultados_ordenados['Compras à vista'] = self.compras_vista
+        resultados_ordenados['         '] = [''] * self.num_meses  # Linha em branco
+        
+        resultados_ordenados['Fornecedores Parcelados'] = fornecedores_parcelados
+        resultados_ordenados['          '] = [''] * self.num_meses  # Linha em branco
+        
+        resultados_ordenados['Total Pagamento de Fornecedores'] = self.total_pagamento_compras
+        resultados_ordenados['           '] = [''] * self.num_meses  # Linha em branco
+        
+        resultados_ordenados['Despesas variáveis'] = self.desp_variaveis
+        resultados_ordenados['Despesas fixas'] = self.desp_fixas
+        resultados_ordenados['            '] = [''] * self.num_meses  # Linha em branco
+        
+        resultados_ordenados['SALDO OPERACIONAL'] = self.saldo_operacional
+        resultados_ordenados['SALDO FINAL DE CAIXA PREVISTO'] = self.saldo_final_caixa
         
         # Formatando os resultados
-        resultados_formatados = {}
-        for key, values in resultados_ordenados:
-            if key == '':
+        resultados_formatados = OrderedDict()
+        for key, values in resultados_ordenados.items():
+            if key.strip() == '':
+                # Linha em branco
                 resultados_formatados[key] = [''] * (self.num_meses + 1)
             else:
+                # Dados com valores
                 if values:
                     if key == 'SALDO FINAL DE CAIXA PREVISTO':
                         total = values[-1]
@@ -291,7 +309,7 @@ class PlanejamentoCaixa:
             'meses': meses
         }
 
-# ... (o restante do código permanece igual - rotas, autenticação, etc.)
+# ... (o restante do código permanece igual)
 
 # Função de validação de email
 def validate_email(email):
