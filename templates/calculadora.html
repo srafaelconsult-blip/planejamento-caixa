@@ -176,7 +176,7 @@
         function getNumericArray(prefix, count) {
             const arr = [];
             for (let i = 1; i <= count; i++) {
-                const elementId = `${prefix}_${i}`;
+                const elementId = `${prefix}${i}`;
                 const element = document.getElementById(elementId);
                 if (element) {
                     arr.push(parseFloat(element.value) || 0);
@@ -214,13 +214,13 @@
                         desp_variaveis_impostos: parseFloat(document.getElementById('desp_variaveis_impostos').value)
                     },
                     // --- INÍCIO DA CORREÇÃO ---
-                    // O nome da função estava com um 'y' a mais (getNumericArrayy)
-                    previsao_vendas: getNumericArray('venda_mes', 5),
+                    // O prefixo precisa do underscore no final para corresponder ao ID do HTML (ex: 'venda_mes_1')
+                    previsao_vendas: getNumericArray('venda_mes_', 5),
+                    desp_fixas_manuais: getNumericArray('desp_fixas_', 5),
+                    contas_receber_anteriores: getNumericArray('cr_ant_', 5),
+                    comissoes_anteriores: getNumericArray('com_ant_', 5),
+                    fornecedores_anteriores: getNumericArray('forn_ant_', 5)
                     // --- FIM DA CORREÇÃO ---
-                    desp_fixas_manuais: getNumericArray('desp_fixas', 5),
-                    contas_receber_anteriores: getNumericArray('cr_ant', 5),
-                    comissoes_anteriores: getNumericArray('com_ant', 5),
-                    fornecedores_anteriores: getNumericArray('forn_ant', 5)
                 };
 
                 const response = await fetch('/calcular', {
