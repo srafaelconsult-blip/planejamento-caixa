@@ -32,4 +32,80 @@
         .tabela-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th, td { padding: 8px 12px; text-align: right; border-bottom: 1px solid #dee2e6; white-space: nowrap; }
-        th:first-
+        th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: white; z-index: 1; }
+        th { background: var(--light); font-weight: 600; }
+        .alert-danger { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .subscription-info { background: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin-bottom: 15px; text-align: center; display: none; }
+        .empty-row td { border: none; height: 10px; background: transparent !important; }
+        .sidebar-tabs { display: flex; border-bottom: 1px solid #ccc; margin-bottom: 15px; }
+        .tab-button { flex: 1; padding: 10px; background: #e9ecef; border: none; cursor: pointer; font-weight: bold; transition: background 0.3s, color 0.3s; }
+        .tab-button.active { background: var(--primary); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Calculadora de Planejamento de Caixa</h1>
+            <div class="user-info">
+                <span id="user-email"></span>
+                <a href="/logout" class="btn-danger">Sair</a>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="sidebar-tabs">
+                    <button id="btn-parametros" class="tab-button active" onclick="showTab('parametros')">Parâmetros</button>
+                    <button id="btn-anteriores" class="tab-button" onclick="showTab('anteriores')">Dados Anteriores</button>
+                </div>
+
+                <div id="tab-parametros" class="tab-content active">
+                    <div class="section-title">Previsão de Vendas</div>
+                    <div class="input-grid">
+                        <div class="form-group"><label>Mês 1 (R$):</label><input type="number" id="venda_mes_1" value="10000"></div>
+                        <div class="form-group"><label>Mês 2 (R$):</label><input type="number" id="venda_mes_2" value="12000"></div>
+                        <div class="form-group"><label>Mês 3 (R$):</label><input type="number" id="venda_mes_3" value="15000"></div>
+                        <div class="form-group"><label>Mês 4 (R$):</label><input type="number" id="venda_mes_4" value="18000"></div>
+                        <div class="form-group"><label>Mês 5 (R$):</label><input type="number" id="venda_mes_5" value="20000"></div>
+                    </div>
+                    
+                    <div class="section-title">Parâmetros do Negócio</div>
+                    <div class="input-grid">
+                        <div class="form-group"><label>% Vendas à Vista:</label><input type="number" id="vendas_vista" step="0.01" value="0.3"></div>
+                        <div class="form-group"><label>Parc. Vendas (meses):</label><input type="number" id="vendas_parcelamento" value="5"></div>
+                        <div class="form-group"><label>Plus Vendas (%):</label><input type="number" id="plus_vendas" step="0.01" value="0"></div>
+                        <div class="form-group"><label>CMV (%):</label><input type="number" id="cmv" step="0.01" value="0.425"></div>
+                        <div class="form-group"><label>% Compras s/ CMV:</label><input type="number" id="percent_compras" step="0.01" value="0.2"></div>
+                        <div class="form-group"><label>% Compras à Vista:</label><input type="number" id="compras_vista" step="0.01" value="0.2"></div>
+                        <div class="form-group"><label>Parc. Compras (meses):</label><input type="number" id="compras_parcelamento" value="6"></div>
+                        <div class="form-group"><label>Comissões (%):</label><input type="number" id="comissoes" step="0.01" value="0.0761"></div>
+                        <div class="form-group"><label>Desp. Var. & Impostos (%):</label><input type="number" id="desp_variaveis_impostos" step="0.01" value="0.085"></div>
+                    </div>
+                     <div class="section-title">Despesas Fixas Mensais</div>
+                     <div class="input-grid">
+                        <div class="form-group"><label>Mês 1 (R$):</label><input type="number" id="desp_fixas_1" value="438"></div>
+                        <div class="form-group"><label>Mês 2 (R$):</label><input type="number" id="desp_fixas_2" value="438"></div>
+                        <div class="form-group"><label>Mês 3 (R$):</label><input type="number" id="desp_fixas_3" value="438"></div>
+                        <div class="form-group"><label>Mês 4 (R$):</label><input type="number" id="desp_fixas_4" value="438"></div>
+                        <div class="form-group"><label>Mês 5 (R$):</label><input type="number" id="desp_fixas_5" value="438"></div>
+                    </div>
+                </div>
+
+                <div id="tab-anteriores" class="tab-content">
+                    <div class="section-title">Contas a Receber Anteriores</div>
+                    <div class="input-grid">
+                        <div class="form-group"><label>Mês 1 (R$):</label><input type="number" id="cr_ant_1" value="0"></div>
+                        <div class="form-group"><label>Mês 2 (R$):</label><input type="number" id="cr_ant_2" value="0"></div>
+                        <div class="form-group"><label>Mês 3 (R$):</label><input type="number" id="cr_ant_3" value="0"></div>
+                        <div class="form-group"><label>Mês 4 (R$):</label><input type="number" id="cr_ant_4" value="0"></div>
+                        <div class="form-group"><label>Mês 5 (R$):</label><input type="number" id="cr_ant_5" value="0"></div>
+                    </div>
+
+                    <div class="section-title">Comissões a Pagar Anteriores</div>
+                    <div class="input-grid">
+                        <div class="form-group"><label>Mês 1 (R$):</label><input type="number" id="com_ant_1" value="0"></div>
+                        <div class="form-group"><label>Mês 2 (R$):</label><input type="number" id="com_ant_2" value="0"></div>
+                        <div class="form-group"><label>Mês 3 (R$):</label><input type="number" id="com_ant_3" value="0"></div>
+                        <div class="
