@@ -6,14 +6,14 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# Configuração de logging para facilitar a depuração na Render
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-12345')
 
-# --- Função de formatação de moeda segura (já estava correta) ---
+# --- Função de formatação de moeda robusta que não depende do 'locale' do servidor ---
 def format_currency_brl(value):
+    """Formata um número como moeda brasileira (R$ 1.234,56) de forma segura."""
     if not isinstance(value, (int, float)):
         return "R$ 0,00"
     return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -33,7 +33,7 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 280, 'pool_pre_ping':
 
 db = SQLAlchemy(app)
 
-# --- Modelos do Banco de Dados (sem alterações) ---
+# --- Modelos do Banco de Dados ---
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -48,7 +48,7 @@ class User(db.Model):
         if self.subscription_end and self.subscription_end > datetime.utcnow(): self.subscription_end += timedelta(days=days)
         else: self.subscription_end = datetime.utcnow() + timedelta(days=days)
 
-# --- Lógica de Negócio (Classe PlanejamentoCaixa, sem alterações) ---
+# --- Lógica de Negócio ---
 class PlanejamentoCaixa:
     def __init__(self, num_meses=5):
         self.num_meses = num_meses
@@ -166,14 +166,9 @@ class PlanejamentoCaixa:
         return { 'resultados': resultados_ordenados, 'indicadores': indicadores, 'graficos': dados_graficos, 'meses': meses_header + ['TOTAL'] }
 
 # --- Rotas da Aplicação ---
-
-# **INÍCIO DA CORREÇÃO CRÍTICA**
-# Garante que a sessão do banco de dados seja fechada após cada requisição.
-# Isso é crucial para a estabilidade em produção.
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     db.session.remove()
-# **FIM DA CORREÇÃO CRÍTICA**
 
 @app.route('/')
 def index():
@@ -268,10 +263,7 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# **INÍCIO DA CORREÇÃO CRÍTICA**
-# Removido o `db.create_all()` do escopo de execução principal.
-# Isso deve ser executado manualmente no servidor.
+# Removido o db.create_all() do escopo de execução principal.
 # if __name__ == '__main__':
 #     port = int(os.environ.get('PORT', 5000))
 #     app.run(host='0.0.0.0', port=port, debug=True)
-# **FIM DA CORREÇÃO CRÍTICA**
