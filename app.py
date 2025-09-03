@@ -6,12 +6,13 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
+# Configuração de logging para facilitar a depuração na Render
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-12345')
 
-# --- Função de formatação de moeda robusta que não depende do 'locale' do servidor ---
+# --- Função de formatação de moeda segura (não depende do 'locale' do servidor) ---
 def format_currency_brl(value):
     """Formata um número como moeda brasileira (R$ 1.234,56) de forma segura."""
     if not isinstance(value, (int, float)):
@@ -250,20 +251,4 @@ def process_payment():
 @app.route('/subscription_info')
 def subscription_info():
     if 'user_id' not in session: return jsonify({'active': False})
-    user = db.session.get(User, session['user_id'])
-    if not user: return jsonify({'active': False})
-    return jsonify({
-        'active': user.has_active_subscription(),
-        'end_date': user.subscription_end.isoformat() if user.subscription_end else None,
-        'email': user.email
-    })
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('login'))
-
-# Removido o db.create_all() do escopo de execução principal.
-# if __name__ == '__main__':
-#     port = int(os.environ.get('PORT', 5000))
-#     app.run(host='0.0.0.0', port=port, debug=True)
+    user = db.session.
