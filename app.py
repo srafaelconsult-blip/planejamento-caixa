@@ -1,6 +1,7 @@
 import os
 import re
 import logging
+import locale
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
@@ -10,6 +11,17 @@ logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-12345')
+
+# --- INÍCIO DA CORREÇÃO DE ERRO DE SERVIDOR ---
+# Função de formatação de moeda robusta que não depende do 'locale' do servidor.
+# Isso evita o "Internal Server Error" em ambientes de produção.
+def format_currency_brl(value):
+    """Formata um número como moeda brasileira (R$ 1.234,56) de forma segura."""
+    if not isinstance(value, (int, float)):
+        return "R$ 0,00"
+    # Formata com 2 casas decimais, usando vírgula como separador decimal e ponto para milhares.
+    return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+# --- FIM DA CORREÇÃO DE ERRO DE SERVIDOR ---
 
 # --- Configuração do Banco de Dados ---
 database_url = os.environ.get('DATABASE_URL')
@@ -22,7 +34,7 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 280, 'pool_pre_ping':
 
 db = SQLAlchemy(app)
 
-# --- Modelos do Banco de Dados (sem alterações) ---
+# --- Modelos do Banco de Dados ---
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -38,17 +50,6 @@ class User(db.Model):
         else: self.subscription_end = datetime.utcnow() + timedelta(days=days)
 
 # --- Lógica de Negócio ---
-
-# **INÍCIO DA CORREÇÃO CRÍTICA**
-# Função de formatação de moeda robusta que não depende do 'locale' do servidor.
-def format_currency_brl(value):
-    """Formata um número como moeda brasileira (R$ 1.234,56) de forma segura."""
-    if not isinstance(value, (int, float)):
-        return "R$ 0,00"
-    # Formata com 2 casas decimais, usando vírgula como separador decimal e ponto para milhares.
-    return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-# **FIM DA CORREÇÃO CRÍTICA**
-
 class PlanejamentoCaixa:
     def __init__(self, num_meses=5):
         self.num_meses = num_meses
@@ -60,7 +61,6 @@ class PlanejamentoCaixa:
         self.desp_fixas_manuais = [0.0] * num_meses
 
     def calcular(self, dados):
-        # A lógica de cálculo permanece a mesma, pois já estava correta.
         self.setup.update(dados.get('setup', {}))
         self.previsao_vendas = [float(v) for v in dados.get('previsao_vendas', [0]*self.num_meses)]
         self.contas_receber_anteriores = [float(v) for v in dados.get('contas_receber_anteriores', [0]*self.num_meses)]
@@ -153,12 +153,11 @@ class PlanejamentoCaixa:
         ]
 
         total_recebimentos = sum(self.vendas_vista) + sum(contas_receber_parcelado) + sum(self.contas_receber_anteriores)
-        total_despesas = sum(self.total_comissoes) + sum(self.total_pagamento_compras) + sum(self.desp_variaveis) + sum(self.desp_fixas)
         
         indicadores = {
             'Total de Vendas': format_currency_brl(sum(self.previsao_vendas)),
             'Total de Recebimentos': format_currency_brl(total_recebimentos),
-            'Total de Despesas': format_currency_brl(total_despesas),
+            'Total de Despesas': format_currency_brl(sum(self.total_comissoes) + sum(self.total_pagamento_compras) + sum(self.desp_variaveis) + sum(self.desp_fixas)),
             'Saldo Final Acumulado': format_currency_brl(self.saldo_final_caixa[-1] if self.saldo_final_caixa else 0),
             'Margem Líquida': f"{(sum(self.saldo_operacional) / total_recebimentos * 100):.2f}%".replace(".", ",") if total_recebimentos > 0 else "0,00%"
         }
