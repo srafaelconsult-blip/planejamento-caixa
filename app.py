@@ -1,21 +1,12 @@
 import os
 import re
 import logging
-import locale
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# Configuração de logging para depuração
 logging.basicConfig(level=logging.INFO)
-
-# Tenta definir a localidade para o Brasil para formatação de moeda.
-# Essencial para a função format_currency funcionar corretamente.
-try:
-    locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-except locale.Error:
-    logging.warning("Localidade pt_BR.UTF-8 não disponível. Usando a localidade padrão do sistema.")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-12345')
@@ -31,7 +22,7 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 280, 'pool_pre_ping':
 
 db = SQLAlchemy(app)
 
-# --- Modelos do Banco de Dados ---
+# --- Modelos do Banco de Dados (sem alterações) ---
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -47,6 +38,17 @@ class User(db.Model):
         else: self.subscription_end = datetime.utcnow() + timedelta(days=days)
 
 # --- Lógica de Negócio ---
+
+# **INÍCIO DA CORREÇÃO CRÍTICA**
+# Função de formatação de moeda robusta que não depende do 'locale' do servidor.
+def format_currency_brl(value):
+    """Formata um número como moeda brasileira (R$ 1.234,56) de forma segura."""
+    if not isinstance(value, (int, float)):
+        return "R$ 0,00"
+    # Formata com 2 casas decimais, usando vírgula como separador decimal e ponto para milhares.
+    return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+# **FIM DA CORREÇÃO CRÍTICA**
+
 class PlanejamentoCaixa:
     def __init__(self, num_meses=5):
         self.num_meses = num_meses
@@ -58,7 +60,7 @@ class PlanejamentoCaixa:
         self.desp_fixas_manuais = [0.0] * num_meses
 
     def calcular(self, dados):
-        # Carrega os dados da requisição com segurança
+        # A lógica de cálculo permanece a mesma, pois já estava correta.
         self.setup.update(dados.get('setup', {}))
         self.previsao_vendas = [float(v) for v in dados.get('previsao_vendas', [0]*self.num_meses)]
         self.contas_receber_anteriores = [float(v) for v in dados.get('contas_receber_anteriores', [0]*self.num_meses)]
@@ -66,7 +68,6 @@ class PlanejamentoCaixa:
         self.fornecedores_anteriores = [float(v) for v in dados.get('fornecedores_anteriores', [0]*self.num_meses)]
         self.desp_fixas_manuais = [float(v) for v in dados.get('desp_fixas_manuais', [0]*self.num_meses)]
 
-        # Cálculos principais (lógica já validada)
         plus = float(self.setup.get('plus_vendas', 0))
         self.vendas_escalonadas = [v * (1 + plus) for v in self.previsao_vendas]
         
@@ -128,12 +129,9 @@ class PlanejamentoCaixa:
         comissoes_parceladas = [sum(p[m] for p in self.comissoes_pagar_parcelado) for m in range(self.num_meses)]
         fornecedores_parcelados = [sum(p[m] for p in self.duplicatas_pagar) for m in range(self.num_meses)]
         
-        def format_currency(value):
-            return locale.currency(value, grouping=True, symbol='R$')
-
         def format_row(label, values):
             total = sum(values) if 'SALDO FINAL' not in label else (values[-1] if values else 0)
-            return [label] + [format_currency(v) for v in values] + [format_currency(total)]
+            return [label] + [format_currency_brl(v) for v in values] + [format_currency_brl(total)]
 
         resultados_ordenados = [
             format_row('Escalonamento das Vendas com Plus', self.vendas_escalonadas), [''],
@@ -158,10 +156,10 @@ class PlanejamentoCaixa:
         total_despesas = sum(self.total_comissoes) + sum(self.total_pagamento_compras) + sum(self.desp_variaveis) + sum(self.desp_fixas)
         
         indicadores = {
-            'Total de Vendas': format_currency(sum(self.previsao_vendas)),
-            'Total de Recebimentos': format_currency(total_recebimentos),
-            'Total de Despesas': format_currency(total_despesas),
-            'Saldo Final Acumulado': format_currency(self.saldo_final_caixa[-1] if self.saldo_final_caixa else 0),
+            'Total de Vendas': format_currency_brl(sum(self.previsao_vendas)),
+            'Total de Recebimentos': format_currency_brl(total_recebimentos),
+            'Total de Despesas': format_currency_brl(total_despesas),
+            'Saldo Final Acumulado': format_currency_brl(self.saldo_final_caixa[-1] if self.saldo_final_caixa else 0),
             'Margem Líquida': f"{(sum(self.saldo_operacional) / total_recebimentos * 100):.2f}%".replace(".", ",") if total_recebimentos > 0 else "0,00%"
         }
         
@@ -199,7 +197,7 @@ def calcular_route():
         logging.error(f"Erro na rota /calcular: {e}", exc_info=True)
         return jsonify({'error': 'Ocorreu um erro interno ao processar o cálculo.'}), 500
 
-# Demais rotas de autenticação (login, register, etc.) podem ser mantidas como estão.
+# Demais rotas de autenticação (login, register, etc.)
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -217,3 +215,60 @@ def register():
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
+        if not email or not password or not re.match(r'[^@]+@[^@]+\.[^@]+', email):
+            return render_template('register.html', error='Email e senha válidos são obrigatórios')
+        if User.query.filter_by(email=email).first():
+            return render_template('register.html', error='Email já cadastrado')
+        try:
+            new_user = User(email=email)
+            new_user.set_password(password)
+            db.session.add(new_user)
+            db.session.commit()
+            session['user_id'] = new_user.id
+            return redirect(url_for('payment'))
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f"Erro no registro: {e}")
+            return render_template('register.html', error='Erro ao criar conta.')
+    return render_template('register.html')
+
+@app.route('/payment')
+def payment():
+    if 'user_id' not in session: return redirect(url_for('login'))
+    return render_template('payment.html')
+
+@app.route('/process_payment', methods=['POST'])
+def process_payment():
+    if 'user_id' not in session: return jsonify({'success': False}), 401
+    user = db.session.get(User, session['user_id'])
+    if not user: return jsonify({'success': False}), 404
+    try:
+        user.add_subscription_days(30)
+        db.session.commit()
+        return jsonify({'success': True, 'redirect_url': url_for('index')})
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erro no pagamento: {e}")
+        return jsonify({'success': False}), 500
+
+@app.route('/subscription_info')
+def subscription_info():
+    if 'user_id' not in session: return jsonify({'active': False})
+    user = db.session.get(User, session['user_id'])
+    if not user: return jsonify({'active': False})
+    return jsonify({
+        'active': user.has_active_subscription(),
+        'end_date': user.subscription_end.isoformat() if user.subscription_end else None,
+        'email': user.email
+    })
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
