@@ -6,34 +6,34 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
+# Configuração de logging para facilitar a depuração na Render
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-12345')
 
-# --- INÍCIO DA CORREÇÃO DE ERRO DE SERVIDOR ---
-# Função de formatação de moeda robusta que não depende do 'locale' do servidor.
-# Isso evita o "Internal Server Error" em ambientes de produção.
+# --- Função de formatação de moeda segura (já estava correta) ---
 def format_currency_brl(value):
-    """Formata um número como moeda brasileira (R$ 1.234,56) de forma segura."""
     if not isinstance(value, (int, float)):
         return "R$ 0,00"
-    # Formata com 2 casas decimais, usando vírgula como separador decimal e ponto para milhares.
     return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-# --- FIM DA CORREÇÃO DE ERRO DE SERVIDOR ---
 
-# --- Configuração do Banco de Dados ---
+# --- Configuração do Banco de Dados para Produção ---
 database_url = os.environ.get('DATABASE_URL')
 if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///users.db'
+if not database_url:
+    logging.warning("DATABASE_URL não encontrado. Usando SQLite local.")
+    database_url = 'sqlite:///users.db'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 280, 'pool_pre_ping': True}
 
 db = SQLAlchemy(app)
 
-# --- Modelos do Banco de Dados ---
+# --- Modelos do Banco de Dados (sem alterações) ---
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -48,7 +48,7 @@ class User(db.Model):
         if self.subscription_end and self.subscription_end > datetime.utcnow(): self.subscription_end += timedelta(days=days)
         else: self.subscription_end = datetime.utcnow() + timedelta(days=days)
 
-# --- Lógica de Negócio ---
+# --- Lógica de Negócio (Classe PlanejamentoCaixa, sem alterações) ---
 class PlanejamentoCaixa:
     def __init__(self, num_meses=5):
         self.num_meses = num_meses
@@ -123,7 +123,6 @@ class PlanejamentoCaixa:
 
     def gerar_resultados(self):
         meses_header = [f'Mês {i+1}' for i in range(self.num_meses)]
-        
         contas_receber_parcelado = [sum(p[m] for p in self.duplicatas_receber) for m in range(self.num_meses)]
         comissoes_parceladas = [sum(p[m] for p in self.comissoes_pagar_parcelado) for m in range(self.num_meses)]
         fornecedores_parcelados = [sum(p[m] for p in self.duplicatas_pagar) for m in range(self.num_meses)]
@@ -150,9 +149,7 @@ class PlanejamentoCaixa:
             format_row('(=) SALDO OPERACIONAL', self.saldo_operacional),
             format_row('(=) SALDO FINAL DE CAIXA PREVISTO', self.saldo_final_caixa)
         ]
-
         total_recebimentos = sum(self.vendas_vista) + sum(contas_receber_parcelado) + sum(self.contas_receber_anteriores)
-        
         indicadores = {
             'Total de Vendas': format_currency_brl(sum(self.previsao_vendas)),
             'Total de Recebimentos': format_currency_brl(total_recebimentos),
@@ -160,17 +157,24 @@ class PlanejamentoCaixa:
             'Saldo Final Acumulado': format_currency_brl(self.saldo_final_caixa[-1] if self.saldo_final_caixa else 0),
             'Margem Líquida': f"{(sum(self.saldo_operacional) / total_recebimentos * 100):.2f}%".replace(".", ",") if total_recebimentos > 0 else "0,00%"
         }
-        
         dados_graficos = {
             'meses': meses_header,
             'saldo_final_caixa': self.saldo_final_caixa,
             'receitas': [self.vendas_vista[i] + contas_receber_parcelado[i] + self.contas_receber_anteriores[i] for i in range(self.num_meses)],
             'despesas': [self.total_comissoes[i] + self.total_pagamento_compras[i] + self.desp_variaveis[i] + self.desp_fixas[i] for i in range(self.num_meses)]
         }
-        
         return { 'resultados': resultados_ordenados, 'indicadores': indicadores, 'graficos': dados_graficos, 'meses': meses_header + ['TOTAL'] }
 
 # --- Rotas da Aplicação ---
+
+# **INÍCIO DA CORREÇÃO CRÍTICA**
+# Garante que a sessão do banco de dados seja fechada após cada requisição.
+# Isso é crucial para a estabilidade em produção.
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db.session.remove()
+# **FIM DA CORREÇÃO CRÍTICA**
+
 @app.route('/')
 def index():
     if 'user_id' not in session: return redirect(url_for('login'))
@@ -195,7 +199,6 @@ def calcular_route():
         logging.error(f"Erro na rota /calcular: {e}", exc_info=True)
         return jsonify({'error': 'Ocorreu um erro interno ao processar o cálculo.'}), 500
 
-# Demais rotas de autenticação (login, register, etc.)
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -226,8 +229,8 @@ def register():
             return redirect(url_for('payment'))
         except Exception as e:
             db.session.rollback()
-            logging.error(f"Erro no registro: {e}")
-            return render_template('register.html', error='Erro ao criar conta.')
+            logging.error(f"Erro no registro: {e}", exc_info=True)
+            return render_template('register.html', error='Erro ao criar conta. Tente novamente.')
     return render_template('register.html')
 
 @app.route('/payment')
@@ -246,7 +249,7 @@ def process_payment():
         return jsonify({'success': True, 'redirect_url': url_for('index')})
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Erro no pagamento: {e}")
+        logging.error(f"Erro no pagamento: {e}", exc_info=True)
         return jsonify({'success': False}), 500
 
 @app.route('/subscription_info')
@@ -265,8 +268,10 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+# **INÍCIO DA CORREÇÃO CRÍTICA**
+# Removido o `db.create_all()` do escopo de execução principal.
+# Isso deve ser executado manualmente no servidor.
+# if __name__ == '__main__':
+#     port = int(os.environ.get('PORT', 5000))
+#     app.run(host='0.0.0.0', port=port, debug=True)
+# **FIM DA CORREÇÃO CRÍTICA**
