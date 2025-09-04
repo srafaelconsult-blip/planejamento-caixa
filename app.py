@@ -291,12 +291,10 @@ class PlanejamentoCaixa:
                 # Dados com valores
                 valores_formatados = []
                 for i, valor in enumerate(values):
-                    if i < self.num_meses:
-                        # Valores mensais
-                        valores_formatados.append(f"R$ {valor:,.0f}" if isinstance(valor, (int, float)) else valor)
+                    if isinstance(valor, (int, float)):
+                        valores_formatados.append(f"R$ {valor:,.0f}")
                     else:
-                        # Valor total (último elemento)
-                        valores_formatados.append(f"R$ {valor:,.0f}" if isinstance(valor, (int, float)) else valor)
+                        valores_formatados.append(valor)
                 
                 resultados_formatados.append([key] + valores_formatados)
         
@@ -427,6 +425,8 @@ def process_payment():
         
         user = User.query.get(session['user_id'])
         if not user:
+                   user = User.query.get(session['user_id'])
+        if not user:
             return jsonify({'success': False, 'message': 'Usuário não encontrado'})
         
         user.add_subscription_days(30)
@@ -447,4 +447,60 @@ def check_subscription():
     if 'user_id' not in session:
         return jsonify({'active': False})
     
-    user = User.query.get(session['user_id']
+    user = User.query.get(session['user_id'])
+    if not user:
+        return jsonify({'active': False})
+    
+    return jsonify({'active': user.has_active_subscription()})
+
+@app.route('/subscription_info')
+def subscription_info():
+    if 'user_id' not in session:
+        return jsonify({'active': False})
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        return jsonify({'active': False})
+    
+    return jsonify({
+        'active': user.has_active_subscription(),
+        'end_date': user.subscription_end.isoformat() if user.subscription_end else None
+    })
+
+@app.route('/logout', methods=['GET'])
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('login'))
+
+@app.route('/calcular', methods=['POST'])
+def calcular():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Usuário não autenticado'}), 401
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        return jsonify({'error': 'Usuário não encontrado'}), 401
+    
+    if not user.has_active_subscription():
+        return jsonify({
+            'error': 'Assinatura expirada',
+            'redirect_url': '/payment'
+        }), 403
+    
+    try:
+        dados = request.get_json()
+        planejamento = PlanejamentoCaixa()
+        resultados = planejamento.calcular(dados)
+        return jsonify(resultados)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+# Criar tabelas do banco de dados
+print("🔄 Criando tabelas do banco de dados...")
+with app.app_context():
+    db.create_all()
+    print("✅ Tabelas criadas com sucesso!")
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
