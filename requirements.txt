@@ -1,8 +1,7 @@
-# requirements.txt
-Flask
-SQLAlchemy
-psycopg2-binary
-gunicorn
-Werkzeug
-numpy
-pandas
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Werkzeug==2.3.7
+psycopg2-binary==2.9.7
+pandas==2.0.3
+numpy==1.24.3
+gunicorn==21.2.0
