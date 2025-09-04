@@ -118,6 +118,14 @@ class PlanejamentoCaixa:
                 if mes_recebimento < self.num_meses:
                     self.duplicatas_receber[parcela_idx][mes_recebimento] += valor_parcelado
         
+        self.total_recebimentos = []
+        for mes in range(self.num_meses):
+            total = self.vendas_vista[mes]
+            for p in range(n_parcelas):
+                total += self.duplicatas_receber[p][mes]
+            total += self.contas_receber_anteriores[mes]
+            self.total_recebimentos.append(total)
+        
         # 3. Comissões
         self.comissoes_mes = [
             venda * self.setup['comissoes'] 
@@ -185,9 +193,12 @@ class PlanejamentoCaixa:
         # 7. Saldo operacional
         self.saldo_operacional = []
         for mes in range(self.num_meses):
-            recebimentos = self.vendas_vista[mes] + sum(self.duplicatas_receber[p][mes] for p in range(n_parcelas)) + self.contas_receber_anteriores[mes]
-            despesas = self.total_comissoes[mes] + self.total_pagamento_compras[mes] + self.desp_variaveis[mes] + self.desp_fixas[mes]
-            self.saldo_operacional.append(recebimentos - despesas)
+            saldo = (self.total_recebimentos[mes] - 
+                    self.total_comissoes[mes] - 
+                    self.total_pagamento_compras[mes] - 
+                    self.desp_variaveis[mes] - 
+                    self.desp_fixas[mes])
+            self.saldo_operacional.append(saldo)
         
         # 8. Saldo final de caixa
         self.saldo_final_caixa = [self.saldo_operacional[0]]
@@ -198,127 +209,93 @@ class PlanejamentoCaixa:
     
     def gerar_resultados(self):
         meses = [f'Mês {i+1}' for i in range(self.num_meses)] + ['TOTAL']
+        resultados_formatados = {}
+        
+        # ORDEM EXATA SOLICITADA
+        resultados_formatados['Previsão das Vendas'] = [f"R$ {x:,.0f}" for x in self.previsao_vendas] + [f"R$ {sum(self.previsao_vendas):,.0f}"]
+        resultados_formatados[''] = [''] * (self.num_meses + 1)
+        
+        resultados_formatados['Escalonamento das Vendas com Plus'] = [f"R$ {x:,.0f}" for x in self.vendas_escalonadas] + [f"R$ {sum(self.vendas_escalonadas):,.0f}"]
+        resultados_formatados['  '] = [''] * (self.num_meses + 1)
+        
+        resultados_formatados['Recebimento de vendas à vista'] = [f"R$ {x:,.0f}" for x in self.vendas_vista] + [f"R$ {sum(self.vendas_vista):,.0f}"]
+        resultados_formatados['   '] = [''] * (self.num_meses + 1)
+        
         n_parcelas = int(self.setup['vendas_parcelamento'])
-        n_parcelas_comissoes = 4
-        n_parcelas_compras = int(self.setup['compras_parcelamento'])
-        
-        # Calcular totais parcelados
-        contas_receber_parcelado = [0] * self.num_meses
         for p in range(n_parcelas):
+            parcelas = []
             for mes in range(self.num_meses):
-                contas_receber_parcelado[mes] += self.duplicatas_receber[p][mes]
+                parcelas.append(self.duplicatas_receber[p][mes])
+            resultados_formatados[f'{p+1}º mês duplicatas a receber'] = [f"R$ {x:,.0f}" for x in parcelas] + [f"R$ {sum(parcelas):,.0f}"]
         
-        comissoes_parceladas = [0] * self.num_meses
-        for p in range(n_parcelas_comissoes):
-            for mes in range(self.num_meses):
-                comissoes_parceladas[mes] += self.comissoes_pagar[p][mes]
-        
-        fornecedores_parcelados = [0] * self.num_meses
-        for p in range(n_parcelas_compras):
-            for mes in range(self.num_meses):
-                fornecedores_parcelados[mes] += self.duplicatas_pagar[p][mes]
+        resultados_formatados['    '] = [''] * (self.num_meses + 1)
+        resultados_formatados['Contas a receber anteriores'] = [f"R$ {x:,.0f}" for x in self.contas_receber_anteriores] + [f"R$ {sum(self.contas_receber_anteriores):,.0f}"]
+        resultados_formatados['     '] = [''] * (self.num_meses + 1)
         
         comissoes_vista = [venda * self.setup['comissoes'] * 0.3 for venda in self.vendas_escalonadas]
+        resultados_formatados['Pagamento de comissões à vista'] = [f"R$ {x:,.0f}" for x in comissoes_vista] + [f"R$ {sum(comissoes_vista):,.0f}"]
+        resultados_formatados['      '] = [''] * (self.num_meses + 1)
         
-        # ORDEM EXATA SOLICITADA - usando lista de arrays
-        resultados_ordenados = [
-            # 1. Escalonamento das Vendas com Plus
-            ['Escalonamento das Vendas com Plus'] + self.vendas_escalonadas + [sum(self.vendas_escalonadas)],
-            [''] + [''] * (self.num_meses + 1),  # Linha em branco
-            
-            # 2. Recebimento de vendas à vista
-            ['Recebimento de vendas à vista'] + self.vendas_vista + [sum(self.vendas_vista)],
-            [' '] + [''] * (self.num_meses + 1),  # Linha em branco
-            
-            # 3. Contas a receber Parcelado
-            ['Contas a receber Parcelado'] + contas_receber_parcelado + [sum(contas_receber_parcelado)],
-            ['  '] + [''] * (self.num_meses + 1),  # Linha em branco
-            
-            # 4. Contas a receber anteriores
-            ['Contas a receber anteriores'] + self.contas_receber_anteriores + [sum(self.contas_receber_anteriores)],
-            ['   '] + [''] * (self.num_meses + 1),  # Linha em branco
-            
-            # 5. Pagamento de comissões à vista
-            ['Pagamento de comissões à vista'] + comissoes_vista + [sum(comissoes_vista)],
-            ['    '] + [''] * (self.num_meses + 1),  # Linha em branco
-            
-            # 6. Comissões parceladas
-            ['Comissões parceladas'] + comissoes_parceladas + [sum(comissoes_parceladas)],
-            ['     '] + [''] * (self.num_meses + 1),  # Linha em branco
-            
-            # 7. Comissões a pagar anteriores
-            ['Comissões a pagar anteriores'] + self.comissoes_anteriores + [sum(self.comissoes_anteriores)],
-            ['      '] + [''] * (self.num_meses + 1),  # Linha em branco
-            
-            # 8. Total de Comissões a pagar
-            ['Total de Comissões a pagar'] + self.total_comissoes + [sum(self.total_comissoes)],
-            ['       '] + [''] * (self.num_meses + 1),  # Linha em branco
-            
-            # 9. Compras à vista
-            ['Compras à vista'] + self.compras_vista + [sum(self.compras_vista)],
-            ['        '] + [''] * (self.num_meses + 1),  # Linha em branco
-            
-            # 10. Fornecedores Parcelados
-            ['Fornecedores Parcelados'] + fornecedores_parcelados + [sum(fornecedores_parcelados)],
-            ['         '] + [''] * (self.num_meses + 1),  # Linha em branco
-            
-            # 11. Total Pagamento de Fornecedores
-            ['Total Pagamento de Fornecedores'] + self.total_pagamento_compras + [sum(self.total_pagamento_compras)],
-            ['          '] + [''] * (self.num_meses + 1),  # Linha em branco
-            
-            # 12. Despesas variáveis
-            ['Despesas variáveis'] + self.desp_variaveis + [sum(self.desp_variaveis)],
-            # 13. Despesas fixas
-            ['Despesas fixas'] + self.desp_fixas + [sum(self.desp_fixas)],
-            ['           '] + [''] * (self.num_meses + 1),  # Linha em branco
-            
-            # 14. SALDO OPERACIONAL
-            ['SALDO OPERACIONAL'] + self.saldo_operacional + [sum(self.saldo_operacional)],
-            # 15. SALDO FINAL DE CAIXA PREVISTO
-            ['SALDO FINAL DE CAIXA PREVISTO'] + self.saldo_final_caixa + [self.saldo_final_caixa[-1]]
-        ]
+        n_parcelas_comissoes = 4
+        for p in range(n_parcelas_comissoes):
+            parcelas = []
+            for mes in range(self.num_meses):
+                parcelas.append(self.comissoes_pagar[p][mes])
+            resultados_formatados[f'{p+1}º mês comissões a pagar'] = [f"R$ {x:,.0f}" for x in parcelas] + [f"R$ {sum(parcelas):,.0f}"]
         
-        # Formatando os resultados
-        resultados_formatados = []
-        for linha in resultados_ordenados:
-            key = linha[0]
-            values = linha[1:]
-            
-            if key.strip() == '':
-                # Linha em branco
-                resultados_formatados.append([key] + [''] * (self.num_meses + 1))
-            else:
-                # Dados com valores
-                valores_formatados = []
-                for i, valor in enumerate(values):
-                    if isinstance(valor, (int, float)):
-                        valores_formatados.append(f"R$ {valor:,.0f}")
-                    else:
-                        valores_formatados.append(valor)
-                
-                resultados_formatados.append([key] + valores_formatados)
+        resultados_formatados['       '] = [''] * (self.num_meses + 1)
+        resultados_formatados['Comissões a pagar anteriores'] = [f"R$ {x:,.0f}" for x in self.comissoes_anteriores] + [f"R$ {sum(self.comissoes_anteriores):,.0f}"]
+        resultados_formatados['        '] = [''] * (self.num_meses + 1)
+        resultados_formatados['Total de Comissões a pagar'] = [f"R$ {x:,.0f}" for x in self.total_comissoes] + [f"R$ {sum(self.total_comissoes):,.0f}"]
+        resultados_formatados['         '] = [''] * (self.num_meses + 1)
         
-        # Calcular totais para indicadores
-        total_recebimentos = sum(self.vendas_vista) + sum(contas_receber_parcelado) + sum(self.contas_receber_anteriores)
-        total_despesas = sum(self.total_comissoes) + sum(self.total_pagamento_compras) + sum(self.desp_variaveis) + sum(self.desp_fixas)
+        resultados_formatados['Compras à vista'] = [f"R$ {x:,.0f}" for x in self.compras_vista] + [f"R$ {sum(self.compras_vista):,.0f}"]
+        resultados_formatados['          '] = [''] * (self.num_meses + 1)
+        
+        n_parcelas_compras = int(self.setup['compras_parcelamento'])
+        for p in range(n_parcelas_compras):
+            parcelas = []
+            for mes in range(self.num_meses):
+                parcelas.append(self.duplicatas_pagar[p][mes])
+            resultados_formatados[f'{p+1}º mês fornecedores a pagar'] = [f"R$ {x:,.0f}" for x in parcelas] + [f"R$ {sum(parcelas):,.0f}"]
+        
+        resultados_formatados['           '] = [''] * (self.num_meses + 1)
+        resultados_formatados['Contas a pagar anteriores de fornecedores'] = [f"R$ {x:,.0f}" for x in self.contas_pagar_anteriores] + [f"R$ {sum(self.contas_pagar_anteriores):,.0f}"]
+        resultados_formatados['            '] = [''] * (self.num_meses + 1)
+        resultados_formatados['Total Pagamento de Fornecedores'] = [f"R$ {x:,.0f}" for x in self.total_pagamento_compras] + [f"R$ {sum(self.total_pagamento_compras):,.0f}"]
+        resultados_formatados['             '] = [''] * (self.num_meses + 1)
+        
+        resultados_formatados['Despesas variáveis'] = [f"R$ {x:,.0f}" for x in self.desp_variaveis] + [f"R$ {sum(self.desp_variaveis):,.0f}"]
+        resultados_formatados['Despesas fixas'] = [f"R$ {x:,.0f}" for x in self.desp_fixas] + [f"R$ {sum(self.desp_fixas):,.0f}"]
+        resultados_formatados['              '] = [''] * (self.num_meses + 1)
+        
+        resultados_formatados['SALDO OPERACIONAL'] = [f"R$ {x:,.0f}" for x in self.saldo_operacional] + [f"R$ {sum(self.saldo_operacional):,.0f}"]
+        resultados_formatados['SALDO FINAL DE CAIXA PREVISTO'] = [f"R$ {x:,.0f}" for x in self.saldo_final_caixa] + [f"R$ {self.saldo_final_caixa[-1]:,.0f}"]
         
         indicadores = {
             'Total de Vendas': f"R$ {sum(self.previsao_vendas):,.0f}",
-            'Total de Recebimentos': f"R$ {total_recebimentos:,.0f}",
-            'Total de Despesas': f"R$ {total_despesas:,.0f}",
+            'Total de Recebimentos': f"R$ {sum(self.total_recebimentos):,.0f}",
+            'Total de Despesas': f"R$ {sum(self.total_comissoes) + sum(self.total_pagamento_compras) + sum(self.desp_variaveis) + sum(self.desp_fixas):,.0f}",
             'Saldo Final Acumulado': f"R$ {self.saldo_final_caixa[-1]:,.0f}",
-            'Margem Líquida': f"{(sum(self.saldo_operacional) / total_recebimentos) * 100:.1f}%" if total_recebimentos > 0 else "0%"
+            'Margem Líquida': f"{(sum(self.saldo_operacional) / sum(self.total_recebimentos)) * 100:.1f}%" if sum(self.total_recebimentos) > 0 else "0%"
         }
         
         dados_graficos = {
-            'meses': [f'Mês {i+1}' for i in range(self.num_meses)],
-            'saldo_final_caixa': self.saldo_final_caixa,
-            'receitas': [self.vendas_vista[i] + contas_receber_parcelado[i] + self.contas_receber_anteriores[i] for i in range(self.num_meses)],
-            'despesas': [self.total_comissoes[i] + self.total_pagamento_compras[i] + self.desp_variaveis[i] + self.desp_fixas[i] for i in range(self.num_meses)]
+            'meses': [f'Mês {i+1}' for i in range(min(5, self.num_meses))],
+            'saldo_final_caixa': self.saldo_final_caixa[:5],
+            'receitas': self.total_recebimentos[:5],
+            'despesas': [
+                a + b + c + d for a, b, c, d in zip(
+                    self.total_comissoes[:5], 
+                    self.total_pagamento_compras[:5], 
+                    self.desp_variaveis[:5], 
+                    self.desp_fixas[:5]
+                )
+            ]
         }
         
         return {
-            'resultados': resultados_formatados,  # Agora é uma lista ordenada
+            'resultados': resultados_formatados,
             'indicadores': indicadores,
             'graficos': dados_graficos,
             'meses': meses
@@ -424,8 +401,6 @@ def process_payment():
             return jsonify({'success': False, 'message': 'Usuário não autenticado'})
         
         user = User.query.get(session['user_id'])
-        if not user:
-                   user = User.query.get(session['user_id'])
         if not user:
             return jsonify({'success': False, 'message': 'Usuário não encontrado'})
         
