@@ -291,10 +291,12 @@ class PlanejamentoCaixa:
                 # Dados com valores
                 valores_formatados = []
                 for i, valor in enumerate(values):
-                    if isinstance(valor, (int, float)):
-                        valores_formatados.append(f"R$ {valor:,.0f}")
+                    if i < self.num_meses:
+                        # Valores mensais
+                        valores_formatados.append(f"R$ {valor:,.0f}" if isinstance(valor, (int, float)) else valor)
                     else:
-                        valores_formatados.append(valor)
+                        # Valor total (último elemento)
+                        valores_formatados.append(f"R$ {valor:,.0f}" if isinstance(valor, (int, float)) else valor)
                 
                 resultados_formatados.append([key] + valores_formatados)
         
@@ -425,4 +427,24 @@ def process_payment():
         
         user = User.query.get(session['user_id'])
         if not user:
-           
+            return jsonify({'success': False, 'message': 'Usuário não encontrado'})
+        
+        user.add_subscription_days(30)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Pagamento processado com sucesso!',
+            'redirect_url': url_for('index')
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Erro no servidor: {str(e)}'})
+
+@app.route('/check_subscription')
+def check_subscription():
+    if 'user_id' not in session:
+        return jsonify({'active': False})
+    
+    user = User.query.get(session['user_id']
