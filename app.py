@@ -60,7 +60,7 @@ class User(db.Model):
             self.subscription_end = datetime.utcnow() + timedelta(days=days)
 
 class PlanejamentoCaixa:
-    def __init__(self, num_meses=5):
+    def __init__(self, num_meses=6):  # Alterado para 6 meses
         self.num_meses = num_meses
         self.setup = {
             'vendas_vista': 0.3,
@@ -78,6 +78,7 @@ class PlanejamentoCaixa:
         self.comissoes_anteriores = [0] * self.num_meses
         self.contas_pagar_anteriores = [0] * self.num_meses
         self.desp_fixas_manuais = [0] * self.num_meses
+        self.desp_variaveis_manuais = [0]  # Apenas para o primeiro mês
         
     def calcular(self, dados):
         for key in self.setup:
@@ -94,6 +95,8 @@ class PlanejamentoCaixa:
             self.contas_pagar_anteriores = [float(x) for x in dados['contas_pagar_anteriores']]
         if 'desp_fixas_manuais' in dados:
             self.desp_fixas_manuais = [float(x) for x in dados['desp_fixas_manuais']]
+        if 'desp_variaveis_manuais' in dados:
+            self.desp_variaveis_manuais = [float(x) for x in dados['desp_variaveis_manuais'][:1]]  # Apenas primeiro mês
         
         # 1. Escalonamento das Vendas com Plus
         plus = self.setup['plus_vendas']
@@ -114,7 +117,7 @@ class PlanejamentoCaixa:
         for mes in range(self.num_meses):
             valor_parcelado = (self.vendas_escalonadas[mes] - self.vendas_vista[mes]) / n_parcelas
             for parcela_idx in range(n_parcelas):
-                mes_recebimento = mes + parcela_idx
+                mes_recebimento = mes + parcela_idx + 1  # Começa no próximo mês
                 if mes_recebimento < self.num_meses:
                     self.duplicatas_receber[parcela_idx][mes_recebimento] += valor_parcelado
         
@@ -132,7 +135,7 @@ class PlanejamentoCaixa:
             for venda in self.vendas_escalonadas
         ]
         
-        # Comissões a pagar (parceladas)
+        # Comissões a pagar (parceladas, começam no próximo mês)
         n_parcelas_comissoes = 4
         self.comissoes_pagar = [[0] * self.num_meses for _ in range(n_parcelas_comissoes)]
         
@@ -140,7 +143,7 @@ class PlanejamentoCaixa:
             valor_comissao = self.comissoes_mes[mes]
             valor_parcelado = valor_comissao / n_parcelas_comissoes
             for parcela_idx in range(n_parcelas_comissoes):
-                mes_pagamento = mes + parcela_idx
+                mes_pagamento = mes + parcela_idx + 1  # Começa no próximo mês
                 if mes_pagamento < self.num_meses:
                     self.comissoes_pagar[parcela_idx][mes_pagamento] += valor_parcelado
         
@@ -169,7 +172,7 @@ class PlanejamentoCaixa:
         for mes in range(self.num_meses):
             valor_parcelado = (self.compras_planejadas[mes] - self.compras_vista[mes]) / n_parcelas_compras
             for parcela_idx in range(n_parcelas_compras):
-                mes_pagamento = mes + parcela_idx
+                mes_pagamento = mes + parcela_idx + 1  # Começa no próximo mês
                 if mes_pagamento < self.num_meses:
                     self.duplicatas_pagar[parcela_idx][mes_pagamento] += valor_parcelado
         
@@ -182,10 +185,11 @@ class PlanejamentoCaixa:
             self.total_pagamento_compras.append(total)
         
         # 5. Despesas variáveis
-        self.desp_variaveis = [
-            venda * self.setup['desp_variaveis_impostos'] 
-            for venda in self.vendas_escalonadas
-        ]
+        self.desp_variaveis = [0] * self.num_meses
+        if self.desp_variaveis_manuais:
+            self.desp_variaveis[0] = self.desp_variaveis_manuais[0]  # Manual apenas para o primeiro mês
+        for mes in range(1, self.num_meses):
+            self.desp_variaveis[mes] = self.vendas_escalonadas[mes - 1] * self.setup['desp_variaveis_impostos']  # Referente ao mês anterior
         
         # 6. Despesas fixas
         self.desp_fixas = self.desp_fixas_manuais
@@ -210,39 +214,28 @@ class PlanejamentoCaixa:
     def gerar_resultados(self):
         meses = [f'Mês {i+1}' for i in range(self.num_meses)] + ['TOTAL']
         
-        # Criar lista ordenada exatamente como solicitado
+        # Criar lista ordenada conforme solicitado
         resultados_ordenados = [
-            ('Previsão das Vendas', self.previsao_vendas),
-            ('', []),  # Linha em branco
             ('Escalonamento das Vendas com Plus', self.vendas_escalonadas),
             ('', []),  # Linha em branco
             ('Recebimento de vendas à vista', self.vendas_vista),
             ('', []),  # Linha em branco
         ]
         
-        # Adicionar Contas a receber Parcelado
+        # Contas a receber Parcelado
         n_parcelas = int(self.setup['vendas_parcelamento'])
         for p in range(n_parcelas):
-            parcelas = []
-            for mes in range(self.num_meses):
-                parcelas.append(self.duplicatas_receber[p][mes])
+            parcelas = [self.duplicatas_receber[p][mes] for mes in range(self.num_meses)]
             resultados_ordenados.append((f'{p+1}º mês duplicatas a receber', parcelas))
         
         resultados_ordenados.append(('', []))  # Linha em branco
         resultados_ordenados.append(('Contas a receber anteriores', self.contas_receber_anteriores))
         resultados_ordenados.append(('', []))  # Linha em branco
         
-        # Comissões à vista
-        comissoes_vista = [venda * self.setup['comissoes'] * 0.3 for venda in self.vendas_escalonadas]
-        resultados_ordenados.append(('Pagamento de comissões à vista', comissoes_vista))
-        resultados_ordenados.append(('', []))  # Linha em branco
-        
         # Comissões parceladas
         n_parcelas_comissoes = 4
         for p in range(n_parcelas_comissoes):
-            parcelas = []
-            for mes in range(self.num_meses):
-                parcelas.append(self.comissoes_pagar[p][mes])
+            parcelas = [self.comissoes_pagar[p][mes] for mes in range(self.num_meses)]
             resultados_ordenados.append((f'{p+1}º mês comissões a pagar', parcelas))
         
         resultados_ordenados.append(('', []))  # Linha em branco
@@ -257,9 +250,7 @@ class PlanejamentoCaixa:
         # Fornecedores Parcelados
         n_parcelas_compras = int(self.setup['compras_parcelamento'])
         for p in range(n_parcelas_compras):
-            parcelas = []
-            for mes in range(self.num_meses):
-                parcelas.append(self.duplicatas_pagar[p][mes])
+            parcelas = [self.duplicatas_pagar[p][mes] for mes in range(self.num_meses)]
             resultados_ordenados.append((f'{p+1}º mês fornecedores a pagar', parcelas))
         
         resultados_ordenados.append(('', []))  # Linha em branco
@@ -277,16 +268,10 @@ class PlanejamentoCaixa:
         resultados_formatados = {}
         for key, values in resultados_ordenados:
             if key == '':
-                # Linha em branco
                 resultados_formatados[key] = [''] * (self.num_meses + 1)
             else:
-                # Dados com valores
                 if values:
-                    if key in ['SALDO FINAL DE CAIXA PREVISTO']:
-                        # Para saldo final, mostrar apenas o último valor no total
-                        total = values[-1] if values else 0
-                    else:
-                        total = sum(values) if len(values) == self.num_meses else values[-1] if values else 0
+                    total = sum(values) if len(values) == self.num_meses else values[-1]
                     valores_formatados = [f"R$ {x:,.0f}" for x in values] + [f"R$ {total:,.0f}"]
                 else:
                     valores_formatados = [''] * (self.num_meses + 1)
@@ -374,11 +359,10 @@ def register():
         email = request.form.get('email')
         password = request.form.get('password')
         
-        # Validação crítica
         if not email or not password:
             return render_template('register.html', error='Email e senha são obrigatórios')
         
-        if not validate_email(email):
+        if not validate chair_email(email):
             return render_template('register.html', error='Email inválido')
         
         if User.query.filter_by(email=email).first():
