@@ -121,14 +121,14 @@
             box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
         }
         
-        .vendas-mes {
+        .vendas-mes, .contas-receber-anteriores, .comissoes-anteriores, .contas-pagar-anteriores {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             margin-bottom: 15px;
         }
         
-        .vendas-mes input {
+        .vendas-mes input, .contas-receber-anteriores input, .comissoes-anteriores input, .contas-pagar-anteriores input {
             text-align: right;
         }
         
@@ -302,7 +302,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>📊 Calculadora de Planejamento de Caixa - 5 Meses</h1>
+            <h1>📊 Calculadora de Planejamento de Caixa - 6 Meses</h1>
             <div class="user-info">
                 <span id="user-email">Usuário</span>
                 <button class="btn btn-danger" onclick="logout()">Sair</button>
@@ -334,6 +334,94 @@
                     <div class="form-group">
                         <label for="venda_mes5">Mês 5 (R$):</label>
                         <input type="number" id="venda_mes5" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="venda_mes6">Mês 6 (R$):</label>
+                        <input type="number" id="venda_mes6" step="100" min="0" value="0">
+                    </div>
+                </div>
+                
+                <div class="section-title">Contas a Receber Anteriores por Mês</div>
+                <div class="contas-receber-anteriores">
+                    <div class="form-group">
+                        <label for="receber_anteriores_mes1">Mês 1 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes1" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="receber_anteriores_mes2">Mês 2 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes2" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="receber_anteriores_mes3">Mês 3 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes3" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="receber_anteriores_mes4">Mês 4 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes4" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="receber_anteriores_mes5">Mês 5 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes5" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="receber_anteriores_mes6">Mês 6 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes6" step="100" min="0" value="0">
+                    </div>
+                </div>
+                
+                <div class="section-title">Comissões a Pagar Anteriores por Mês</div>
+                <div class="comissoes-anteriores">
+                    <div class="form-group">
+                        <label for="comissoes_anteriores_mes1">Mês 1 (R$):</label>
+                        <input type="number" id="comissoes_anteriores_mes1" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="comissoes_anteriores_mes2">Mês 2 (R$):</label>
+                        <input type="number" id="comissoes_anteriores_mes2" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="comissoes_anteriores_mes3">Mês 3 (R$):</label>
+                        <input type="number" id="comissoes_anteriores_mes3" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="comissoes_anteriores_mes4">Mês 4 (R$):</label>
+                        <input type="number" id="comissoes_anteriores_mes4" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="comissoes_anteriores_mes5">Mês 5 (R$):</label>
+                        <input type="number" id="comissoes_anteriores_mes5" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="comissoes_anteriores_mes6">Mês 6 (R$):</label>
+                        <input type="number" id="comissoes_anteriores_mes6" step="100" min="0" value="0">
+                    </div>
+                </div>
+                
+                <div class="section-title">Contas a Pagar Anteriores por Mês</div>
+                <div class="contas-pagar-anteriores">
+                    <div class="form-group">
+                        <label for="pagar_anteriores_mes1">Mês 1 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes1" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="pagar_anteriores_mes2">Mês 2 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes2" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="pagar_anteriores_mes3">Mês 3 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes3" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="pagar_anteriores_mes4">Mês 4 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes4" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="pagar_anteriores_mes5">Mês 5 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes5" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="pagar_anteriores_mes6">Mês 6 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes6" step="100" min="0" value="0">
                     </div>
                 </div>
                 
@@ -385,8 +473,36 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="desp_fixas">Despesas Fixas Mensais (R$):</label>
-                    <input type="number" id="desp_fixas" value="438">
+                    <label for="desp_variaveis_m1">Despesas Variáveis Mês 1 (R$):</label>
+                    <input type="number" id="desp_variaveis_m1" step="100" min="0" value="0">
+                </div>
+                
+                <div class="section-title">Despesas Fixas por Mês</div>
+                <div class="vendas-mes">
+                    <div class="form-group">
+                        <label for="desp_fixas_mes1">Mês 1 (R$):</label>
+                        <input type="number" id="desp_fixas_mes1" step="100" min="0" value="438">
+                    </div>
+                    <div class="form-group">
+                        <label for="desp_fixas_mes2">Mês 2 (R$):</label>
+                        <input type="number" id="desp_fixas_mes2" step="100" min="0" value="438">
+                    </div>
+                    <div class="form-group">
+                        <label for="desp_fixas_mes3">Mês 3 (R$):</label>
+                        <input type="number" id="desp_fixas_mes3" step="100" min="0" value="438">
+                    </div>
+                    <div class="form-group">
+                        <label for="desp_fixas_mes4">Mês 4 (R$):</label>
+                        <input type="number" id="desp_fixas_mes4" step="100" min="0" value="438">
+                    </div>
+                    <div class="form-group">
+                        <label for="desp_fixas_mes5">Mês 5 (R$):</label>
+                        <input type="number" id="desp_fixas_mes5" step="100" min="0" value="438">
+                    </div>
+                    <div class="form-group">
+                        <label for="desp_fixas_mes6">Mês 6 (R$):</label>
+                        <input type="number" id="desp_fixas_mes6" step="100" min="0" value="438">
+                    </div>
                 </div>
                 
                 <button class="calculate-btn" onclick="calcular()">
@@ -396,9 +512,9 @@
             
             <div class="content">
                 <div id="loading" class="loading">
-                    <h2>📈 Calculadora de Planejamento de Caixa - 5 Meses</h2>
+                    <h2>📈 Calculadora de Planejamento de Caixa - 6 Meses</h2>
                     <p>Preencha as vendas mensais e as configurações ao lado e clique em "Calcular Projeção" para gerar sua análise financeira.</p>
-                    <p>Esta ferramenta irá projetar seu fluxo de caixa para os próximos 5 meses.</p>
+                    <p>Esta ferramenta irá projetar seu fluxo de caixa para os próximos 6 meses.</p>
                 </div>
                 
                 <div id="results" class="results-section">
@@ -412,17 +528,17 @@
                     
                     <div class="graficos">
                         <div class="grafico-container">
-                            <div class="result-section-title">📊 Saldo de Caixa (5 meses)</div>
+                            <div class="result-section-title">📊 Saldo de Caixa (6 meses)</div>
                             <canvas id="graficoSaldo"></canvas>
                         </div>
                         <div class="grafico-container">
-                            <div class="result-section-title">📈 Receitas vs Despesas (5 meses)</div>
+                            <div class="result-section-title">📈 Receitas vs Despesas (6 meses)</div>
                             <canvas id="graficoReceitasDespesas"></canvas>
                         </div>
                     </div>
                     
                     <div class="tabela-container">
-                        <div class="result-section-title">📋 Resultados Detalhados - Projeção 5 Meses</div>
+                        <div class="result-section-title">📋 Resultados Detalhados - Projeção 6 Meses</div>
                         <div id="tabela-resultados">
                             <!-- Tabela será preenchida via JavaScript -->
                         </div>
@@ -459,9 +575,16 @@
             }
         }
         
-        // Obter email do usuário (simulado)
-        function getUserEmail() {
-            return 'usuario@exemplo.com'; // Em uma aplicação real, isso viria do backend
+        // Obter email do usuário
+        async function getUserEmail() {
+            try {
+                const response = await fetch('/user_info'); // Supondo que você adicione uma rota para isso
+                const data = await response.json();
+                return data.email || 'usuario@exemplo.com';
+            } catch (error) {
+                console.error('Erro ao obter email do usuário:', error);
+                return 'usuario@exemplo.com';
+            }
         }
         
         // Logout
@@ -482,19 +605,65 @@
             const calculateBtn = document.querySelector('.calculate-btn');
             
             // Mostrar loading
-            loading.innerHTML = '<h2>⏳ Calculando... Aguarde.</h2><p>Processando sua projeção financeira para 5 meses...</p>';
+            loading.innerHTML = '<h2>⏳ Calculando... Aguarde.</h2><p>Processando sua projeção financeira para 6 meses...</p>';
             errorMessage.style.display = 'none';
             calculateBtn.disabled = true;
             calculateBtn.textContent = 'Calculando...';
             
             try {
-                // Coletar vendas dos 5 meses
+                // Coletar vendas dos 6 meses
                 const vendasMensais = [
                     parseFloat(document.getElementById('venda_mes1').value) || 0,
                     parseFloat(document.getElementById('venda_mes2').value) || 0,
                     parseFloat(document.getElementById('venda_mes3').value) || 0,
                     parseFloat(document.getElementById('venda_mes4').value) || 0,
-                    parseFloat(document.getElementById('venda_mes5').value) || 0
+                    parseFloat(document.getElementById('venda_mes5').value) || 0,
+                    parseFloat(document.getElementById('venda_mes6').value) || 0
+                ];
+                
+                // Coletar contas a receber anteriores
+                const contasReceberAnteriores = [
+                    parseFloat(document.getElementById('receber_anteriores_mes1').value) || 0,
+                    parseFloat(document.getElementById('receber_anteriores_mes2').value) || 0,
+                    parseFloat(document.getElementById('receber_anteriores_mes3').value) || 0,
+                    parseFloat(document.getElementById('receber_anteriores_mes4').value) || 0,
+                    parseFloat(document.getElementById('receber_anteriores_mes5').value) || 0,
+                    parseFloat(document.getElementById('receber_anteriores_mes6').value) || 0
+                ];
+                
+                // Coletar comissões a pagar anteriores
+                const comissoesAnteriores = [
+                    parseFloat(document.getElementById('comissoes_anteriores_mes1').value) || 0,
+                    parseFloat(document.getElementById('comissoes_anteriores_mes2').value) || 0,
+                    parseFloat(document.getElementById('comissoes_anteriores_mes3').value) || 0,
+                    parseFloat(document.getElementById('comissoes_anteriores_mes4').value) || 0,
+                    parseFloat(document.getElementById('comissoes_anteriores_mes5').value) || 0,
+                    parseFloat(document.getElementById('comissoes_anteriores_mes6').value) || 0
+                ];
+                
+                // Coletar contas a pagar anteriores
+                const contasPagarAnteriores = [
+                    parseFloat(document.getElementById('pagar_anteriores_mes1').value) || 0,
+                    parseFloat(document.getElementById('pagar_anteriores_mes2').value) || 0,
+                    parseFloat(document.getElementById('pagar_anteriores_mes3').value) || 0,
+                    parseFloat(document.getElementById('pagar_anteriores_mes4').value) || 0,
+                    parseFloat(document.getElementById('pagar_anteriores_mes5').value) || 0,
+                    parseFloat(document.getElementById('pagar_anteriores_mes6').value) || 0
+                ];
+                
+                // Coletar despesas fixas por mês
+                const despFixasManuais = [
+                    parseFloat(document.getElementById('desp_fixas_mes1').value) || 0,
+                    parseFloat(document.getElementById('desp_fixas_mes2').value) || 0,
+                    parseFloat(document.getElementById('desp_fixas_mes3').value) || 0,
+                    parseFloat(document.getElementById('desp_fixas_mes4').value) || 0,
+                    parseFloat(document.getElementById('desp_fixas_mes5').value) || 0,
+                    parseFloat(document.getElementById('desp_fixas_mes6').value) || 0
+                ];
+                
+                // Coletar despesas variáveis (apenas mês 1)
+                const despVariaveisManuais = [
+                    parseFloat(document.getElementById('desp_variaveis_m1').value) || 0
                 ];
                 
                 // Coletar dados do formulário
@@ -511,10 +680,11 @@
                         desp_variaveis_impostos: parseFloat(document.getElementById('desp_variaveis_impostos').value)
                     },
                     previsao_vendas: vendasMensais,
-                    contas_receber_anteriores: [0, 0, 0, 0, 0],
-                    comissoes_anteriores: [0, 0, 0, 0, 0],
-                    contas_pagar_anteriores: [0, 0, 0, 0, 0],
-                    desp_fixas_manuais: Array(5).fill(parseFloat(document.getElementById('desp_fixas').value) || 0)
+                    contas_receber_anteriores: contasReceberAnteriores,
+                    comissoes_anteriores: comissoesAnteriores,
+                    contas_pagar_anteriores: contasPagarAnteriores,
+                    desp_fixas_manuais: despFixasManuais,
+                    desp_variaveis_manuais: despVariaveisManuais
                 };
                 
                 // Fazer requisição para o backend
@@ -553,9 +723,9 @@
                 
                 // Restaurar loading inicial
                 loading.innerHTML = `
-                    <h2>📈 Calculadora de Planejamento de Caixa - 5 Meses</h2>
+                    <h2>📈 Calculadora de Planejamento de Caixa - 6 Meses</h2>
                     <p>Preencha as vendas mensais e as configurações ao lado e clique em "Calcular Projeção" para gerar sua análise financeira.</p>
-                    <p>Esta ferramenta irá projetar seu fluxo de caixa para os próximos 5 meses.</p>
+                    <p>Esta ferramenta irá projetar seu fluxo de caixa para os próximos 6 meses.</p>
                 `;
             } finally {
                 calculateBtn.disabled = false;
@@ -605,7 +775,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Evolução do Saldo de Caixa - 5 Meses'
+                            text: 'Evolução do Saldo de Caixa - 6 Meses'
                         }
                     },
                     scales: {
@@ -648,7 +818,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Receitas vs Despesas - 5 Meses'
+                            text: 'Receitas vs Despesas - 6 Meses'
                         }
                     },
                     scales: {
@@ -696,8 +866,8 @@
         }
         
         // Inicializar página
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('user-email').textContent = getUserEmail();
+        document.addEventListener('DOMContentLoaded', async function() {
+            document.getElementById('user-email').textContent = await getUserEmail();
             checkSubscription();
         });
     </script>
