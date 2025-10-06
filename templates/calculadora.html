@@ -463,21 +463,22 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="comissoes">Comissoes (%):</label>
-                    <input type="number" id="comissoes" step="0.01" value="0.0761">
+                    <label for="comissoes">% Comissoes sobre Vendas:</label>
+                    <input type="number" id="comissoes" step="0.0001" min="0" max="1" value="0.0761">
                 </div>
                 
                 <div class="form-group">
-                    <label for="desp_variaveis_impostos">Despesas Variaveis e Impostos (%):</label>
-                    <input type="number" id="desp_variaveis_impostos" step="0.01" value="0.085">
+                    <label for="desp_variaveis_impostos">% Despesas Variaveis e Impostos sobre Vendas:</label>
+                    <input type="number" id="desp_variaveis_impostos" step="0.001" min="0" max="1" value="0.085">
                 </div>
                 
+                <div class="section-title">Despesas Variaveis Manuais (Apenas Mes 1)</div>
                 <div class="form-group">
-                    <label for="desp_variaveis_m1">Despesas Variaveis Mes 1 (R$):</label>
+                    <label for="desp_variaveis_m1">Mes 1 (R$):</label>
                     <input type="number" id="desp_variaveis_m1" step="100" min="0" value="0">
                 </div>
-                
-                <div class="section-title">Despesas Fixas por Mes</div>
+
+                <div class="section-title">Despesas Fixas Manuais por Mes</div>
                 <div class="vendas-mes">
                     <div class="form-group">
                         <label for="desp_fixas_mes1">Mes 1 (R$):</label>
@@ -695,3 +696,108 @@
                 const div = document.createElement('div');
                 div.className = 'indicador';
                 div.innerHTML = `
+                    <h3>${nome}</h3>
+                    <p class="valor">${valor}</p>
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        function exibirGraficos(dadosGraficos) {
+            const ctxSaldo = document.getElementById('graficoSaldo').getContext('2d');
+            if (graficoSaldo) {
+                graficoSaldo.destroy();
+            }
+            graficoSaldo = new Chart(ctxSaldo, {
+                type: 'line',
+                data: {
+                    labels: dadosGraficos.meses,
+                    datasets: [{
+                        label: 'Saldo Final de Caixa',
+                        data: dadosGraficos.saldo_final_caixa,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            const ctxReceitasDespesas = document.getElementById('graficoReceitasDespesas').getContext('2d');
+            if (graficoReceitasDespesas) {
+                graficoReceitasDespesas.destroy();
+            }
+            graficoReceitasDespesas = new Chart(ctxReceitasDespesas, {
+                type: 'bar',
+                data: {
+                    labels: dadosGraficos.meses,
+                    datasets: [
+                        {
+                            label: 'Receitas',
+                            data: dadosGraficos.receitas,
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                        },
+                        {
+                            label: 'Despesas',
+                            data: dadosGraficos.despesas,
+                            backgroundColor: 'rgba(255, 99, 132, 0.6)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            stacked: true
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function exibirTabela(resultados, meses) {
+            const container = document.getElementById('tabela-resultados');
+            container.innerHTML = '';
+
+            let tableHTML = '<table><thead><tr><th>Descricao</th>';
+            meses.forEach(mes => {
+                tableHTML += `<th>${mes}</th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
+
+            for (const [descricao, valores] of Object.entries(resultados)) {
+                if (descricao === '') {
+                    tableHTML += '<tr class="empty-row"><td colspan="' + (meses.length + 1) + '"></td></tr>';
+                } else {
+                    tableHTML += '<tr>';
+                    tableHTML += `<td>${descricao}</td>`;
+                    valores.forEach(valor => {
+                        tableHTML += `<td>${valor}</td>`;
+                    });
+                    tableHTML += '</tr>';
+                }
+            }
+            tableHTML += '</tbody></table>';
+            container.innerHTML = tableHTML;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const userEmail = await getUserEmail();
+            document.getElementById('user-email').textContent = userEmail;
+            checkSubscription();
+        });
+    </script>
+</body>
+</html>
+
