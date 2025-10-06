@@ -3,91 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pagamento - Calculadora Financeira</title>
+    <title>Assinatura</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 500px; margin: 50px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #333; margin-bottom: 30px; }
-        .plan { border: 2px solid #007bff; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
-        .plan h2 { color: #007bff; margin-top: 0; }
-        .price { font-size: 24px; font-weight: bold; color: #28a745; }
-        .features { margin: 20px 0; }
-        .features li { margin-bottom: 10px; }
-        button { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; }
-        button:hover { background: #218838; }
-        .message { text-align: center; margin: 20px 0; padding: 15px; border-radius: 5px; }
-        .success { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .payment-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+        }
+        .payment-container h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .payment-container p {
+            margin-bottom: 20px;
+            color: #555;
+        }
+        .btn-subscribe {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn-subscribe:hover {
+            background-color: #218838;
+        }
+        .subscription-info {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+        .subscription-info strong {
+            color: #333;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+        .success-message {
+            color: green;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Assinatura Premium</h1>
+    <div class="payment-container">
+        <h2>Ativar Assinatura</h2>
+        <p>Sua assinatura não está ativa. Ative-a para ter acesso total à calculadora.</p>
         
-        <div class="plan">
-            <h2>Plano Mensal</h2>
-            <div class="price">R$ 97,00/mês</div>
-            
-            <div class="features">
-                <h3>O que você recebe:</h3>
-                <ul>
-                    <li>Acesso completo à calculadora financeira</li>
-                    <li>Previsões de fluxo de caixa de 24 meses</li>
-                    <li>Relatórios detalhados em PDF</li>
-                    <li>Suporte prioritário</li>
-                    <li>Atualizações constantes</li>
-                </ul>
-            </div>
-            
-            <button onclick="processPayment()">Assinar Agora</button>
+        <div class="subscription-info">
+            <p>Sua assinatura atual expira em: <strong>{{ user.subscription_end.strftime('%d/%m/%Y') if user.subscription_end else 'N/A' }}</strong></p>
         </div>
-        
-        <div id="message" class="message" style="display: none;"></div>
-    </div>
 
-    <script>
-        async function processPayment() {
-            const button = document.querySelector('button');
-            const messageDiv = document.getElementById('message');
-            
-            button.disabled = true;
-            button.textContent = 'Processando...';
-            messageDiv.style.display = 'none';
-            
-            try {
-                const response = await fetch('/process_payment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
+        <button class="btn-subscribe" onclick="subscribe()">Ativar 30 Dias de Assinatura</button>
+        
+        <p id="message" class="error-message" style="display: none;"></p>
+
+        <script>
+            async function subscribe() {
+                try {
+                    const response = await fetch('/subscribe', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const data = await response.json();
+                    const messageElement = document.getElementById('message');
+                    messageElement.style.display = 'block';
+
+                    if (data.success) {
+                        messageElement.className = 'success-message';
+                        messageElement.textContent = data.message + ' Redirecionando...';
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 2000);
+                    } else {
+                        messageElement.className = 'error-message';
+                        messageElement.textContent = data.message;
                     }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    messageDiv.className = 'message success';
-                    messageDiv.textContent = data.message;
-                    messageDiv.style.display = 'block';
-                    
-                    setTimeout(() => {
-                        window.location.href = data.redirect_url;
-                    }, 2000);
-                } else {
-                    messageDiv.className = 'message error';
-                    messageDiv.textContent = data.message;
-                    messageDiv.style.display = 'block';
-                    button.disabled = false;
-                    button.textContent = 'Assinar Agora';
+                } catch (error) {
+                    const messageElement = document.getElementById('message');
+                    messageElement.className = 'error-message';
+                    messageElement.textContent = 'Erro ao processar a assinatura.';
+                    messageElement.style.display = 'block';
+                    console.error('Erro:', error);
                 }
-                
-            } catch (error) {
-                messageDiv.className = 'message error';
-                messageDiv.textContent = 'Erro ao processar pagamento';
-                messageDiv.style.display = 'block';
-                button.disabled = false;
-                button.textContent = 'Assinar Agora';
             }
-        }
-    </script>
+        </script>
+    </div>
 </body>
 </html>
+
