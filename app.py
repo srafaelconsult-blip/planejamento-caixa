@@ -212,52 +212,82 @@ class PlanejamentoCaixa:
     def gerar_resultados(self):
         meses = [f'Mês {i+1}' for i in range(self.num_meses)] + ['TOTAL']
 
+        # Nova ordem conforme solicitado
         resultados_ordenados = [
+            # 1. Escalonamento das Vendas com Plus
             ('Escalonamento das Vendas com Plus', self.vendas_escalonadas),
             ('', []),
+            
+            # 2. Recebimento de vendas à vista
             ('Recebimento de vendas à vista', self.vendas_vista),
             ('', []),
         ]
 
+        # 3. Contas a receber Parcelado
         n_parcelas = int(self.setup['vendas_parcelamento'])
         for p in range(n_parcelas):
             parcelas = [self.duplicatas_receber[p][mes] for mes in range(self.num_meses)]
             resultados_ordenados.append((f'{p+1}º mês duplicatas a receber', parcelas))
 
         resultados_ordenados.append(('', []))
+        
+        # 4. Contas a receber anteriores
         resultados_ordenados.append(('Contas a receber anteriores', self.contas_receber_anteriores))
         resultados_ordenados.append(('', []))
-
+        
+        # 5. Pagamento de comissões à vista (primeira parcela no mesmo mês)
+        primeira_parcela_comissoes = [self.comissoes_mes[mes] / 4 for mes in range(self.num_meses)]
+        resultados_ordenados.append(('Pagamento de comissões à vista', primeira_parcela_comissoes))
+        resultados_ordenados.append(('', []))
+        
+        # 6. Comissões parceladas (parcelas futuras)
         n_parcelas_comissoes = 4
-        for p in range(n_parcelas_comissoes):
+        for p in range(1, n_parcelas_comissoes):
             parcelas = [self.comissoes_pagar[p][mes] for mes in range(self.num_meses)]
             resultados_ordenados.append((f'{p+1}º mês comissões a pagar', parcelas))
 
         resultados_ordenados.append(('', []))
+        
+        # 7. Comissões a pagar anteriores
         resultados_ordenados.append(('Comissões a pagar anteriores', self.comissoes_anteriores))
         resultados_ordenados.append(('', []))
+        
+        # 8. Total de Comissões a pagar
         resultados_ordenados.append(('Total de Comissões a pagar', self.total_comissoes))
         resultados_ordenados.append(('', []))
-
+        
+        # 9. Compras à vista
         resultados_ordenados.append(('Compras à vista', self.compras_vista))
         resultados_ordenados.append(('', []))
-
+        
+        # 10. Fornecedores Parcelados
         n_parcelas_compras = int(self.setup['compras_parcelamento'])
         for p in range(n_parcelas_compras):
             parcelas = [self.duplicatas_pagar[p][mes] for mes in range(self.num_meses)]
             resultados_ordenados.append((f'{p+1}º mês fornecedores a pagar', parcelas))
 
         resultados_ordenados.append(('', []))
+        resultados_ordenados.append(('Contas a pagar anteriores', self.contas_pagar_anteriores))
+        resultados_ordenados.append(('', []))
+        
+        # 11. Total Pagamento de Fornecedores
         resultados_ordenados.append(('Total Pagamento de Fornecedores', self.total_pagamento_compras))
         resultados_ordenados.append(('', []))
-
+        
+        # 12. Despesas variáveis
         resultados_ordenados.append(('Despesas variáveis', self.desp_variaveis))
+        
+        # 13. Despesas fixas
         resultados_ordenados.append(('Despesas fixas', self.desp_fixas))
         resultados_ordenados.append(('', []))
-
+        
+        # 14. SALDO OPERACIONAL
         resultados_ordenados.append(('SALDO OPERACIONAL', self.saldo_operacional))
+        
+        # 15. SALDO FINAL DE CAIXA PREVISTO
         resultados_ordenados.append(('SALDO FINAL DE CAIXA PREVISTO', self.saldo_final_caixa))
 
+        # Formatar resultados
         resultados_formatados = {}
         for key, values in resultados_ordenados:
             if key == '':
