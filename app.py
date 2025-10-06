@@ -467,6 +467,17 @@ def subscription_info():
         'end_date': user.subscription_end.isoformat() if user.subscription_end else None
     })
 
+@app.route('/user_info')
+def user_info():
+    if 'user_id' not in session:
+        return jsonify({'email': None})
+
+    user = User.query.get(session['user_id'])
+    if not user:
+        return jsonify({'email': None})
+
+    return jsonify({'email': user.email})
+
 @app.route('/logout', methods=['GET'])
 def logout():
     session.pop('user_id', None)
