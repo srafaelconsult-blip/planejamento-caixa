@@ -297,6 +297,17 @@
             font-weight: bold;
             background: #e9ecef;
         }
+
+        .bold-row {
+            font-weight: bold;
+            background: #f8f9fa;
+        }
+
+        .section-header {
+            font-weight: bold;
+            background: #e9ecef;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -770,24 +781,67 @@
             const container = document.getElementById('tabela-resultados');
             container.innerHTML = '';
 
+            // Ordem fixa das linhas
+            const ordemCorreta = [
+                "PREVISÃO DE VENDAS",
+                "Recebimento de vendas à vista",
+                "Contas a receber Parcelado",
+                "Contas a receber anteriores",
+                "Total de Contas a Receber",
+                "",
+                "Pagamento de comissões à vista",
+                "Comissões parceladas",
+                "Comissões a pagar anteriores",
+                "Total de Comissões a pagar",
+                "",
+                "Compras à vista",
+                "Fornecedores Parcelados",
+                "Fornecedores Anteriores",
+                "Total Pagamento de Fornecedores",
+                "",
+                "Despesas variáveis",
+                "Despesas fixas",
+                "",
+                "SALDO OPERACIONAL",
+                "SALDO FINAL DE CAIXA PREVISTO"
+            ];
+
             let tableHTML = '<table><thead><tr><th>Descricao</th>';
             meses.forEach(mes => {
                 tableHTML += `<th>${mes}</th>`;
             });
             tableHTML += '</tr></thead><tbody>';
 
-            for (const [descricao, valores] of Object.entries(resultados)) {
-                if (descricao === '') {
+            // Criar a tabela na ordem correta
+            ordemCorreta.forEach(descricao => {
+                if (descricao === "") {
                     tableHTML += '<tr class="empty-row"><td colspan="' + (meses.length + 1) + '"></td></tr>';
-                } else {
-                    tableHTML += '<tr>';
+                } else if (resultados[descricao]) {
+                    // Definir classes para linhas em negrito
+                    let rowClass = '';
+                    if ([
+                        "Total de Contas a Receber",
+                        "Total de Comissões a pagar", 
+                        "Compras à vista",
+                        "Total Pagamento de Fornecedores",
+                        "Despesas variáveis",
+                        "Despesas fixas",
+                        "SALDO OPERACIONAL",
+                        "SALDO FINAL DE CAIXA PREVISTO"
+                    ].includes(descricao)) {
+                        rowClass = 'bold-row';
+                    } else if (descricao === "PREVISÃO DE VENDAS") {
+                        rowClass = 'section-header';
+                    }
+
+                    tableHTML += `<tr class="${rowClass}">`;
                     tableHTML += `<td>${descricao}</td>`;
-                    valores.forEach(valor => {
+                    resultados[descricao].forEach(valor => {
                         tableHTML += `<td>${valor}</td>`;
                     });
                     tableHTML += '</tr>';
                 }
-            }
+            });
             tableHTML += '</tbody></table>';
             container.innerHTML = tableHTML;
         }
@@ -800,4 +854,3 @@
     </script>
 </body>
 </html>
-
