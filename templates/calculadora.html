@@ -308,6 +308,38 @@
             background: #e9ecef;
             font-size: 16px;
         }
+
+        .instruction-box {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .instruction-box h4 {
+            color: #0066cc;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .instruction-box ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .instruction-box li {
+            margin-bottom: 5px;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -323,6 +355,17 @@
         <div class="main-content">
             <div class="sidebar">
                 <h2>Configuracoes</h2>
+
+                <!-- Instrução de Uso -->
+                <div class="instruction-box">
+                    <h4>📋 Instruções de Uso</h4>
+                    <p><strong>Para iniciar o planejamento:</strong></p>
+                    <ul>
+                        <li>No campo <span class="highlight">"Contas a receber anteriores - Mês 1"</span> abaixo, insira:</li>
+                        <li><strong>Saldo Inicial de Caixa + Contas a Receber</strong></li>
+                    </ul>
+                    <p><em>Exemplo: Se você tem R$ 5.000 em caixa e R$ 10.000 a receber, insira R$ 15.000 no Mês 1.</em></p>
+                </div>
                 
                 <div class="section-title">Previsao de Vendas por Mes</div>
                 <div class="vendas-mes">
@@ -353,10 +396,13 @@
                 </div>
                 
                 <div class="section-title">Contas a Receber Anteriores por Mes</div>
+                <div class="instruction-box" style="margin-top: -10px; margin-bottom: 15px;">
+                    <p><strong>💡 Importante:</strong> No <span class="highlight">Mês 1</span>, insira o <strong>Saldo Inicial de Caixa + Contas a Receber</strong></p>
+                </div>
                 <div class="contas-receber-anteriores">
                     <div class="form-group">
                         <label for="receber_anteriores_mes1">Mes 1 (R$):</label>
-                        <input type="number" id="receber_anteriores_mes1" step="100" min="0" value="0">
+                        <input type="number" id="receber_anteriores_mes1" step="100" min="0" value="0" placeholder="Saldo + Contas a Receber">
                     </div>
                     <div class="form-group">
                         <label for="receber_anteriores_mes2">Mes 2 (R$):</label>
@@ -826,42 +872,4 @@
                 if (descricao === "") {
                     tableHTML += '<tr class="empty-row"><td colspan="' + (meses.length + 1) + '"></td></tr>';
                 } else if (resultados[descricao]) {
-                    // Definir classes para linhas em negrito
-                    let rowClass = '';
-                    if ([
-                        "Total de Contas a Receber",
-                        "Total de Comissões a pagar", 
-                        "Compras à vista",
-                        "Total Pagamento de Fornecedores",
-                        "Despesas variáveis",
-                        "Despesas fixas",
-                        "SALDO OPERACIONAL",
-                        "SALDO FINAL DE CAIXA PREVISTO"
-                    ].includes(descricao)) {
-                        rowClass = 'bold-row';
-                    } else if (descricao === "PREVISÃO DE VENDAS") {
-                        rowClass = 'section-header';
-                    }
-
-                    tableHTML += `<tr class="${rowClass}">`;
-                    tableHTML += `<td>${descricao}</td>`;
-                    resultados[descricao].forEach(valor => {
-                        tableHTML += `<td>${valor}</td>`;
-                    });
-                    tableHTML += '</tr>';
-                }
-            });
-            tableHTML += '</tbody></table>';
-            container.innerHTML = tableHTML;
-        }
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            const userEmail = await getUserEmail();
-            document.getElementById('user-email').textContent = userEmail;
-            checkSubscription();
-        });
-    </script>
-</body>
-</html>
-
-
+                    // Definir classes para lin
