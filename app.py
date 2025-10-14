@@ -9,6 +9,7 @@ import os
 import psycopg2
 from urllib.parse import urlparse
 import re
+from collections import OrderedDict
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-12345")
@@ -207,89 +208,71 @@ class PlanejamentoCaixa:
     def gerar_resultados(self):
         meses = [f"Mês {i+1}" for i in range(self.num_meses)] + ["TOTAL"]
 
-        # 1. Recebimento de vendas à vista
-        resultados_ordenados = [
-            ("Recebimento de vendas à vista", self.vendas_vista),
-            ("", []),
-        ]
-
-        # 2. Contas a receber Parcelado (somar todos e mostrar total por mês)
+        # Calcular totais agrupados
+        # Contas a receber Parcelado (somar todos e mostrar total por mês)
         total_receber_parcelado = [0] * self.num_meses
         n_parcelas_vendas = int(self.setup["vendas_parcelamento"])
         for p in range(n_parcelas_vendas):
             for mes in range(self.num_meses):
                 total_receber_parcelado[mes] += self.duplicatas_receber[p][mes]
         
-        resultados_ordenados.append(("Contas a receber Parcelado", total_receber_parcelado))
-        resultados_ordenados.append(("", []))
-
-        # 3. Contas a receber anteriores
-        resultados_ordenados.append(("Contas a receber anteriores", self.contas_receber_anteriores))
-        resultados_ordenados.append(("", []))
-
-        # 4. Pagamento de comissões à vista
-        comissoes_vista = [self.comissoes_mes[mes] / 4 for mes in range(self.num_meses)]
-        resultados_ordenados.append(("Pagamento de comissões à vista", comissoes_vista))
-        resultados_ordenados.append(("", []))
-
-        # 5. Comissões parceladas (somar todas e mostrar total por mês)
+        # Comissões parceladas (somar todas e mostrar total por mês)
         total_comissoes_parceladas = [0] * self.num_meses
         n_parcelas_comissoes = 4
         for p in range(1, n_parcelas_comissoes):  # Começa de 1 para pular a parcela à vista
             for mes in range(self.num_meses):
                 total_comissoes_parceladas[mes] += self.comissoes_pagar[p][mes]
         
-        resultados_ordenados.append(("Comissões parceladas", total_comissoes_parceladas))
-        resultados_ordenados.append(("", []))
-
-        # 6. Comissões a pagar anteriores
-        resultados_ordenados.append(("Comissões a pagar anteriores", self.comissoes_anteriores))
-        resultados_ordenados.append(("", []))
-
-        # 7. Total de Comissões a pagar
-        resultados_ordenados.append(("Total de Comissões a pagar", self.total_comissoes))
-        resultados_ordenados.append(("", []))
-
-        # 8. Compras à vista
-        resultados_ordenados.append(("Compras à vista", self.compras_vista))
-        resultados_ordenados.append(("", []))
-
-        # 9. Fornecedores Parcelados (somar todos e mostrar total por mês)
+        # Fornecedores Parcelados (somar todos e mostrar total por mês)
         total_fornecedores_parcelados = [0] * self.num_meses
         n_parcelas_compras = int(self.setup["compras_parcelamento"])
         for p in range(n_parcelas_compras):
             for mes in range(self.num_meses):
                 total_fornecedores_parcelados[mes] += self.duplicatas_pagar[p][mes]
+
+        # Comissões à vista (primeira parcela)
+        comissoes_vista = [self.comissoes_mes[mes] / 4 for mes in range(self.num_meses)]
+
+        # Criar resultados na ordem EXATA solicitada usando OrderedDict
+        resultados_ordenados = OrderedDict()
         
-        resultados_ordenados.append(("Fornecedores Parcelados", total_fornecedores_parcelados))
-        resultados_ordenados.append(("", []))
-
-        # 10. Total Pagamento de Fornecedores
-        resultados_ordenados.append(("Total Pagamento de Fornecedores", self.total_pagamento_compras))
-        resultados_ordenados.append(("", []))
-
-        # 11. Despesas variáveis
-        resultados_ordenados.append(("Despesas variáveis", self.desp_variaveis))
-        resultados_ordenados.append(("", []))
-
-        # 12. Despesas fixas
-        resultados_ordenados.append(("Despesas fixas", self.desp_fixas))
-        resultados_ordenados.append(("", []))
-
-        # 13. SALDO OPERACIONAL
-        resultados_ordenados.append(("SALDO OPERACIONAL", self.saldo_operacional))
-        resultados_ordenados.append(("", []))
-
-        # 14. SALDO FINAL DE CAIXA PREVISTO
-        resultados_ordenados.append(("SALDO FINAL DE CAIXA PREVISTO", self.saldo_final_caixa))
+        # PREVISÃO DE VENDAS
+        resultados_ordenados["PREVISÃO DE VENDAS"] = [""] * (self.num_meses + 1)
+        resultados_ordenados["Recebimento de vendas à vista"] = self.vendas_vista
+        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        resultados_ordenados["Contas a receber Parcelado"] = total_receber_parcelado
+        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        resultados_ordenados["Contas a receber anteriores"] = self.contas_receber_anteriores
+        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        resultados_ordenados["Pagamento de comissões à vista"] = comissoes_vista
+        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        resultados_ordenados["Comissões parceladas"] = total_comissoes_parceladas
+        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        resultados_ordenados["Comissões a pagar anteriores"] = self.comissoes_anteriores
+        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        resultados_ordenados["Total de Comissões a pagar"] = self.total_comissoes
+        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        resultados_ordenados["Compras à vista"] = self.compras_vista
+        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        resultados_ordenados["Fornecedores Parcelados"] = total_fornecedores_parcelados
+        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        resultados_ordenados["Total Pagamento de Fornecedores"] = self.total_pagamento_compras
+        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        resultados_ordenados["Despesas variáveis"] = self.desp_variaveis
+        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        resultados_ordenados["Despesas fixas"] = self.desp_fixas
+        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        resultados_ordenados["SALDO OPERACIONAL"] = self.saldo_operacional
+        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        resultados_ordenados["SALDO FINAL DE CAIXA PREVISTO"] = self.saldo_final_caixa
 
         # Formatar resultados
-        resultados_formatados = {}
-        for key, values in resultados_ordenados:
+        resultados_formatados = OrderedDict()
+        for key, values in resultados_ordenados.items():
             if key == "":
                 resultados_formatados[key] = [""] * (self.num_meses + 1)
             else:
-                if values:
+                if values and key != "PREVISÃO DE VENDAS":
                     total = sum(values) if len(values) == self.num_meses else values[-1]
                     valores_formatados = [f"R$ {x:,.0f}" for x in values] + [f"R$ {total:,.0f}"]
                 else:
