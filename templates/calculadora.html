@@ -612,15 +612,18 @@
             results.style.display = 'none';
             errorMessage.style.display = 'none';
             
+            // Capturar os valores de previsão de vendas para usar na tabela
+            const previsaoVendas = [
+                parseFloat(document.getElementById('venda_mes1').value) || 0,
+                parseFloat(document.getElementById('venda_mes2').value) || 0,
+                parseFloat(document.getElementById('venda_mes3').value) || 0,
+                parseFloat(document.getElementById('venda_mes4').value) || 0,
+                parseFloat(document.getElementById('venda_mes5').value) || 0,
+                parseFloat(document.getElementById('venda_mes6').value) || 0
+            ];
+            
             const dados = {
-                previsao_vendas: [
-                    parseFloat(document.getElementById('venda_mes1').value) || 0,
-                    parseFloat(document.getElementById('venda_mes2').value) || 0,
-                    parseFloat(document.getElementById('venda_mes3').value) || 0,
-                    parseFloat(document.getElementById('venda_mes4').value) || 0,
-                    parseFloat(document.getElementById('venda_mes5').value) || 0,
-                    parseFloat(document.getElementById('venda_mes6').value) || 0
-                ],
+                previsao_vendas: previsaoVendas,
                 contas_receber_anteriores: [
                     parseFloat(document.getElementById('receber_anteriores_mes1').value) || 0,
                     parseFloat(document.getElementById('receber_anteriores_mes2').value) || 0,
@@ -684,6 +687,12 @@
                 }
                 
                 const resultados = await response.json();
+                
+                // Adicionar a previsão de vendas aos resultados
+                resultados.resultados["PREVISÃO DE VENDAS"] = [
+                    ...previsaoVendas.map(valor => `R$ ${valor.toLocaleString('pt-BR')}`),
+                    `R$ ${previsaoVendas.reduce((a, b) => a + b, 0).toLocaleString('pt-BR')}`
+                ];
                 
                 exibirIndicadores(resultados.indicadores);
                 exibirGraficos(resultados.graficos);
