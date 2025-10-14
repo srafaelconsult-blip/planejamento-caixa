@@ -37,10 +37,7 @@ class User(db.Model):
     subscription_end = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def __init__(self, email):
-        if not email:
-            raise ValueError("Email não pode ser vazio")
-        self.email = email
+
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -390,8 +387,9 @@ def register():
             return render_template("register.html", error="Email já cadastrado")
 
         try:
-            user = User(email=email)
-            user.set_password(password)
+            password_hash = generate_password_hash(password)
+            user = User(email=email, password_hash=password_hash)
+
             db.session.add(user)
             db.session.commit()
 
@@ -400,6 +398,7 @@ def register():
 
         except Exception as e:
             db.session.rollback()
+            print(f"Erro durante o registro: {e}") # Adicionado para depuração
             return render_template("register.html", error=f"Erro ao criar conta: {str(e)}")
 
     return render_template("register.html")
