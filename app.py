@@ -233,37 +233,72 @@ class PlanejamentoCaixa:
         # Comissões à vista (primeira parcela)
         comissoes_vista = [self.comissoes_mes[mes] / 4 for mes in range(self.num_meses)]
 
+        # Calcular totais
+        total_contas_receber = [
+            self.vendas_vista[i] + total_receber_parcelado[i] + self.contas_receber_anteriores[i] 
+            for i in range(self.num_meses)
+        ]
+
         # Criar resultados na ordem EXATA solicitada usando OrderedDict
         resultados_ordenados = OrderedDict()
         
-        # PREVISÃO DE VENDAS
+        # 1: PREVISÃO DE VENDAS
         resultados_ordenados["PREVISÃO DE VENDAS"] = [""] * (self.num_meses + 1)
+        
+        # 2: Recebimento de vendas à vista
         resultados_ordenados["Recebimento de vendas à vista"] = self.vendas_vista
-        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        
+        # 3: Contas a receber Parcelado (total)
         resultados_ordenados["Contas a receber Parcelado"] = total_receber_parcelado
-        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        
+        # 4: Contas a receber anteriores
         resultados_ordenados["Contas a receber anteriores"] = self.contas_receber_anteriores
+        
+        # 6: Total de Contas a Receber (negrito)
+        resultados_ordenados["Total de Contas a Receber"] = total_contas_receber
+        
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        
+        # 7: Pagamento de comissões à vista
         resultados_ordenados["Pagamento de comissões à vista"] = comissoes_vista
-        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        
+        # 8: Comissões parceladas (total)
         resultados_ordenados["Comissões parceladas"] = total_comissoes_parceladas
-        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        
+        # 9: Comissões a pagar anteriores
         resultados_ordenados["Comissões a pagar anteriores"] = self.comissoes_anteriores
-        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        
+        # 10: Total de Comissões a pagar
         resultados_ordenados["Total de Comissões a pagar"] = self.total_comissoes
+        
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        
+        # 11: Compras à vista (negrito)
         resultados_ordenados["Compras à vista"] = self.compras_vista
-        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        
+        # 12: Fornecedores Parcelados (total)
         resultados_ordenados["Fornecedores Parcelados"] = total_fornecedores_parcelados
-        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        
+        # 13: Fornecedores Anteriores
+        resultados_ordenados["Fornecedores Anteriores"] = self.contas_pagar_anteriores
+        
+        # 14: Total Pagamento de Fornecedores (negrito)
         resultados_ordenados["Total Pagamento de Fornecedores"] = self.total_pagamento_compras
+        
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        
+        # 15: Despesas variáveis (negrito)
         resultados_ordenados["Despesas variáveis"] = self.desp_variaveis
-        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        
+        # 16: Despesas fixas (negrito)
         resultados_ordenados["Despesas fixas"] = self.desp_fixas
+        
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        
+        # 17: SALDO OPERACIONAL (negrito)
         resultados_ordenados["SALDO OPERACIONAL"] = self.saldo_operacional
-        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        
+        # 18: SALDO FINAL DE CAIXA PREVISTO (negrito)
         resultados_ordenados["SALDO FINAL DE CAIXA PREVISTO"] = self.saldo_final_caixa
 
         # Formatar resultados
