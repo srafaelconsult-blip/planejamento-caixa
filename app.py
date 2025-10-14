@@ -1,498 +1,856 @@
-import pandas as pd
-import numpy as np
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timedelta
-import json
-import os
-import psycopg2
-from urllib.parse import urlparse
-import re
-from collections import OrderedDict
-
-app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-12345")
-
-# Configuração do banco de dados
-database_url = os.environ.get("DATABASE_URL")
-
-if database_url:
-    parsed_url = urlparse(database_url)
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"postgresql+psycopg2://{parsed_url.username}:{parsed_url.password}@{parsed_url.hostname}:{parsed_url.port}{parsed_url.path}"
-else:
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
-
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
-}
-
-db = SQLAlchemy(app)
-
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
-    subscription_end = db.Column(db.DateTime, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-    def has_active_subscription(self):
-        if not self.subscription_end:
-            return False
-        return self.subscription_end > datetime.utcnow()
-
-    def add_subscription_days(self, days=30):
-        if self.subscription_end and self.subscription_end > datetime.utcnow():
-            self.subscription_end += timedelta(days=days)
-        else:
-            self.subscription_end = datetime.utcnow() + timedelta(days=days)
-
-class PlanejamentoCaixa:
-    def __init__(self, num_meses=6):
-        self.num_meses = num_meses
-        self.setup = {
-            "vendas_vista": 0.3,
-            "vendas_parcelamento": 5,
-            "plus_vendas": 0,
-            "cmv": 0.425,
-            "percent_compras": 0.2,
-            "compras_vista": 0.2,
-            "compras_parcelamento": 6,
-            "comissoes": 0.0761,
-            "desp_variaveis_impostos": 0.085
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Financeira - Planejamento de Caixa</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #007bff;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --light: #f8f9fa;
+            --dark: #343a40;
         }
-        self.previsao_vendas = [0] * self.num_meses
-        self.contas_receber_anteriores = [0] * self.num_meses
-        self.comissoes_anteriores = [0] * self.num_meses
-        self.contas_pagar_anteriores = [0] * self.num_meses
-        self.desp_fixas_manuais = [0] * self.num_meses
-        self.desp_variaveis_manuais = [0]
-
-    def calcular(self, dados):
-        for key in self.setup:
-            if key in dados.get("setup", {}):
-                self.setup[key] = float(dados["setup"][key])
-
-        if "previsao_vendas" in dados:
-            self.previsao_vendas = [float(x) for x in dados["previsao_vendas"]]
-        if "contas_receber_anteriores" in dados:
-            self.contas_receber_anteriores = [float(x) for x in dados["contas_receber_anteriores"]]
-        if "comissoes_anteriores" in dados:
-            self.comissoes_anteriores = [float(x) for x in dados["comissoes_anteriores"]]
-        if "contas_pagar_anteriores" in dados:
-            self.contas_pagar_anteriores = [float(x) for x in dados["contas_pagar_anteriores"]]
-        if "desp_fixas_manuais" in dados:
-            self.desp_fixas_manuais = [float(x) for x in dados["desp_fixas_manuais"]]
-        if "desp_variaveis_manuais" in dados:
-            self.desp_variaveis_manuais = [float(x) for x in dados["desp_variaveis_manuais"][:1]]
-
-        # 1. Escalonamento das Vendas com Plus
-        plus = self.setup["plus_vendas"]
-        self.vendas_escalonadas = [
-            venda * (1 + plus) if plus > 0 else venda
-            for venda in self.previsao_vendas
-        ]
-
-        # 2. Fluxo de recebimentos
-        n_parcelas = int(self.setup["vendas_parcelamento"])
-        self.vendas_vista = [
-            venda * self.setup["vendas_vista"]
-            for venda in self.vendas_escalonadas
-        ]
-
-        self.duplicatas_receber = [[0] * self.num_meses for _ in range(n_parcelas)]
-
-        for mes in range(self.num_meses):
-            valor_parcelado = (self.vendas_escalonadas[mes] - self.vendas_vista[mes]) / n_parcelas
-            for parcela_idx in range(n_parcelas):
-                mes_recebimento = mes + parcela_idx + 1
-                if mes_recebimento < self.num_meses:
-                    self.duplicatas_receber[parcela_idx][mes_recebimento] += valor_parcelado
-
-        self.total_recebimentos = []
-        for mes in range(self.num_meses):
-            total = self.vendas_vista[mes]
-            for p in range(n_parcelas):
-                total += self.duplicatas_receber[p][mes]
-            total += self.contas_receber_anteriores[mes]
-            self.total_recebimentos.append(total)
-
-        # 3. Comissões
-        self.comissoes_mes = [
-            venda * self.setup["comissoes"]
-            for venda in self.vendas_escalonadas
-        ]
-
-        n_parcelas_comissoes = 4
-        self.comissoes_pagar = [[0] * self.num_meses for _ in range(n_parcelas_comissoes)]
-
-        for mes in range(self.num_meses):
-            valor_comissao = self.comissoes_mes[mes]
-            valor_parcelado = valor_comissao / n_parcelas_comissoes
-            for parcela_idx in range(n_parcelas_comissoes):
-                mes_pagamento = mes + parcela_idx + 1
-                if mes_pagamento < self.num_meses:
-                    self.comissoes_pagar[parcela_idx][mes_pagamento] += valor_parcelado
-
-        self.total_comissoes = []
-        for mes in range(self.num_meses):
-            total = self.comissoes_anteriores[mes]
-            for p in range(n_parcelas_comissoes):
-                total += self.comissoes_pagar[p][mes]
-            self.total_comissoes.append(total)
-
-        # 4. Planejamento de Compras
-        self.compras_planejadas = [
-            venda * self.setup["cmv"] * self.setup["percent_compras"]
-            for venda in self.vendas_escalonadas
-        ]
-
-        self.compras_vista = [
-            compra * self.setup["compras_vista"]
-            for compra in self.compras_planejadas
-        ]
-
-        n_parcelas_compras = int(self.setup["compras_parcelamento"])
-        self.duplicatas_pagar = [[0] * self.num_meses for _ in range(n_parcelas_compras)]
-
-        for mes in range(self.num_meses):
-            valor_parcelado = (self.compras_planejadas[mes] - self.compras_vista[mes]) / n_parcelas_compras
-            for parcela_idx in range(n_parcelas_compras):
-                mes_pagamento = mes + parcela_idx + 1
-                if mes_pagamento < self.num_meses:
-                    self.duplicatas_pagar[parcela_idx][mes_pagamento] += valor_parcelado
-
-        self.total_pagamento_compras = []
-        for mes in range(self.num_meses):
-            total = self.compras_vista[mes]
-            for p in range(n_parcelas_compras):
-                total += self.duplicatas_pagar[p][mes]
-            total += self.contas_pagar_anteriores[mes]
-            self.total_pagamento_compras.append(total)
-
-        # 5. Despesas variáveis
-        self.desp_variaveis = [0] * self.num_meses
-        if self.desp_variaveis_manuais:
-            self.desp_variaveis[0] = self.desp_variaveis_manuais[0]
-        for mes in range(1, self.num_meses):
-            self.desp_variaveis[mes] = self.vendas_escalonadas[mes - 1] * self.setup["desp_variaveis_impostos"]
-
-        # 6. Despesas fixas
-        self.desp_fixas = self.desp_fixas_manuais
-
-        # 7. Saldo operacional
-        self.saldo_operacional = []
-        for mes in range(self.num_meses):
-            saldo = (self.total_recebimentos[mes] -
-                     self.total_comissoes[mes] -
-                     self.total_pagamento_compras[mes] -
-                     self.desp_variaveis[mes] -
-                     self.desp_fixas[mes])
-            self.saldo_operacional.append(saldo)
-
-        # 8. Saldo final de caixa
-        self.saldo_final_caixa = [self.saldo_operacional[0]]
-        for mes in range(1, self.num_meses):
-            self.saldo_final_caixa.append(self.saldo_final_caixa[-1] + self.saldo_operacional[mes])
-
-        return self.gerar_resultados()
-
-    def gerar_resultados(self):
-        meses = [f"Mês {i+1}" for i in range(self.num_meses)] + ["TOTAL"]
-
-        # Calcular totais agrupados
-        # Contas a receber Parcelado (somar todos e mostrar total por mês)
-        total_receber_parcelado = [0] * self.num_meses
-        n_parcelas_vendas = int(self.setup["vendas_parcelamento"])
-        for p in range(n_parcelas_vendas):
-            for mes in range(self.num_meses):
-                total_receber_parcelado[mes] += self.duplicatas_receber[p][mes]
         
-        # Comissões parceladas (somar todas e mostrar total por mês)
-        total_comissoes_parceladas = [0] * self.num_meses
-        n_parcelas_comissoes = 4
-        for p in range(1, n_parcelas_comissoes):  # Começa de 1 para pular a parcela à vista
-            for mes in range(self.num_meses):
-                total_comissoes_parceladas[mes] += self.comissoes_pagar[p][mes]
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         
-        # Fornecedores Parcelados (somar todos e mostrar total por mês)
-        total_fornecedores_parcelados = [0] * self.num_meses
-        n_parcelas_compras = int(self.setup["compras_parcelamento"])
-        for p in range(n_parcelas_compras):
-            for mes in range(self.num_meses):
-                total_fornecedores_parcelados[mes] += self.duplicatas_pagar[p][mes]
-
-        # Comissões à vista (primeira parcela)
-        comissoes_vista = [self.comissoes_mes[mes] / 4 for mes in range(self.num_meses)]
-
-        # Calcular totais
-        total_contas_receber = [
-            self.vendas_vista[i] + total_receber_parcelado[i] + self.contas_receber_anteriores[i] 
-            for i in range(self.num_meses)
-        ]
-
-        # Criar resultados na ordem EXATA solicitada usando OrderedDict
-        resultados_ordenados = OrderedDict()
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
         
-        # 1: PREVISÃO DE VENDAS
-        resultados_ordenados["PREVISÃO DE VENDAS"] = [""] * (self.num_meses + 1)
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
         
-        # 2: Recebimento de vendas à vista
-        resultados_ordenados["Recebimento de vendas à vista"] = self.vendas_vista
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
         
-        # 3: Contas a receber Parcelado (total)
-        resultados_ordenados["Contas a receber Parcelado"] = total_receber_parcelado
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
         
-        # 4: Contas a receber anteriores
-        resultados_ordenados["Contas a receber anteriores"] = self.contas_receber_anteriores
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
         
-        # 6: Total de Contas a Receber (negrito)
-        resultados_ordenados["Total de Contas a Receber"] = total_contas_receber
+        .btn-primary {
+            background: var(--success);
+            color: white;
+        }
         
-        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        .btn-primary:hover {
+            background: #218838;
+        }
         
-        # 7: Pagamento de comissões à vista
-        resultados_ordenados["Pagamento de comissões à vista"] = comissoes_vista
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
         
-        # 8: Comissões parceladas (total)
-        resultados_ordenados["Comissões parceladas"] = total_comissoes_parceladas
+        .btn-danger:hover {
+            background: #c82333;
+        }
         
-        # 9: Comissões a pagar anteriores
-        resultados_ordenados["Comissões a pagar anteriores"] = self.comissoes_anteriores
+        .main-content {
+            display: grid;
+            grid-template-columns: 500px 1fr;
+            min-height: 800px;
+        }
         
-        # 10: Total de Comissões a pagar
-        resultados_ordenados["Total de Comissões a pagar"] = self.total_comissoes
+        .sidebar {
+            background: var(--light);
+            padding: 20px;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+        }
         
-        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        .form-group {
+            margin-bottom: 15px;
+        }
         
-        # 11: Compras à vista (negrito)
-        resultados_ordenados["Compras à vista"] = self.compras_vista
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--dark);
+        }
         
-        # 12: Fornecedores Parcelados (total)
-        resultados_ordenados["Fornecedores Parcelados"] = total_fornecedores_parcelados
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 14px;
+        }
         
-        # 13: Fornecedores Anteriores
-        resultados_ordenados["Fornecedores Anteriores"] = self.contas_pagar_anteriores
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
         
-        # 14: Total Pagamento de Fornecedores (negrito)
-        resultados_ordenados["Total Pagamento de Fornecedores"] = self.total_pagamento_compras
+        .vendas-mes, .contas-receber-anteriores, .comissoes-anteriores, .contas-pagar-anteriores {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
         
-        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        .vendas-mes input, .contas-receber-anteriores input, .comissoes-anteriores input, .contas-pagar-anteriores input {
+            text-align: right;
+        }
         
-        # 15: Despesas variáveis (negrito)
-        resultados_ordenados["Despesas variáveis"] = self.desp_variaveis
+        .section-title {
+            background: var(--primary);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0 15px 0;
+            font-weight: 600;
+            font-size: 16px;
+        }
         
-        # 16: Despesas fixas (negrito)
-        resultados_ordenados["Despesas fixas"] = self.desp_fixas
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s ease;
+        }
         
-        resultados_ordenados[""] = [""] * (self.num_meses + 1)
+        .calculate-btn:hover {
+            background: #0056b3;
+        }
         
-        # 17: SALDO OPERACIONAL (negrito)
-        resultados_ordenados["SALDO OPERACIONAL"] = self.saldo_operacional
+        .calculate-btn:disabled {
+            background: var(--secondary);
+            cursor: not-allowed;
+        }
         
-        # 18: SALDO FINAL DE CAIXA PREVISTO (negrito)
-        resultados_ordenados["SALDO FINAL DE CAIXA PREVISTO"] = self.saldo_final_caixa
-
-        # Formatar resultados
-        resultados_formatados = OrderedDict()
-        for key, values in resultados_ordenados.items():
-            if key == "":
-                resultados_formatados[key] = [""] * (self.num_meses + 1)
-            else:
-                if values and key != "PREVISÃO DE VENDAS":
-                    total = sum(values) if len(values) == self.num_meses else values[-1]
-                    valores_formatados = [f"R$ {x:,.0f}" for x in values] + [f"R$ {total:,.0f}"]
-                else:
-                    valores_formatados = [""] * (self.num_meses + 1)
-                resultados_formatados[key] = valores_formatados
-
-        indicadores = {
-            "Total de Vendas": f"R$ {sum(self.previsao_vendas):,.0f}",
-            "Total de Recebimentos": f"R$ {sum(self.total_recebimentos):,.0f}",
-            "Total de Despesas": f"R$ {sum(self.total_comissoes) + sum(self.total_pagamento_compras) + sum(self.desp_variaveis) + sum(self.desp_fixas):,.0f}",
-            "Saldo Final Acumulado": f"R$ {self.saldo_final_caixa[-1]:,.0f}",
-            "Margem Líquida": f"{(sum(self.saldo_operacional) / sum(self.total_recebimentos)) * 100:.1f}%" if sum(self.total_recebimentos) > 0 else "0%"
+        .content {
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: var(--secondary);
+        }
+        
+        .results-section {
+            display: none;
+        }
+        
+        .indicadores {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .indicador {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .indicador h3 {
+            font-size: 14px;
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+        
+        .indicador .valor {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--dark);
+        }
+        
+        .graficos {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .grafico-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .tabela-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        th, td {
+            padding: 8px 12px;
+            text-align: right;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        th {
+            background: var(--light);
+            font-weight: 600;
+            text-align: left;
+            position: sticky;
+            left: 0;
+            z-index: 1;
+        }
+        
+        th:first-child {
+            min-width: 250px;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .result-section-title {
+            background: var(--primary);
+            color: white;
+            padding: 10px 15px;
+            margin: 0 -20px 20px -20px;
+            font-weight: 600;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .subscription-info {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .empty-row {
+            height: 10px;
+            background: transparent;
+        }
+        
+        .total-row {
+            font-weight: bold;
+            background: #e9ecef;
         }
 
-        dados_graficos = {
-            "meses": [f"Mês {i+1}" for i in range(self.num_meses)],
-            "saldo_final_caixa": self.saldo_final_caixa,
-            "receitas": self.total_recebimentos,
-            "despesas": [
-                a + b + c + d for a, b, c, d in zip(
-                    self.total_comissoes,
-                    self.total_pagamento_compras,
-                    self.desp_variaveis,
-                    self.desp_fixas
-                )
-            ]
+        .bold-row {
+            font-weight: bold;
+            background: #f8f9fa;
         }
 
-        return {
-            "resultados": resultados_formatados,
-            "indicadores": indicadores,
-            "graficos": dados_graficos,
-            "meses": meses
+        .section-header {
+            font-weight: bold;
+            background: #e9ecef;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Calculadora de Planejamento de Caixa - 6 Meses</h1>
+            <div class="user-info">
+                <span id="user-email">Usuario</span>
+                <button class="btn btn-danger" onclick="logout()">Sair</button>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <h2>Configuracoes</h2>
+                
+                <div class="section-title">Previsao de Vendas por Mes</div>
+                <div class="vendas-mes">
+                    <div class="form-group">
+                        <label for="venda_mes1">Mes 1 (R$):</label>
+                        <input type="number" id="venda_mes1" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="venda_mes2">Mes 2 (R$):</label>
+                        <input type="number" id="venda_mes2" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="venda_mes3">Mes 3 (R$):</label>
+                        <input type="number" id="venda_mes3" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="venda_mes4">Mes 4 (R$):</label>
+                        <input type="number" id="venda_mes4" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="venda_mes5">Mes 5 (R$):</label>
+                        <input type="number" id="venda_mes5" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="venda_mes6">Mes 6 (R$):</label>
+                        <input type="number" id="venda_mes6" step="100" min="0" value="0">
+                    </div>
+                </div>
+                
+                <div class="section-title">Contas a Receber Anteriores por Mes</div>
+                <div class="contas-receber-anteriores">
+                    <div class="form-group">
+                        <label for="receber_anteriores_mes1">Mes 1 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes1" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="receber_anteriores_mes2">Mes 2 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes2" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="receber_anteriores_mes3">Mes 3 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes3" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="receber_anteriores_mes4">Mes 4 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes4" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="receber_anteriores_mes5">Mes 5 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes5" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="receber_anteriores_mes6">Mes 6 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes6" step="100" min="0" value="0">
+                    </div>
+                </div>
+                
+                <div class="section-title">Comissoes a Pagar Anteriores por Mes</div>
+                <div class="comissoes-anteriores">
+                    <div class="form-group">
+                        <label for="comissoes_anteriores_mes1">Mes 1 (R$):</label>
+                        <input type="number" id="comissoes_anteriores_mes1" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="comissoes_anteriores_mes2">Mes 2 (R$):</label>
+                        <input type="number" id="comissoes_anteriores_mes2" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="comissoes_anteriores_mes3">Mes 3 (R$):</label>
+                        <input type="number" id="comissoes_anteriores_mes3" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="comissoes_anteriores_mes4">Mes 4 (R$):</label>
+                        <input type="number" id="comissoes_anteriores_mes4" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="comissoes_anteriores_mes5">Mes 5 (R$):</label>
+                        <input type="number" id="comissoes_anteriores_mes5" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="comissoes_anteriores_mes6">Mes 6 (R$):</label>
+                        <input type="number" id="comissoes_anteriores_mes6" step="100" min="0" value="0">
+                    </div>
+                </div>
+                
+                <div class="section-title">Contas a Pagar Anteriores por Mes</div>
+                <div class="contas-pagar-anteriores">
+                    <div class="form-group">
+                        <label for="pagar_anteriores_mes1">Mes 1 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes1" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="pagar_anteriores_mes2">Mes 2 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes2" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="pagar_anteriores_mes3">Mes 3 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes3" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="pagar_anteriores_mes4">Mes 4 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes4" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="pagar_anteriores_mes5">Mes 5 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes5" step="100" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="pagar_anteriores_mes6">Mes 6 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes6" step="100" min="0" value="0">
+                    </div>
+                </div>
+                
+                <div class="section-title">Parametros do Negocio</div>
+                
+                <div class="form-group">
+                    <label for="vendas_vista">% Vendas a Vista:</label>
+                    <input type="number" id="vendas_vista" step="0.01" min="0" max="1" value="0.3">
+                </div>
+                
+                <div class="form-group">
+                    <label for="vendas_parcelamento">Parcelamento Vendas (meses):</label>
+                    <input type="number" id="vendas_parcelamento" min="1" value="5">
+                </div>
+                
+                <div class="form-group">
+                    <label for="plus_vendas">Plus de Vendas (%):</label>
+                    <input type="number" id="plus_vendas" step="0.01" value="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="cmv">CMV (Custo Mercadoria Vendida):</label>
+                    <input type="number" id="cmv" step="0.01" min="0" max="1" value="0.425">
+                </div>
+                
+                <div class="form-group">
+                    <label for="percent_compras">% Compras sobre CMV:</label>
+                    <input type="number" id="percent_compras" step="0.01" min="0" max="1" value="0.2">
+                </div>
+                
+                <div class="form-group">
+                    <label for="compras_vista">% Compras a Vista:</label>
+                    <input type="number" id="compras_vista" step="0.01" min="0" max="1" value="0.2">
+                </div>
+                
+                <div class="form-group">
+                    <label for="compras_parcelamento">Parcelamento Compras (meses):</label>
+                    <input type="number" id="compras_parcelamento" min="1" value="6">
+                </div>
+                
+                <div class="form-group">
+                    <label for="comissoes">% Comissoes sobre Vendas:</label>
+                    <input type="number" id="comissoes" step="0.0001" min="0" max="1" value="0.0761">
+                </div>
+                
+                <div class="form-group">
+                    <label for="desp_variaveis_impostos">% Despesas Variaveis e Impostos sobre Vendas:</label>
+                    <input type="number" id="desp_variaveis_impostos" step="0.001" min="0" max="1" value="0.085">
+                </div>
+                
+                <div class="section-title">Despesas Variaveis Manuais (Apenas Mes 1)</div>
+                <div class="form-group">
+                    <label for="desp_variaveis_m1">Mes 1 (R$):</label>
+                    <input type="number" id="desp_variaveis_m1" step="100" min="0" value="0">
+                </div>
+
+                <div class="section-title">Despesas Fixas Manuais por Mes</div>
+                <div class="vendas-mes">
+                    <div class="form-group">
+                        <label for="desp_fixas_mes1">Mes 1 (R$):</label>
+                        <input type="number" id="desp_fixas_mes1" step="100" min="0" value="438">
+                    </div>
+                    <div class="form-group">
+                        <label for="desp_fixas_mes2">Mes 2 (R$):</label>
+                        <input type="number" id="desp_fixas_mes2" step="100" min="0" value="438">
+                    </div>
+                    <div class="form-group">
+                        <label for="desp_fixas_mes3">Mes 3 (R$):</label>
+                        <input type="number" id="desp_fixas_mes3" step="100" min="0" value="438">
+                    </div>
+                    <div class="form-group">
+                        <label for="desp_fixas_mes4">Mes 4 (R$):</label>
+                        <input type="number" id="desp_fixas_mes4" step="100" min="0" value="438">
+                    </div>
+                    <div class="form-group">
+                        <label for="desp_fixas_mes5">Mes 5 (R$):</label>
+                        <input type="number" id="desp_fixas_mes5" step="100" min="0" value="438">
+                    </div>
+                    <div class="form-group">
+                        <label for="desp_fixas_mes6">Mes 6 (R$):</label>
+                        <input type="number" id="desp_fixas_mes6" step="100" min="0" value="438">
+                    </div>
+                </div>
+                
+                <button class="calculate-btn" onclick="calcular()">
+                    Calcular Projecao
+                </button>
+            </div>
+            
+            <div class="content">
+                <div id="loading" class="loading">
+                    <h2>Calculadora de Planejamento de Caixa - 6 Meses</h2>
+                    <p>Preencha as vendas mensais e as configuracoes ao lado e clique em "Calcular Projecao" para gerar sua analise financeira.</p>
+                    <p>Esta ferramenta ira projetar seu fluxo de caixa para os proximos 6 meses.</p>
+                </div>
+                
+                <div id="results" class="results-section">
+                    <div class="subscription-info" id="subscription-info">
+                        Assinatura ativa ate: <span id="subscription-end"></span>
+                    </div>
+                    
+                    <div class="indicadores" id="indicadores">
+                    </div>
+                    
+                    <div class="graficos">
+                        <div class="grafico-container">
+                            <div class="result-section-title">Saldo de Caixa (6 meses)</div>
+                            <canvas id="graficoSaldo"></canvas>
+                        </div>
+                        <div class="grafico-container">
+                            <div class="result-section-title">Receitas vs Despesas (6 meses)</div>
+                            <canvas id="graficoReceitasDespesas"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="tabela-container">
+                        <div class="result-section-title">Resultados Detalhados - Projecao 6 Meses</div>
+                        <div id="tabela-resultados">
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="error-message" class="alert alert-danger" style="display: none;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let graficoSaldo = null;
+        let graficoReceitasDespesas = null;
+        
+        async function checkSubscription() {
+            try {
+                const response = await fetch('/subscription_info');
+                const data = await response.json();
+                
+                if (data.active && data.end_date) {
+                    const endDate = new Date(data.end_date);
+                    document.getElementById('subscription-end').textContent = endDate.toLocaleDateString('pt-BR');
+                    document.getElementById('subscription-info').style.display = 'block';
+                } else {
+                    document.getElementById('subscription-info').style.display = 'none';
+                    window.location.href = '/payment';
+                }
+            } catch (error) {
+                console.error('Erro ao verificar assinatura:', error);
+            }
+        }
+        
+        async function getUserEmail() {
+            try {
+                const response = await fetch('/user_info');
+                const data = await response.json();
+                return data.email || 'usuario@exemplo.com';
+            } catch (error) {
+                console.error('Erro ao obter email do usuario:', error);
+                return 'usuario@exemplo.com';
+            }
+        }
+        
+        async function logout() {
+            try {
+                await fetch('/logout');
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Erro ao fazer logout:', error);
+            }
+        }
+        
+        async function calcular() {
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const errorMessage = document.getElementById('error-message');
+            
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            errorMessage.style.display = 'none';
+            
+            const dados = {
+                previsao_vendas: [
+                    parseFloat(document.getElementById('venda_mes1').value) || 0,
+                    parseFloat(document.getElementById('venda_mes2').value) || 0,
+                    parseFloat(document.getElementById('venda_mes3').value) || 0,
+                    parseFloat(document.getElementById('venda_mes4').value) || 0,
+                    parseFloat(document.getElementById('venda_mes5').value) || 0,
+                    parseFloat(document.getElementById('venda_mes6').value) || 0
+                ],
+                contas_receber_anteriores: [
+                    parseFloat(document.getElementById('receber_anteriores_mes1').value) || 0,
+                    parseFloat(document.getElementById('receber_anteriores_mes2').value) || 0,
+                    parseFloat(document.getElementById('receber_anteriores_mes3').value) || 0,
+                    parseFloat(document.getElementById('receber_anteriores_mes4').value) || 0,
+                    parseFloat(document.getElementById('receber_anteriores_mes5').value) || 0,
+                    parseFloat(document.getElementById('receber_anteriores_mes6').value) || 0
+                ],
+                comissoes_anteriores: [
+                    parseFloat(document.getElementById('comissoes_anteriores_mes1').value) || 0,
+                    parseFloat(document.getElementById('comissoes_anteriores_mes2').value) || 0,
+                    parseFloat(document.getElementById('comissoes_anteriores_mes3').value) || 0,
+                    parseFloat(document.getElementById('comissoes_anteriores_mes4').value) || 0,
+                    parseFloat(document.getElementById('comissoes_anteriores_mes5').value) || 0,
+                    parseFloat(document.getElementById('comissoes_anteriores_mes6').value) || 0
+                ],
+                contas_pagar_anteriores: [
+                    parseFloat(document.getElementById('pagar_anteriores_mes1').value) || 0,
+                    parseFloat(document.getElementById('pagar_anteriores_mes2').value) || 0,
+                    parseFloat(document.getElementById('pagar_anteriores_mes3').value) || 0,
+                    parseFloat(document.getElementById('pagar_anteriores_mes4').value) || 0,
+                    parseFloat(document.getElementById('pagar_anteriores_mes5').value) || 0,
+                    parseFloat(document.getElementById('pagar_anteriores_mes6').value) || 0
+                ],
+                desp_fixas_manuais: [
+                    parseFloat(document.getElementById('desp_fixas_mes1').value) || 0,
+                    parseFloat(document.getElementById('desp_fixas_mes2').value) || 0,
+                    parseFloat(document.getElementById('desp_fixas_mes3').value) || 0,
+                    parseFloat(document.getElementById('desp_fixas_mes4').value) || 0,
+                    parseFloat(document.getElementById('desp_fixas_mes5').value) || 0,
+                    parseFloat(document.getElementById('desp_fixas_mes6').value) || 0
+                ],
+                desp_variaveis_manuais: [
+                    parseFloat(document.getElementById('desp_variaveis_m1').value) || 0
+                ],
+                setup: {
+                    vendas_vista: parseFloat(document.getElementById('vendas_vista').value),
+                    vendas_parcelamento: parseInt(document.getElementById('vendas_parcelamento').value),
+                    plus_vendas: parseFloat(document.getElementById('plus_vendas').value),
+                    cmv: parseFloat(document.getElementById('cmv').value),
+                    percent_compras: parseFloat(document.getElementById('percent_compras').value),
+                    compras_vista: parseFloat(document.getElementById('compras_vista').value),
+                    compras_parcelamento: parseInt(document.getElementById('compras_parcelamento').value),
+                    comissoes: parseFloat(document.getElementById('comissoes').value),
+                    desp_variaveis_impostos: parseFloat(document.getElementById('desp_variaveis_impostos').value)
+                }
+            };
+            
+            try {
+                const response = await fetch('/calcular', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dados)
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Erro ao calcular');
+                }
+                
+                const resultados = await response.json();
+                
+                exibirIndicadores(resultados.indicadores);
+                exibirGraficos(resultados.graficos);
+                exibirTabela(resultados.resultados, resultados.meses);
+                
+                loading.style.display = 'none';
+                results.style.display = 'block';
+                
+            } catch (error) {
+                loading.style.display = 'none';
+                errorMessage.textContent = error.message;
+                errorMessage.style.display = 'block';
+            }
+        }
+        
+        function exibirIndicadores(indicadores) {
+            const container = document.getElementById('indicadores');
+            container.innerHTML = '';
+            
+            for (const [nome, valor] of Object.entries(indicadores)) {
+                const div = document.createElement('div');
+                div.className = 'indicador';
+                div.innerHTML = `
+                    <h3>${nome}</h3>
+                    <p class="valor">${valor}</p>
+                `;
+                container.appendChild(div);
+            }
         }
 
-def validate_email(email):
-    pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-    return re.match(pattern, email) is not None
+        function exibirGraficos(dadosGraficos) {
+            const ctxSaldo = document.getElementById('graficoSaldo').getContext('2d');
+            if (graficoSaldo) {
+                graficoSaldo.destroy();
+            }
+            graficoSaldo = new Chart(ctxSaldo, {
+                type: 'line',
+                data: {
+                    labels: dadosGraficos.meses,
+                    datasets: [{
+                        label: 'Saldo Final de Caixa',
+                        data: dadosGraficos.saldo_final_caixa,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
 
-@app.route("/")
-def index():
-    try:
-        if "user_id" not in session:
-            return redirect(url_for("login"))
+            const ctxReceitasDespesas = document.getElementById('graficoReceitasDespesas').getContext('2d');
+            if (graficoReceitasDespesas) {
+                graficoReceitasDespesas.destroy();
+            }
+            graficoReceitasDespesas = new Chart(ctxReceitasDespesas, {
+                type: 'bar',
+                data: {
+                    labels: dadosGraficos.meses,
+                    datasets: [
+                        {
+                            label: 'Receitas',
+                            data: dadosGraficos.receitas,
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                        },
+                        {
+                            label: 'Despesas',
+                            data: dadosGraficos.despesas,
+                            backgroundColor: 'rgba(255, 99, 132, 0.6)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            stacked: true
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
 
-        user = User.query.get(session["user_id"])
-        if not user:
-            session.pop("user_id", None)
-            return redirect(url_for("login"))
+        function exibirTabela(resultados, meses) {
+            const container = document.getElementById('tabela-resultados');
+            container.innerHTML = '';
 
-        if not user.has_active_subscription():
-            return redirect(url_for("payment"))
+            // Ordem fixa das linhas
+            const ordemCorreta = [
+                "PREVISÃO DE VENDAS",
+                "Recebimento de vendas à vista",
+                "Contas a receber Parcelado",
+                "Contas a receber anteriores",
+                "Total de Contas a Receber",
+                "",
+                "Pagamento de comissões à vista",
+                "Comissões parceladas",
+                "Comissões a pagar anteriores",
+                "Total de Comissões a pagar",
+                "",
+                "Compras à vista",
+                "Fornecedores Parcelados",
+                "Fornecedores Anteriores",
+                "Total Pagamento de Fornecedores",
+                "",
+                "Despesas variáveis",
+                "Despesas fixas",
+                "",
+                "SALDO OPERACIONAL",
+                "SALDO FINAL DE CAIXA PREVISTO"
+            ];
 
-        return render_template("calculadora.html")
+            let tableHTML = '<table><thead><tr><th>Descricao</th>';
+            meses.forEach(mes => {
+                tableHTML += `<th>${mes}</th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
 
-    except Exception as e:
-        return redirect(url_for("login"))
+            // Criar a tabela na ordem correta
+            ordemCorreta.forEach(descricao => {
+                if (descricao === "") {
+                    tableHTML += '<tr class="empty-row"><td colspan="' + (meses.length + 1) + '"></td></tr>';
+                } else if (resultados[descricao]) {
+                    // Definir classes para linhas em negrito
+                    let rowClass = '';
+                    if ([
+                        "Total de Contas a Receber",
+                        "Total de Comissões a pagar", 
+                        "Compras à vista",
+                        "Total Pagamento de Fornecedores",
+                        "Despesas variáveis",
+                        "Despesas fixas",
+                        "SALDO OPERACIONAL",
+                        "SALDO FINAL DE CAIXA PREVISTO"
+                    ].includes(descricao)) {
+                        rowClass = 'bold-row';
+                    } else if (descricao === "PREVISÃO DE VENDAS") {
+                        rowClass = 'section-header';
+                    }
 
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        email = request.form.get("email")
-        password = request.form.get("password")
+                    tableHTML += `<tr class="${rowClass}">`;
+                    tableHTML += `<td>${descricao}</td>`;
+                    resultados[descricao].forEach(valor => {
+                        tableHTML += `<td>${valor}</td>`;
+                    });
+                    tableHTML += '</tr>';
+                }
+            });
+            tableHTML += '</tbody></table>';
+            container.innerHTML = tableHTML;
+        }
 
-        if not email or not password:
-            return render_template("login.html", error="Email e senha são obrigatórios")
-
-        user = User.query.filter_by(email=email).first()
-
-        if user and user.check_password(password):
-            session["user_id"] = user.id
-            if user.has_active_subscription():
-                return redirect(url_for("index"))
-            else:
-                return redirect(url_for("payment"))
-
-        return render_template("login.html", error="Email ou senha inválidos")
-
-    return render_template("login.html")
-
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        email = request.form.get("email")
-        password = request.form.get("password")
-
-        if not email or not password:
-            return render_template("register.html", error="Email e senha são obrigatórios")
-
-        if not validate_email(email):
-            return render_template("register.html", error="Email inválido")
-
-        if User.query.filter_by(email=email).first():
-            return render_template("register.html", error="Email já cadastrado")
-
-        try:
-            password_hash = generate_password_hash(password)
-            user = User(email=email, password_hash=password_hash)
-
-            db.session.add(user)
-            db.session.commit()
-
-            session["user_id"] = user.id
-            return redirect(url_for("payment"))
-
-        except Exception as e:
-            db.session.rollback()
-            print(f"Erro durante o registro: {e}") # Adicionado para depuração
-            return render_template("register.html", error=f"Erro ao criar conta: {str(e)}")
-
-    return render_template("register.html")
-
-@app.route("/payment")
-def payment():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-    user = User.query.get(session["user_id"])
-    if not user:
-        session.pop("user_id", None)
-        return redirect(url_for("login"))
-    return render_template("payment.html", user=user)
-
-@app.route("/subscribe", methods=["POST"])
-def subscribe():
-    if "user_id" not in session:
-        return jsonify({"success": False, "message": "Usuário não logado"}), 401
-    user = User.query.get(session["user_id"])
-    if not user:
-        session.pop("user_id", None)
-        return jsonify({"success": False, "message": "Usuário não encontrado"}), 404
-    try:
-        user.add_subscription_days(30) # Adiciona 30 dias de assinatura
-        db.session.commit()
-        return jsonify({"success": True, "message": "Assinatura ativada com sucesso!"})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "message": f"Erro ao ativar assinatura: {str(e)}"}), 500
-
-@app.route("/subscription_info")
-def subscription_info():
-    if "user_id" not in session:
-        return jsonify({"active": False, "end_date": None})
-    user = User.query.get(session["user_id"])
-    if not user:
-        session.pop("user_id", None)
-        return jsonify({"active": False, "end_date": None})
-    return jsonify({"active": user.has_active_subscription(), "end_date": user.subscription_end.isoformat() if user.subscription_end else None})
-
-@app.route("/user_info")
-def user_info():
-    if "user_id" not in session:
-        return jsonify({"email": None})
-    user = User.query.get(session["user_id"])
-    if not user:
-        session.pop("user_id", None)
-        return jsonify({"email": None})
-    return jsonify({"email": user.email})
-
-@app.route("/logout")
-def logout():
-    session.pop("user_id", None)
-    return redirect(url_for("login"))
-
-@app.route("/calcular", methods=["POST"])
-def calcular_projecao():
-    try:
-        if "user_id" not in session:
-            return jsonify({"error": "Usuário não autenticado."}), 401
-        user = User.query.get(session["user_id"])
-        if not user or not user.has_active_subscription():
-            return jsonify({"error": "Assinatura inativa ou inválida."}), 403
-
-        dados = request.get_json()
-        planejamento = PlanejamentoCaixa()
-        resultados = planejamento.calcular(dados)
-        return jsonify(resultados)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
-
-# Criar tabelas do banco de dados
-print("🔄 Criando tabelas do banco de dados...")
-with app.app_context():
-    db.create_all()
-    print("✅ Tabelas criadas com sucesso!")
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(debug=True, host="0.0.0.0", port=port)
+        document.addEventListener('DOMContentLoaded', async () => {
+            const userEmail = await getUserEmail();
+            document.getElementById('user-email').textContent = userEmail;
+            checkSubscription();
+        });
+    </script>
+</body>
+</html>
