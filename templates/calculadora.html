@@ -366,6 +366,12 @@
                     </ul>
                     <p><em>Exemplo: Se você tem R$ 5.000 em caixa e R$ 10.000 a receber, insira R$ 15.000 no Mês 1.</em></p>
                 </div>
+
+                <div class="section-title">Vendas Mês 0 (Base para Cálculos)</div>
+                <div class="form-group">
+                    <label for="venda_mes0">Vendas Mês 0 (R$):</label>
+                    <input type="number" id="venda_mes0" step="100" min="0" value="0">
+                </div>
                 
                 <div class="section-title">Previsao de Vendas por Mes</div>
                 <div class="vendas-mes">
@@ -528,12 +534,6 @@
                     <label for="desp_variaveis_impostos">% Despesas Variaveis e Impostos sobre Vendas:</label>
                     <input type="number" id="desp_variaveis_impostos" step="0.001" min="0" max="1" value="0.085">
                 </div>
-                
-                <div class="section-title">Despesas Variaveis Manuais (Apenas Mes 1)</div>
-                <div class="form-group">
-                    <label for="desp_variaveis_m1">Mes 1 (R$):</label>
-                    <input type="number" id="desp_variaveis_m1" step="100" min="0" value="0">
-                </div>
 
                 <div class="section-title">Despesas Fixas Manuais por Mes</div>
                 <div class="vendas-mes">
@@ -669,6 +669,7 @@
             ];
             
             const dados = {
+                venda_mes0: parseFloat(document.getElementById('venda_mes0').value) || 0,
                 previsao_vendas: previsaoVendas,
                 contas_receber_anteriores: [
                     parseFloat(document.getElementById('receber_anteriores_mes1').value) || 0,
@@ -701,9 +702,6 @@
                     parseFloat(document.getElementById('desp_fixas_mes4').value) || 0,
                     parseFloat(document.getElementById('desp_fixas_mes5').value) || 0,
                     parseFloat(document.getElementById('desp_fixas_mes6').value) || 0
-                ],
-                desp_variaveis_manuais: [
-                    parseFloat(document.getElementById('desp_variaveis_m1').value) || 0
                 ],
                 setup: {
                     vendas_vista: parseFloat(document.getElementById('vendas_vista').value),
