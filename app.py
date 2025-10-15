@@ -75,11 +75,18 @@ class PlanejamentoCaixa:
         self.contas_pagar_anteriores = [0] * self.num_meses
         self.desp_fixas_manuais = [0] * self.num_meses
         self.desp_variaveis_manuais = [0]
+        self.venda_mes0 = 0  # Novo campo para armazenar a venda do mês 0
 
     def calcular(self, dados):
         for key in self.setup:
             if key in dados.get("setup", {}):
                 self.setup[key] = float(dados["setup"][key])
+
+        # Obter venda_mes0 dos dados recebidos
+        if "venda_mes0" in dados:
+            self.venda_mes0 = float(dados["venda_mes0"])
+        else:
+            self.venda_mes0 = 0
 
         if "previsao_vendas" in dados:
             self.previsao_vendas = [float(x) for x in dados["previsao_vendas"]]
@@ -110,6 +117,16 @@ class PlanejamentoCaixa:
 
         self.duplicatas_receber = [[0] * self.num_meses for _ in range(n_parcelas)]
 
+        # CALCULAR CONTAS A RECEBER PARCELADO REFERENTE AO MÊS 1 COM BASE NO MÊS 0
+        # Para o primeiro mês, usar venda_mes0 como base
+        if self.venda_mes0 > 0:
+            valor_parcelado_mes0 = (self.venda_mes0 - (self.venda_mes0 * self.setup["vendas_vista"])) / n_parcelas
+            for parcela_idx in range(n_parcelas):
+                mes_recebimento = parcela_idx  # Mês 0, 1, 2, ... (ajustado para índice 0-based)
+                if mes_recebimento < self.num_meses:
+                    self.duplicatas_receber[parcela_idx][mes_recebimento] += valor_parcelado_mes0
+
+        # Para os demais meses, usar as vendas escalonadas normalmente
         for mes in range(self.num_meses):
             valor_parcelado = (self.vendas_escalonadas[mes] - self.vendas_vista[mes]) / n_parcelas
             for parcela_idx in range(n_parcelas):
@@ -134,6 +151,17 @@ class PlanejamentoCaixa:
         n_parcelas_comissoes = 4
         self.comissoes_pagar = [[0] * self.num_meses for _ in range(n_parcelas_comissoes)]
 
+        # CALCULAR COMISSÕES PARCELADAS REFERENTE AO MÊS 1 COM BASE NO MÊS 0
+        # Para o primeiro mês, usar venda_mes0 como base
+        if self.venda_mes0 > 0:
+            comissao_mes0 = self.venda_mes0 * self.setup["comissoes"]
+            valor_parcelado_comissao_mes0 = comissao_mes0 / n_parcelas_comissoes
+            for parcela_idx in range(n_parcelas_comissoes):
+                mes_pagamento = parcela_idx  # Mês 0, 1, 2, ... (ajustado para índice 0-based)
+                if mes_pagamento < self.num_meses:
+                    self.comissoes_pagar[parcela_idx][mes_pagamento] += valor_parcelado_comissao_mes0
+
+        # Para os demais meses, usar as comissões normalmente
         for mes in range(self.num_meses):
             valor_comissao = self.comissoes_mes[mes]
             valor_parcelado = valor_comissao / n_parcelas_comissoes
@@ -163,6 +191,18 @@ class PlanejamentoCaixa:
         n_parcelas_compras = int(self.setup["compras_parcelamento"])
         self.duplicatas_pagar = [[0] * self.num_meses for _ in range(n_parcelas_compras)]
 
+        # CALCULAR FORNECEDORES PARCELADOS REFERENTE AO MÊS 1 COM BASE NO MÊS 0
+        # Para o primeiro mês, usar venda_mes0 como base
+        if self.venda_mes0 > 0:
+            compra_mes0 = self.venda_mes0 * self.setup["cmv"] * self.setup["percent_compras"]
+            compra_vista_mes0 = compra_mes0 * self.setup["compras_vista"]
+            valor_parcelado_compra_mes0 = (compra_mes0 - compra_vista_mes0) / n_parcelas_compras
+            for parcela_idx in range(n_parcelas_compras):
+                mes_pagamento = parcela_idx  # Mês 0, 1, 2, ... (ajustado para índice 0-based)
+                if mes_pagamento < self.num_meses:
+                    self.duplicatas_pagar[parcela_idx][mes_pagamento] += valor_parcelado_compra_mes0
+
+        # Para os demais meses, usar as compras normalmente
         for mes in range(self.num_meses):
             valor_parcelado = (self.compras_planejadas[mes] - self.compras_vista[mes]) / n_parcelas_compras
             for parcela_idx in range(n_parcelas_compras):
@@ -180,8 +220,17 @@ class PlanejamentoCaixa:
 
         # 5. Despesas variáveis
         self.desp_variaveis = [0] * self.num_meses
-        if self.desp_variaveis_manuais:
+        
+        # DESPESAS VARIÁVEIS REFERENTE AO MÊS 1 COM BASE NO MÊS 0
+        # Para o primeiro mês, usar venda_mes0 como base
+        if self.venda_mes0 > 0 and self.num_meses > 0:
+            self.desp_variaveis[0] = self.venda_mes0 * self.setup["desp_variaveis_impostos"]
+        
+        # Se houver valor manual, substituir
+        if self.desp_variaveis_manuais and self.desp_variaveis_manuais[0] > 0:
             self.desp_variaveis[0] = self.desp_variaveis_manuais[0]
+        
+        # Para os demais meses, usar as vendas do mês anterior normalmente
         for mes in range(1, self.num_meses):
             self.desp_variaveis[mes] = self.vendas_escalonadas[mes - 1] * self.setup["desp_variaveis_impostos"]
 
