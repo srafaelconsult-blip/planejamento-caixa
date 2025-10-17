@@ -177,15 +177,17 @@ class PlanejamentoCaixa:
                 total += self.comissoes_pagar[p][mes]
             self.total_comissoes.append(total)
 
-        # 4. Planejamento de Compras
-        self.compras_planejadas = [
+        # 4. Planejamento de Compras - CÁLCULO CORRIGIDO
+        # Cálculo do total de fornecedores (compras totais)
+        self.fornecedores_totais = [
             venda * self.setup["cmv"] * self.setup["percent_compras"]
             for venda in self.vendas_escalonadas
         ]
 
-        self.compras_vista = [
-            compra * self.setup["compras_vista"]
-            for compra in self.compras_planejadas
+        # Cálculo de Fornecedores à Vista (nova fórmula)
+        self.fornecedores_vista = [
+            fornecedor_total * self.setup["compras_vista"]
+            for fornecedor_total in self.fornecedores_totais
         ]
 
         n_parcelas_compras = int(self.setup["compras_parcelamento"])
@@ -194,17 +196,19 @@ class PlanejamentoCaixa:
         # CALCULAR FORNECEDORES PARCELADOS REFERENTE AO MÊS 1 COM BASE NO MÊS 0
         # Para o primeiro mês, usar venda_mes0 como base
         if self.venda_mes0 > 0:
-            compra_mes0 = self.venda_mes0 * self.setup["cmv"] * self.setup["percent_compras"]
-            compra_vista_mes0 = compra_mes0 * self.setup["compras_vista"]
-            valor_parcelado_compra_mes0 = (compra_mes0 - compra_vista_mes0) / n_parcelas_compras
+            fornecedor_total_mes0 = self.venda_mes0 * self.setup["cmv"] * self.setup["percent_compras"]
+            fornecedor_vista_mes0 = fornecedor_total_mes0 * self.setup["compras_vista"]
+            # Fornecedores Parcelados = (Total do fornecedor - Fornecedores à vista) / N parcelas
+            valor_parcelado_fornecedor_mes0 = (fornecedor_total_mes0 - fornecedor_vista_mes0) / n_parcelas_compras
             for parcela_idx in range(n_parcelas_compras):
                 mes_pagamento = parcela_idx  # Mês 0, 1, 2, ... (ajustado para índice 0-based)
                 if mes_pagamento < self.num_meses:
-                    self.duplicatas_pagar[parcela_idx][mes_pagamento] += valor_parcelado_compra_mes0
+                    self.duplicatas_pagar[parcela_idx][mes_pagamento] += valor_parcelado_fornecedor_mes0
 
-        # Para os demais meses, usar as compras normalmente
+        # Para os demais meses, usar os fornecedores normalmente
         for mes in range(self.num_meses):
-            valor_parcelado = (self.compras_planejadas[mes] - self.compras_vista[mes]) / n_parcelas_compras
+            # Fornecedores Parcelados = (Total do fornecedor - Fornecedores à vista) / N parcelas
+            valor_parcelado = (self.fornecedores_totais[mes] - self.fornecedores_vista[mes]) / n_parcelas_compras
             for parcela_idx in range(n_parcelas_compras):
                 mes_pagamento = mes + parcela_idx + 1
                 if mes_pagamento < self.num_meses:
@@ -212,7 +216,7 @@ class PlanejamentoCaixa:
 
         self.total_pagamento_compras = []
         for mes in range(self.num_meses):
-            total = self.compras_vista[mes]
+            total = self.fornecedores_vista[mes]
             for p in range(n_parcelas_compras):
                 total += self.duplicatas_pagar[p][mes]
             total += self.contas_pagar_anteriores[mes]
@@ -323,8 +327,8 @@ class PlanejamentoCaixa:
         
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
         
-        # 11: Compras à vista (negrito)
-        resultados_ordenados["Compras à vista"] = self.compras_vista
+        # 11: FORNECEDORES À VISTA (negrito) - NOME CORRIGIDO
+        resultados_ordenados["Fornecedores à vista"] = self.fornecedores_vista
         
         # 12: Fornecedores Parcelados (total) - TODAS as parcelas
         resultados_ordenados["Fornecedores Parcelados"] = total_fornecedores_parcelados
