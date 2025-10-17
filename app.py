@@ -257,30 +257,31 @@ class PlanejamentoCaixa:
     def gerar_resultados(self):
         meses = [f"Mês {i+1}" for i in range(self.num_meses)] + ["TOTAL"]
 
-        # Calcular totais agrupados
-        # Contas a receber Parcelado (somar todos e mostrar total por mês)
-        total_receber_parcelado = [0] * self.num_meses
+        # Calcular totais agrupados CORRETAMENTE
         n_parcelas_vendas = int(self.setup["vendas_parcelamento"])
+        n_parcelas_compras = int(self.setup["compras_parcelamento"])
+        n_parcelas_comissoes = 4
+
+        # 1. CONTAS A RECEBER PARCELADO - Somar TODAS as parcelas (da 1ª à última)
+        total_receber_parcelado = [0] * self.num_meses
         for p in range(n_parcelas_vendas):
             for mes in range(self.num_meses):
                 total_receber_parcelado[mes] += self.duplicatas_receber[p][mes]
         
-        # Comissões parceladas (somar todas e mostrar total por mês)
+        # 2. COMISSÕES PARCELADAS - Somar APENAS as parcelas 2, 3 e 4 (excluir a 1ª parcela que é à vista)
         total_comissoes_parceladas = [0] * self.num_meses
-        n_parcelas_comissoes = 4
-        for p in range(1, n_parcelas_comissoes):  # Começa de 1 para pular a parcela à vista
+        for p in range(1, n_parcelas_comissoes):  # Começa de 1 para pular a parcela à vista (índice 0)
             for mes in range(self.num_meses):
                 total_comissoes_parceladas[mes] += self.comissoes_pagar[p][mes]
         
-        # Fornecedores Parcelados (somar todos e mostrar total por mês)
+        # 3. FORNECEDORES PARCELADOS - Somar TODAS as parcelas (da 1ª à última)
         total_fornecedores_parcelados = [0] * self.num_meses
-        n_parcelas_compras = int(self.setup["compras_parcelamento"])
         for p in range(n_parcelas_compras):
             for mes in range(self.num_meses):
                 total_fornecedores_parcelados[mes] += self.duplicatas_pagar[p][mes]
 
         # Comissões à vista (primeira parcela)
-        comissoes_vista = [self.comissoes_mes[mes] / 4 for mes in range(self.num_meses)]
+        comissoes_vista = [self.comissoes_pagar[0][mes] for mes in range(self.num_meses)]
 
         # Calcular totais
         total_contas_receber = [
@@ -297,7 +298,7 @@ class PlanejamentoCaixa:
         # 2: Recebimento de vendas à vista
         resultados_ordenados["Recebimento de vendas à vista"] = self.vendas_vista
         
-        # 3: Contas a receber Parcelado (total)
+        # 3: Contas a receber Parcelado (total) - TODAS as parcelas
         resultados_ordenados["Contas a receber Parcelado"] = total_receber_parcelado
         
         # 4: Contas a receber anteriores
@@ -308,10 +309,10 @@ class PlanejamentoCaixa:
         
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
         
-        # 7: Pagamento de comissões à vista
+        # 7: Pagamento de comissões à vista (APENAS a 1ª parcela)
         resultados_ordenados["Pagamento de comissões à vista"] = comissoes_vista
         
-        # 8: Comissões parceladas (total)
+        # 8: Comissões parceladas (total) - APENAS parcelas 2, 3 e 4
         resultados_ordenados["Comissões parceladas"] = total_comissoes_parceladas
         
         # 9: Comissões a pagar anteriores
@@ -325,7 +326,7 @@ class PlanejamentoCaixa:
         # 11: Compras à vista (negrito)
         resultados_ordenados["Compras à vista"] = self.compras_vista
         
-        # 12: Fornecedores Parcelados (total)
+        # 12: Fornecedores Parcelados (total) - TODAS as parcelas
         resultados_ordenados["Fornecedores Parcelados"] = total_fornecedores_parcelados
         
         # 13: Fornecedores Anteriores
