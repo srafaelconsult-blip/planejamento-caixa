@@ -178,16 +178,16 @@ class PlanejamentoCaixa:
             self.total_comissoes.append(total)
 
         # 4. Planejamento de Compras - CÁLCULO CORRIGIDO
-        # Cálculo do total de fornecedores (compras totais)
-        self.fornecedores_totais = [
+        # LINHA MÃE: Compras (CMV * % Compras sobre CMV)
+        self.compras_totais = [
             venda * self.setup["cmv"] * self.setup["percent_compras"]
             for venda in self.vendas_escalonadas
         ]
 
-        # Cálculo de Fornecedores à Vista (nova fórmula)
+        # LINHA FILHA: Fornecedores à Vista (Compras * % Compras a Vista)
         self.fornecedores_vista = [
-            fornecedor_total * self.setup["compras_vista"]
-            for fornecedor_total in self.fornecedores_totais
+            compra_total * self.setup["compras_vista"]
+            for compra_total in self.compras_totais
         ]
 
         n_parcelas_compras = int(self.setup["compras_parcelamento"])
@@ -196,19 +196,19 @@ class PlanejamentoCaixa:
         # CALCULAR FORNECEDORES PARCELADOS REFERENTE AO MÊS 1 COM BASE NO MÊS 0
         # Para o primeiro mês, usar venda_mes0 como base
         if self.venda_mes0 > 0:
-            fornecedor_total_mes0 = self.venda_mes0 * self.setup["cmv"] * self.setup["percent_compras"]
-            fornecedor_vista_mes0 = fornecedor_total_mes0 * self.setup["compras_vista"]
-            # Fornecedores Parcelados = (Total do fornecedor - Fornecedores à vista) / N parcelas
-            valor_parcelado_fornecedor_mes0 = (fornecedor_total_mes0 - fornecedor_vista_mes0) / n_parcelas_compras
+            compra_total_mes0 = self.venda_mes0 * self.setup["cmv"] * self.setup["percent_compras"]
+            fornecedor_vista_mes0 = compra_total_mes0 * self.setup["compras_vista"]
+            # Fornecedores Parcelados = (Compras totais - Fornecedores à vista) / N parcelas
+            valor_parcelado_fornecedor_mes0 = (compra_total_mes0 - fornecedor_vista_mes0) / n_parcelas_compras
             for parcela_idx in range(n_parcelas_compras):
                 mes_pagamento = parcela_idx  # Mês 0, 1, 2, ... (ajustado para índice 0-based)
                 if mes_pagamento < self.num_meses:
                     self.duplicatas_pagar[parcela_idx][mes_pagamento] += valor_parcelado_fornecedor_mes0
 
-        # Para os demais meses, usar os fornecedores normalmente
+        # Para os demais meses, usar as compras normalmente
         for mes in range(self.num_meses):
-            # Fornecedores Parcelados = (Total do fornecedor - Fornecedores à vista) / N parcelas
-            valor_parcelado = (self.fornecedores_totais[mes] - self.fornecedores_vista[mes]) / n_parcelas_compras
+            # Fornecedores Parcelados = (Compras totais - Fornecedores à vista) / N parcelas
+            valor_parcelado = (self.compras_totais[mes] - self.fornecedores_vista[mes]) / n_parcelas_compras
             for parcela_idx in range(n_parcelas_compras):
                 mes_pagamento = mes + parcela_idx + 1
                 if mes_pagamento < self.num_meses:
@@ -327,32 +327,35 @@ class PlanejamentoCaixa:
         
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
         
-        # 11: FORNECEDORES À VISTA (negrito) - NOME CORRIGIDO
+        # 11: LINHA MÃE: COMPRAS (CMV * % Compras sobre CMV)
+        resultados_ordenados["Compras"] = self.compras_totais
+        
+        # 12: LINHA FILHA: FORNECEDORES À VISTA (Compras * % Compras a Vista)
         resultados_ordenados["Fornecedores à vista"] = self.fornecedores_vista
         
-        # 12: Fornecedores Parcelados (total) - TODAS as parcelas
+        # 13: Fornecedores Parcelados (total) - TODAS as parcelas
         resultados_ordenados["Fornecedores Parcelados"] = total_fornecedores_parcelados
         
-        # 13: Fornecedores Anteriores
+        # 14: Fornecedores Anteriores
         resultados_ordenados["Fornecedores Anteriores"] = self.contas_pagar_anteriores
         
-        # 14: Total Pagamento de Fornecedores (negrito)
+        # 15: Total Pagamento de Fornecedores (negrito)
         resultados_ordenados["Total Pagamento de Fornecedores"] = self.total_pagamento_compras
         
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
         
-        # 15: Despesas variáveis (negrito)
+        # 16: Despesas variáveis (negrito)
         resultados_ordenados["Despesas variáveis"] = self.desp_variaveis
         
-        # 16: Despesas fixas (negrito)
+        # 17: Despesas fixas (negrito)
         resultados_ordenados["Despesas fixas"] = self.desp_fixas
         
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
         
-        # 17: SALDO OPERACIONAL (negrito)
+        # 18: SALDO OPERACIONAL (negrito)
         resultados_ordenados["SALDO OPERACIONAL"] = self.saldo_operacional
         
-        # 18: SALDO FINAL DE CAIXA PREVISTO (negrito)
+        # 19: SALDO FINAL DE CAIXA PREVISTO (negrito)
         resultados_ordenados["SALDO FINAL DE CAIXA PREVISTO"] = self.saldo_final_caixa
 
         # Formatar resultados
