@@ -67,7 +67,8 @@ class PlanejamentoCaixa:
             "compras_vista": 0.2,
             "compras_parcelamento": 6,
             "comissoes": 0.0761,
-            "desp_variaveis_impostos": 0.085
+            "desp_variaveis_impostos": 0.085,
+            "desp_variaveis_parcelamento": 0.0
         }
         self.previsao_vendas = [0] * self.num_meses
         self.contas_receber_anteriores = [0] * self.num_meses
@@ -196,7 +197,7 @@ class PlanejamentoCaixa:
             total += self.contas_pagar_anteriores[mes]
             self.total_pagamento_compras.append(total)
 
-        # 4. Despesas variáveis
+        # 4.1 Despesas variáveis s/ Vendas
         self.desp_variaveis = [0] * self.num_meses
         
         # DESPESAS VARIÁVEIS REFERENTE AO MÊS 1 COM BASE NO MÊS 0
@@ -212,6 +213,47 @@ class PlanejamentoCaixa:
         for mes in range(1, self.num_meses):
             self.desp_variaveis[mes] = self.vendas_escalonadas[mes - 1] * self.setup["desp_variaveis_impostos"]
 
+        # 4.2 NOVAS DESPESAS VARIÁVEIS S/ PARCELAMENTO DAS VENDAS
+        percent_desp_var_parcelamento = self.setup["desp_variaveis_parcelamento"]
+        n_parcelas_vendas = int(self.setup["vendas_parcelamento"])
+
+        # 2.1) Despesas Variáveis à Vista (% Despesas variáveis s/ Parcelamento das Vendas * % Vendas a Vista)
+        self.desp_variaveis_vista = [
+            venda * percent_desp_var_parcelamento * self.setup["vendas_vista"]
+            for venda in self.vendas_escalonadas
+        ]
+
+        # 2.2) Despesas Variáveis Parceladas
+        self.desp_variaveis_parceladas = [[0] * self.num_meses for _ in range(n_parcelas_vendas)]
+
+        # Para o primeiro mês, usar venda_mes0 como base
+        if self.venda_mes0 > 0:
+            valor_parcelado_desp_mes0 = (self.venda_mes0 * percent_desp_var_parcelamento * (1 - self.setup["vendas_vista"])) / n_parcelas_vendas
+            for parcela_idx in range(n_parcelas_vendas):
+                mes_pagamento = parcela_idx
+                if mes_pagamento < self.num_meses:
+                    self.desp_variaveis_parceladas[parcela_idx][mes_pagamento] += valor_parcelado_desp_mes0
+
+        # Para os demais meses
+        for mes in range(self.num_meses):
+            valor_parcelado_desp = (self.vendas_escalonadas[mes] * percent_desp_var_parcelamento * (1 - self.setup["vendas_vista"])) / n_parcelas_vendas
+            for parcela_idx in range(n_parcelas_vendas):
+                mes_pagamento = mes + parcela_idx + 1
+                if mes_pagamento < self.num_meses:
+                    self.desp_variaveis_parceladas[parcela_idx][mes_pagamento] += valor_parcelado_desp
+
+        # Total Despesas Variáveis Parceladas por mês
+        self.total_desp_variaveis_parceladas = [0] * self.num_meses
+        for p in range(n_parcelas_vendas):
+            for mes in range(self.num_meses):
+                self.total_desp_variaveis_parceladas[mes] += self.desp_variaveis_parceladas[p][mes]
+
+        # 2.3) Total Despesas Variáveis s/ Parcelamento das Vendas
+        self.total_desp_variaveis_parcelamento = [
+            self.desp_variaveis_vista[i] + self.total_desp_variaveis_parceladas[i]
+            for i in range(self.num_meses)
+        ]
+
         # 5. Despesas fixas
         self.desp_fixas = self.desp_fixas_manuais
 
@@ -221,6 +263,7 @@ class PlanejamentoCaixa:
             saldo = (self.total_recebimentos[mes] -
                      self.total_pagamento_compras[mes] -
                      self.desp_variaveis[mes] -
+                     self.total_desp_variaveis_parcelamento[mes] -
                      self.desp_fixas[mes])
             self.saldo_operacional.append(saldo)
 
@@ -274,37 +317,46 @@ class PlanejamentoCaixa:
         # 5: Total de Contas a Receber (negrito)
         resultados_ordenados["Total de Contas a Receber"] = total_contas_receber
         
+        # 6: Despesas variáveis s/ Parcelamento das Vendas
+        resultados_ordenados["Despesas variáveis s/ Parcelamento das Vendas"] = self.total_desp_variaveis_parcelamento
+        
+        # 7: Despesas Variáveis à Vista
+        resultados_ordenados["Despesas Variáveis à Vista"] = self.desp_variaveis_vista
+        
+        # 8: Despesas Variáveis Parceladas
+        resultados_ordenados["Despesas Variáveis Parceladas"] = self.total_desp_variaveis_parceladas
+        
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
         
-        # 6: LINHA MÃE: COMPRAS (CMV * % Compras sobre CMV)
+        # 9: LINHA MÃE: COMPRAS (CMV * % Compras sobre CMV)
         resultados_ordenados["Planejamento de Compras"] = self.compras_totais
         
-        # 7: LINHA FILHA: FORNECEDORES À VISTA (Compras * % Compras a Vista)
+        # 10: LINHA FILHA: FORNECEDORES À VISTA (Compras * % Compras a Vista)
         resultados_ordenados["Fornecedores à vista"] = self.fornecedores_vista
         
-        # 8: Fornecedores Parcelados (total) - TODAS as parcelas
+        # 11: Fornecedores Parcelados (total) - TODAS as parcelas
         resultados_ordenados["Fornecedores Parcelados"] = total_fornecedores_parcelados
         
-        # 9: Fornecedores Anteriores
+        # 12: Fornecedores Anteriores
         resultados_ordenados["Fornecedores Anteriores"] = self.contas_pagar_anteriores
         
-        # 10: Total Pagamento de Fornecedores (negrito)
+        # 13: Total Pagamento de Fornecedores (negrito)
         resultados_ordenados["Total Pagamento de Fornecedores"] = self.total_pagamento_compras
         
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
         
-        # 11: Despesas variáveis (negrito)
-        resultados_ordenados["Despesas variáveis"] = self.desp_variaveis
+        # 14: Despesas variáveis s/ Vendas (negrito)
+        resultados_ordenados["Despesas variáveis s/ Vendas"] = self.desp_variaveis
         
-        # 12: Despesas fixas (negrito)
+        # 15: Despesas fixas (negrito)
         resultados_ordenados["Despesas fixas"] = self.desp_fixas
         
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
         
-        # 13: SALDO OPERACIONAL (negrito)
+        # 16: SALDO OPERACIONAL (negrito)
         resultados_ordenados["SALDO OPERACIONAL"] = self.saldo_operacional
         
-        # 14: SALDO FINAL DE CAIXA PREVISTO (negrito)
+        # 17: SALDO FINAL DE CAIXA PREVISTO (negrito)
         resultados_ordenados["SALDO FINAL DE CAIXA PREVISTO"] = self.saldo_final_caixa
 
         # Formatar resultados
@@ -323,7 +375,7 @@ class PlanejamentoCaixa:
         indicadores = {
             "Total de Vendas": f"R$ {sum(self.previsao_vendas):,.0f}",
             "Total de Recebimentos": f"R$ {sum(self.total_recebimentos):,.0f}",
-            "Total de Despesas": f"R$ {sum(self.total_pagamento_compras) + sum(self.desp_variaveis) + sum(self.desp_fixas):,.0f}",
+            "Total de Despesas": f"R$ {sum(self.total_pagamento_compras) + sum(self.desp_variaveis) + sum(self.desp_fixas) + sum(self.total_desp_variaveis_parcelamento):,.0f}",
             "Saldo Final Acumulado": f"R$ {self.saldo_final_caixa[-1]:,.0f}",
             "Margem Líquida": f"{(sum(self.saldo_operacional) / sum(self.total_recebimentos)) * 100:.1f}%" if sum(self.total_recebimentos) > 0 else "0%"
         }
@@ -333,9 +385,10 @@ class PlanejamentoCaixa:
             "saldo_final_caixa": self.saldo_final_caixa,
             "receitas": self.total_recebimentos,
             "despesas": [
-                a + b + c for a, b, c in zip(
+                a + b + c + d for a, b, c, d in zip(
                     self.total_pagamento_compras,
                     self.desp_variaveis,
+                    self.total_desp_variaveis_parcelamento,
                     self.desp_fixas
                 )
             ]
