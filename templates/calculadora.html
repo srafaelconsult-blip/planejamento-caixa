@@ -3,748 +3,555 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora Financeira - Planejamento de Caixa</title>
+    <title>Calculadora de Fluxo de Caixa</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --primary: #007bff;
-            --secondary: #6c757d;
-            --success: #28a745;
-            --danger: #dc3545;
-            --warning: #ffc107;
-            --info: #17a2b8;
-            --light: #f8f9fa;
-            --dark: #343a40;
-        }
-        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-        
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             overflow: hidden;
         }
-        
-        header {
-            background: var(--primary);
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
             color: white;
-            padding: 20px;
+            padding: 25px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 300;
+        }
+
         .user-info {
             display: flex;
             align-items: center;
             gap: 15px;
         }
-        
-        .btn {
-            padding: 10px 20px;
+
+        .user-email {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
             border: none;
-            border-radius: 5px;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
             cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            transition: background 0.3s;
         }
-        
-        .btn-primary {
-            background: var(--success);
-            color: white;
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
         }
-        
-        .btn-primary:hover {
-            background: #218838;
-        }
-        
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #c82333;
-        }
-        
+
         .main-content {
             display: grid;
-            grid-template-columns: 500px 1fr;
+            grid-template-columns: 400px 1fr;
+            gap: 0;
             min-height: 800px;
         }
-        
+
         .sidebar {
-            background: var(--light);
-            padding: 20px;
-            border-right: 1px solid #dee2e6;
-            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 30px;
+            border-right: 1px solid #e9ecef;
         }
-        
+
+        .setup-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #3498db;
+        }
+
         .form-group {
             margin-bottom: 15px;
         }
-        
+
         .form-group label {
             display: block;
-            margin-bottom: 5px;
+            font-size: 13px;
             font-weight: 500;
-            color: var(--dark);
+            color: #5a6c7d;
+            margin-bottom: 5px;
         }
-        
-        .form-group input,
-        .form-group select {
+
+        .form-group input {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
             font-size: 14px;
+            transition: border 0.3s;
         }
-        
-        .form-group input:focus,
-        .form-group select:focus {
+
+        .form-group input:focus {
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
         }
-        
-        .vendas-mes, .contas-receber-anteriores, .comissoes-anteriores, .contas-pagar-anteriores {
+
+        .vendas-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .venda-mes0 {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .venda-mes0 label {
+            color: #856404;
+            font-weight: 600;
+        }
+
+        .mes-inputs {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
-            margin-bottom: 15px;
         }
-        
-        .vendas-mes input, .contas-receber-anteriores input, .comissoes-anteriores input, .contas-pagar-anteriores input {
-            text-align: right;
+
+        .mes-input {
+            display: flex;
+            flex-direction: column;
         }
-        
-        .section-title {
-            background: var(--primary);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 20px 0 15px 0;
-            font-weight: 600;
-            font-size: 16px;
+
+        .mes-input label {
+            font-size: 11px;
+            color: #6c757d;
+            margin-bottom: 3px;
         }
-        
+
         .calculate-btn {
             width: 100%;
-            padding: 15px;
-            background: var(--primary);
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
             color: white;
             border: none;
-            border-radius: 5px;
+            padding: 15px;
+            border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            margin-top: 20px;
-            transition: background 0.3s ease;
+            transition: transform 0.2s;
+            margin-top: 10px;
         }
-        
+
         .calculate-btn:hover {
-            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
         }
-        
-        .calculate-btn:disabled {
-            background: var(--secondary);
-            cursor: not-allowed;
+
+        .results-container {
+            padding: 30px;
+            background: white;
+            overflow: auto;
         }
-        
-        .content {
-            padding: 20px;
-            overflow-y: auto;
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
         }
-        
-        .loading {
+
+        .results-title {
+            font-size: 24px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .export-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .export-btn:hover {
+            background: #2980b9;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            font-size: 13px;
+        }
+
+        .results-table th {
+            background: #34495e;
+            color: white;
+            padding: 12px 8px;
             text-align: center;
-            padding: 50px;
-            color: var(--secondary);
+            font-weight: 600;
+            border: 1px solid #2c3e50;
         }
-        
-        .results-section {
-            display: none;
+
+        .results-table td {
+            padding: 10px 8px;
+            border: 1px solid #ddd;
+            text-align: right;
         }
-        
+
+        .results-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .results-table tr:hover {
+            background: #e3f2fd;
+        }
+
+        .category-header {
+            background: #2c3e50 !important;
+            color: white;
+            font-weight: 600;
+            text-align: left !important;
+        }
+
+        .sub-item {
+            background: #f8f9fa;
+            padding-left: 20px !important;
+            font-style: italic;
+        }
+
+        .total-row {
+            background: #e3f2fd !important;
+            font-weight: 600;
+            border-top: 2px solid #3498db !important;
+        }
+
         .indicadores {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-bottom: 30px;
         }
-        
-        .indicador {
+
+        .indicador-card {
             background: white;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             text-align: center;
-            border-left: 4px solid var(--primary);
+            border-left: 4px solid #3498db;
         }
-        
-        .indicador h3 {
-            font-size: 14px;
-            color: var(--secondary);
-            margin-bottom: 10px;
-        }
-        
-        .indicador .valor {
+
+        .indicador-valor {
             font-size: 24px;
-            font-weight: bold;
-            color: var(--dark);
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 10px 0;
         }
-        
-        .graficos {
+
+        .indicador-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .charts-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
-            margin-bottom: 30px;
+            margin-top: 30px;
         }
-        
-        .grafico-container {
+
+        .chart-card {
             background: white;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        
-        .tabela-container {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow-x: auto;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        
-        th, td {
-            padding: 8px 12px;
-            text-align: right;
-            border-bottom: 1px solid #dee2e6;
-        }
-        
-        th {
-            background: var(--light);
+
+        .chart-title {
+            font-size: 16px;
             font-weight: 600;
-            text-align: left;
-            position: sticky;
-            left: 0;
-            z-index: 1;
-        }
-        
-        th:first-child {
-            min-width: 250px;
-        }
-        
-        tr:hover {
-            background: #f8f9fa;
-        }
-        
-        .result-section-title {
-            background: var(--primary);
-            color: white;
-            padding: 10px 15px;
-            margin: 0 -20px 20px -20px;
-            font-weight: 600;
-        }
-        
-        .alert {
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        
-        .alert-danger {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .subscription-info {
-            background: #fff3cd;
-            color: #856404;
-            padding: 10px;
-            border-radius: 5px;
+            color: #2c3e50;
             margin-bottom: 15px;
             text-align: center;
         }
-        
-        .empty-row {
-            height: 10px;
-            background: transparent;
-        }
-        
-        .total-row {
-            font-weight: bold;
-            background: #e9ecef;
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
         }
 
-        .bold-row {
-            font-weight: bold;
-            background: #f8f9fa;
+        .loading.spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
         }
 
-        .section-header {
-            font-weight: bold;
-            background: #e9ecef;
-            font-size: 16px;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        .instruction-box {
-            background: #e7f3ff;
-            border: 1px solid #b3d9ff;
-            border-radius: 8px;
+        .error-message {
+            background: #e74c3c;
+            color: white;
             padding: 15px;
-            margin: 15px 0;
-            font-size: 14px;
-            line-height: 1.5;
+            border-radius: 6px;
+            margin: 20px 0;
+            display: none;
         }
 
-        .instruction-box h4 {
-            color: #0066cc;
-            margin-bottom: 8px;
-            font-size: 16px;
+        .success-message {
+            background: #27ae60;
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            display: none;
         }
 
-        .instruction-box ul {
-            margin: 10px 0;
-            padding-left: 20px;
+        /* Hierarquia visual para as linhas de compras */
+        .parent-row {
+            background: #e8f4f8 !important;
+            font-weight: 600;
         }
 
-        .instruction-box li {
-            margin-bottom: 5px;
+        .child-row {
+            background: #f0f8f0 !important;
+            padding-left: 30px !important;
         }
 
-        .highlight {
-            background: #fff3cd;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-weight: 500;
-        }
-
-        /* Responsividade */
-        @media (max-width: 1200px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-            
-            .sidebar {
-                border-right: none;
-                border-bottom: 1px solid #dee2e6;
-            }
-            
-            .graficos {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .vendas-mes, .contas-receber-anteriores, .comissoes-anteriores, .contas-pagar-anteriores {
-                grid-template-columns: 1fr;
-            }
-            
-            header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-            
-            .indicadores {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            }
+        .grandchild-row {
+            background: #f8f8f8 !important;
+            padding-left: 45px !important;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>Calculadora de Planejamento de Caixa - 6 Meses</h1>
+        <div class="header">
+            <h1>📊 Calculadora de Fluxo de Caixa</h1>
             <div class="user-info">
-                <span id="user-email">Usuario</span>
-                <button class="btn btn-danger" onclick="logout()">Sair</button>
+                <span class="user-email" id="userEmail">carregando...</span>
+                <button class="logout-btn" onclick="logout()">Sair</button>
             </div>
-        </header>
-        
+        </div>
+
         <div class="main-content">
             <div class="sidebar">
-                <h2>Configuracoes</h2>
-
-                <!-- Instrução de Uso -->
-                <div class="instruction-box">
-                    <h4>📋 Instruções de Uso</h4>
-                    <p><strong>Para iniciar o planejamento:</strong></p>
-                    <ul>
-                        <li>No campo <span class="highlight">"Contas a receber anteriores - Mês 1"</span> abaixo, insira:</li>
-                        <li><strong>Saldo Inicial de Caixa + Contas a Receber</strong></li>
-                    </ul>
-                    <p><em>Exemplo: Se você tem R$ 5.000 em caixa e R$ 10.000 a receber, insira R$ 15.000 no Mês 1.</em></p>
-                </div>
-
-                <div class="section-title">Vendas Mês 0 (Base para Cálculos)</div>
-                <div class="form-group">
-                    <label for="venda_mes0">Vendas Mês 0 (R$):</label>
-                    <input type="number" id="venda_mes0" step="100" min="0" value="0">
-                </div>
-                
-                <div class="section-title">Previsao de Vendas por Mes</div>
-                <div class="vendas-mes">
+                <div class="setup-section">
+                    <div class="section-title">⚙️ Configurações</div>
+                    
                     <div class="form-group">
-                        <label for="venda_mes1">Mes 1 (R$):</label>
-                        <input type="number" id="venda_mes1" step="100" min="0" value="0">
+                        <label>% Vendas à Vista</label>
+                        <input type="number" id="vendas_vista" step="0.01" min="0" max="1" value="0.3">
                     </div>
+                    
                     <div class="form-group">
-                        <label for="venda_mes2">Mes 2 (R$):</label>
-                        <input type="number" id="venda_mes2" step="100" min="0" value="0">
+                        <label>Parcelamento Vendas (meses)</label>
+                        <input type="number" id="vendas_parcelamento" min="1" value="5">
                     </div>
+                    
                     <div class="form-group">
-                        <label for="venda_mes3">Mes 3 (R$):</label>
-                        <input type="number" id="venda_mes3" step="100" min="0" value="0">
+                        <label>Plus de Vendas (%)</label>
+                        <input type="number" id="plus_vendas" step="0.01" min="0" value="0">
                     </div>
+                    
                     <div class="form-group">
-                        <label for="venda_mes4">Mes 4 (R$):</label>
-                        <input type="number" id="venda_mes4" step="100" min="0" value="0">
+                        <label>% CMV (Custo Mercadoria Vendida)</label>
+                        <input type="number" id="cmv" step="0.01" min="0" max="1" value="0.425">
                     </div>
+                    
                     <div class="form-group">
-                        <label for="venda_mes5">Mes 5 (R$):</label>
-                        <input type="number" id="venda_mes5" step="100" min="0" value="0">
+                        <label>% Compras sobre CMV</label>
+                        <input type="number" id="percent_compras" step="0.01" min="0" max="1" value="0.2">
                     </div>
+                    
                     <div class="form-group">
-                        <label for="venda_mes6">Mes 6 (R$):</label>
-                        <input type="number" id="venda_mes6" step="100" min="0" value="0">
+                        <label>% Compras à Vista</label>
+                        <input type="number" id="compras_vista" step="0.01" min="0" max="1" value="0.2">
                     </div>
-                </div>
-                
-                <div class="section-title">Contas a Receber Anteriores por Mes</div>
-                <div class="instruction-box" style="margin-top: -10px; margin-bottom: 15px;">
-                    <p><strong>💡 Importante:</strong> No <span class="highlight">Mês 1</span>, insira o <strong>Saldo Inicial de Caixa + Contas a Receber</strong></p>
-                </div>
-                <div class="contas-receber-anteriores">
+                    
                     <div class="form-group">
-                        <label for="receber_anteriores_mes1">Mes 1 (R$):</label>
-                        <input type="number" id="receber_anteriores_mes1" step="100" min="0" value="0" placeholder="Saldo + Contas a Receber">
+                        <label>Parcelamento Compras (meses)</label>
+                        <input type="number" id="compras_parcelamento" min="1" value="6">
                     </div>
+                    
                     <div class="form-group">
-                        <label for="receber_anteriores_mes2">Mes 2 (R$):</label>
-                        <input type="number" id="receber_anteriores_mes2" step="100" min="0" value="0">
+                        <label>% Comissões</label>
+                        <input type="number" id="comissoes" step="0.01" min="0" max="1" value="0.0761">
                     </div>
+                    
                     <div class="form-group">
-                        <label for="receber_anteriores_mes3">Mes 3 (R$):</label>
-                        <input type="number" id="receber_anteriores_mes3" step="100" min="0" value="0">
+                        <label>% Despesas Variáveis/Impostos</label>
+                        <input type="number" id="desp_variaveis_impostos" step="0.01" min="0" max="1" value="0.085">
                     </div>
-                    <div class="form-group">
-                        <label for="receber_anteriores_mes4">Mes 4 (R$):</label>
-                        <input type="number" id="receber_anteriores_mes4" step="100" min="0" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="receber_anteriores_mes5">Mes 5 (R$):</label>
-                        <input type="number" id="receber_anteriores_mes5" step="100" min="0" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="receber_anteriores_mes6">Mes 6 (R$):</label>
-                        <input type="number" id="receber_anteriores_mes6" step="100" min="0" value="0">
-                    </div>
-                </div>
-                
-                <div class="section-title">Comissoes a Pagar Anteriores por Mes</div>
-                <div class="comissoes-anteriores">
-                    <div class="form-group">
-                        <label for="comissoes_anteriores_mes1">Mes 1 (R$):</label>
-                        <input type="number" id="comissoes_anteriores_mes1" step="100" min="0" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="comissoes_anteriores_mes2">Mes 2 (R$):</label>
-                        <input type="number" id="comissoes_anteriores_mes2" step="100" min="0" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="comissoes_anteriores_mes3">Mes 3 (R$):</label>
-                        <input type="number" id="comissoes_anteriores_mes3" step="100" min="0" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="comissoes_anteriores_mes4">Mes 4 (R$):</label>
-                        <input type="number" id="comissoes_anteriores_mes4" step="100" min="0" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="comissoes_anteriores_mes5">Mes 5 (R$):</label>
-                        <input type="number" id="comissoes_anteriores_mes5" step="100" min="0" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="comissoes_anteriores_mes6">Mes 6 (R$):</label>
-                        <input type="number" id="comissoes_anteriores_mes6" step="100" min="0" value="0">
-                    </div>
-                </div>
-                
-                <div class="section-title">Contas a Pagar Anteriores por Mes</div>
-                <div class="contas-pagar-anteriores">
-                    <div class="form-group">
-                        <label for="pagar_anteriores_mes1">Mes 1 (R$):</label>
-                        <input type="number" id="pagar_anteriores_mes1" step="100" min="0" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="pagar_anteriores_mes2">Mes 2 (R$):</label>
-                        <input type="number" id="pagar_anteriores_mes2" step="100" min="0" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="pagar_anteriores_mes3">Mes 3 (R$):</label>
-                        <input type="number" id="pagar_anteriores_mes3" step="100" min="0" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="pagar_anteriores_mes4">Mes 4 (R$):</label>
-                        <input type="number" id="pagar_anteriores_mes4" step="100" min="0" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="pagar_anteriores_mes5">Mes 5 (R$):</label>
-                        <input type="number" id="pagar_anteriores_mes5" step="100" min="0" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="pagar_anteriores_mes6">Mes 6 (R$):</label>
-                        <input type="number" id="pagar_anteriores_mes6" step="100" min="0" value="0">
-                    </div>
-                </div>
-                
-                <div class="section-title">Parametros do Negocio</div>
-                
-                <div class="form-group">
-                    <label for="vendas_vista">% Vendas a Vista:</label>
-                    <input type="number" id="vendas_vista" step="0.01" min="0" max="1" value="0.3">
-                </div>
-                
-                <div class="form-group">
-                    <label for="vendas_parcelamento">Parcelamento Vendas (meses):</label>
-                    <input type="number" id="vendas_parcelamento" min="1" value="5">
-                </div>
-                
-                <div class="form-group">
-                    <label for="plus_vendas">Plus de Vendas (%):</label>
-                    <input type="number" id="plus_vendas" step="0.01" value="0">
-                </div>
-                
-                <div class="form-group">
-                    <label for="cmv">CMV (Custo Mercadoria Vendida):</label>
-                    <input type="number" id="cmv" step="0.01" min="0" max="1" value="0.425">
-                </div>
-                
-                <div class="form-group">
-                    <label for="percent_compras">% Compras sobre CMV:</label>
-                    <input type="number" id="percent_compras" step="0.01" min="0" max="1" value="0.2">
-                </div>
-                
-                <div class="form-group">
-                    <label for="compras_vista">% Compras a Vista:</label>
-                    <input type="number" id="compras_vista" step="0.01" min="0" max="1" value="0.2">
-                </div>
-                
-                <div class="form-group">
-                    <label for="compras_parcelamento">Parcelamento Compras (meses):</label>
-                    <input type="number" id="compras_parcelamento" min="1" value="6">
-                </div>
-                
-                <div class="form-group">
-                    <label for="comissoes">% Comissoes sobre Vendas:</label>
-                    <input type="number" id="comissoes" step="0.0001" min="0" max="1" value="0.0761">
-                </div>
-                
-                <div class="form-group">
-                    <label for="desp_variaveis_impostos">% Despesas Variaveis e Impostos sobre Vendas:</label>
-                    <input type="number" id="desp_variaveis_impostos" step="0.001" min="0" max="1" value="0.085">
                 </div>
 
-                <div class="section-title">Despesas Fixas Manuais por Mes</div>
-                <div class="vendas-mes">
-                    <div class="form-group">
-                        <label for="desp_fixas_mes1">Mes 1 (R$):</label>
-                        <input type="number" id="desp_fixas_mes1" step="100" min="0" value="438">
+                <div class="vendas-section">
+                    <div class="section-title">💰 Previsão de Vendas</div>
+                    
+                    <div class="venda-mes0">
+                        <label>Vendas Mês 0 (Base para cálculo Mês 1)</label>
+                        <input type="number" id="venda_mes0" step="1000" min="0" value="0">
                     </div>
-                    <div class="form-group">
-                        <label for="desp_fixas_mes2">Mes 2 (R$):</label>
-                        <input type="number" id="desp_fixas_mes2" step="100" min="0" value="438">
-                    </div>
-                    <div class="form-group">
-                        <label for="desp_fixas_mes3">Mes 3 (R$):</label>
-                        <input type="number" id="desp_fixas_mes3" step="100" min="0" value="438">
-                    </div>
-                    <div class="form-group">
-                        <label for="desp_fixas_mes4">Mes 4 (R$):</label>
-                        <input type="number" id="desp_fixas_mes4" step="100" min="0" value="438">
-                    </div>
-                    <div class="form-group">
-                        <label for="desp_fixas_mes5">Mes 5 (R$):</label>
-                        <input type="number" id="desp_fixas_mes5" step="100" min="0" value="438">
-                    </div>
-                    <div class="form-group">
-                        <label for="desp_fixas_mes6">Mes 6 (R$):</label>
-                        <input type="number" id="desp_fixas_mes6" step="100" min="0" value="438">
+                    
+                    <div class="mes-inputs">
+                        <div class="mes-input">
+                            <label>Mês 1</label>
+                            <input type="number" id="venda_mes1" step="1000" min="0" value="0">
+                        </div>
+                        <div class="mes-input">
+                            <label>Mês 2</label>
+                            <input type="number" id="venda_mes2" step="1000" min="0" value="0">
+                        </div>
+                        <div class="mes-input">
+                            <label>Mês 3</label>
+                            <input type="number" id="venda_mes3" step="1000" min="0" value="0">
+                        </div>
+                        <div class="mes-input">
+                            <label>Mês 4</label>
+                            <input type="number" id="venda_mes4" step="1000" min="0" value="0">
+                        </div>
+                        <div class="mes-input">
+                            <label>Mês 5</label>
+                            <input type="number" id="venda_mes5" step="1000" min="0" value="0">
+                        </div>
+                        <div class="mes-input">
+                            <label>Mês 6</label>
+                            <input type="number" id="venda_mes6" step="1000" min="0" value="0">
+                        </div>
                     </div>
                 </div>
-                
-                <button class="calculate-btn" onclick="calcular()">
-                    Calcular Projecao
+
+                <button class="calculate-btn" onclick="calcularProjecao()">
+                    🚀 Calcular Projeção
                 </button>
             </div>
-            
-            <div class="content">
-                <div id="loading" class="loading">
-                    <h2>Calculadora de Planejamento de Caixa - 6 Meses</h2>
-                    <p>Preencha as vendas mensais e as configuracoes ao lado e clique em "Calcular Projecao" para gerar sua analise financeira.</p>
-                    <p>Esta ferramenta ira projetar seu fluxo de caixa para os proximos 6 meses.</p>
+
+            <div class="results-container">
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    Calculando projeção...
                 </div>
-                
-                <div id="results" class="results-section">
-                    <div class="subscription-info" id="subscription-info">
-                        Assinatura ativa ate: <span id="subscription-end"></span>
+
+                <div class="error-message" id="errorMessage"></div>
+                <div class="success-message" id="successMessage"></div>
+
+                <div id="resultsContent" style="display: none;">
+                    <div class="results-header">
+                        <div class="results-title">📈 Resultados da Projeção</div>
+                        <button class="export-btn" onclick="exportToExcel()">📊 Exportar Excel</button>
                     </div>
-                    
-                    <div class="indicadores" id="indicadores">
+
+                    <div class="indicadores" id="indicadores"></div>
+
+                    <div class="table-container">
+                        <table class="results-table" id="resultsTable">
+                            <thead>
+                                <tr>
+                                    <th>Descrição</th>
+                                    <th>Mês 1</th>
+                                    <th>Mês 2</th>
+                                    <th>Mês 3</th>
+                                    <th>Mês 4</th>
+                                    <th>Mês 5</th>
+                                    <th>Mês 6</th>
+                                    <th>TOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsBody"></tbody>
+                        </table>
                     </div>
-                    
-                    <div class="graficos">
-                        <div class="grafico-container">
-                            <div class="result-section-title">Saldo de Caixa (6 meses)</div>
-                            <canvas id="graficoSaldo"></canvas>
+
+                    <div class="charts-container">
+                        <div class="chart-card">
+                            <div class="chart-title">Saldo Final de Caixa</div>
+                            <canvas id="saldoChart"></canvas>
                         </div>
-                        <div class="grafico-container">
-                            <div class="result-section-title">Receitas vs Despesas (6 meses)</div>
-                            <canvas id="graficoReceitasDespesas"></canvas>
+                        <div class="chart-card">
+                            <div class="chart-title">Receitas vs Despesas</div>
+                            <canvas id="receitasDespesasChart"></canvas>
                         </div>
                     </div>
-                    
-                    <div class="tabela-container">
-                        <div class="result-section-title">Resultados Detalhados - Projecao 6 Meses</div>
-                        <div id="tabela-resultados">
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="error-message" class="alert alert-danger" style="display: none;">
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let graficoSaldo = null;
-        let graficoReceitasDespesas = null;
-        
-        // Função para simular verificação de assinatura (substituir por implementação real)
-        async function checkSubscription() {
+        // Carregar informações do usuário
+        async function loadUserInfo() {
             try {
-                // Simulação - substituir por chamada real à API
-                const subscriptionData = {
-                    active: true,
-                    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 dias a partir de hoje
-                };
-                
-                if (subscriptionData.active && subscriptionData.end_date) {
-                    const endDate = new Date(subscriptionData.end_date);
-                    document.getElementById('subscription-end').textContent = endDate.toLocaleDateString('pt-BR');
-                    document.getElementById('subscription-info').style.display = 'block';
-                } else {
-                    document.getElementById('subscription-info').style.display = 'none';
-                    // window.location.href = '/payment'; // Descomentar quando implementar
-                }
+                const response = await fetch('/user_info');
+                const data = await response.json();
+                document.getElementById('userEmail').textContent = data.email || 'Usuário';
             } catch (error) {
-                console.error('Erro ao verificar assinatura:', error);
-                document.getElementById('subscription-info').style.display = 'none';
+                console.error('Erro ao carregar informações do usuário:', error);
             }
         }
-        
-        // Função para simular obtenção de email do usuário (substituir por implementação real)
-        async function getUserEmail() {
-            try {
-                // Simulação - substituir por chamada real à API
-                return 'usuario@exemplo.com';
-            } catch (error) {
-                console.error('Erro ao obter email do usuario:', error);
-                return 'usuario@exemplo.com';
-            }
+
+        // Logout
+        function logout() {
+            window.location.href = '/logout';
         }
-        
-        // Função para simular logout (substituir por implementação real)
-        async function logout() {
-            try {
-                // Simulação - substituir por chamada real à API
-                // await fetch('/logout');
-                alert('Funcionalidade de logout será implementada');
-                // window.location.href = '/login';
-            } catch (error) {
-                console.error('Erro ao fazer logout:', error);
-            }
-        }
-        
-        // Função principal de cálculo
-        async function calcular() {
+
+        // Calcular projeção
+        async function calcularProjecao() {
             const loading = document.getElementById('loading');
-            const results = document.getElementById('results');
-            const errorMessage = document.getElementById('error-message');
-            
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            const resultsContent = document.getElementById('resultsContent');
+
             loading.style.display = 'block';
-            results.style.display = 'none';
             errorMessage.style.display = 'none';
-            
-            // Capturar os valores de previsão de vendas para usar na tabela
-            const previsaoVendas = [
-                parseFloat(document.getElementById('venda_mes1').value) || 0,
-                parseFloat(document.getElementById('venda_mes2').value) || 0,
-                parseFloat(document.getElementById('venda_mes3').value) || 0,
-                parseFloat(document.getElementById('venda_mes4').value) || 0,
-                parseFloat(document.getElementById('venda_mes5').value) || 0,
-                parseFloat(document.getElementById('venda_mes6').value) || 0
-            ];
-            
-            const dados = {
-                venda_mes0: parseFloat(document.getElementById('venda_mes0').value) || 0,
-                previsao_vendas: previsaoVendas,
-                contas_receber_anteriores: [
-                    parseFloat(document.getElementById('receber_anteriores_mes1').value) || 0,
-                    parseFloat(document.getElementById('receber_anteriores_mes2').value) || 0,
-                    parseFloat(document.getElementById('receber_anteriores_mes3').value) || 0,
-                    parseFloat(document.getElementById('receber_anteriores_mes4').value) || 0,
-                    parseFloat(document.getElementById('receber_anteriores_mes5').value) || 0,
-                    parseFloat(document.getElementById('receber_anteriores_mes6').value) || 0
-                ],
-                comissoes_anteriores: [
-                    parseFloat(document.getElementById('comissoes_anteriores_mes1').value) || 0,
-                    parseFloat(document.getElementById('comissoes_anteriores_mes2').value) || 0,
-                    parseFloat(document.getElementById('comissoes_anteriores_mes3').value) || 0,
-                    parseFloat(document.getElementById('comissoes_anteriores_mes4').value) || 0,
-                    parseFloat(document.getElementById('comissoes_anteriores_mes5').value) || 0,
-                    parseFloat(document.getElementById('comissoes_anteriores_mes6').value) || 0
-                ],
-                contas_pagar_anteriores: [
-                    parseFloat(document.getElementById('pagar_anteriores_mes1').value) || 0,
-                    parseFloat(document.getElementById('pagar_anteriores_mes2').value) || 0,
-                    parseFloat(document.getElementById('pagar_anteriores_mes3').value) || 0,
-                    parseFloat(document.getElementById('pagar_anteriores_mes4').value) || 0,
-                    parseFloat(document.getElementById('pagar_anteriores_mes5').value) || 0,
-                    parseFloat(document.getElementById('pagar_anteriores_mes6').value) || 0
-                ],
-                desp_fixas_manuais: [
-                    parseFloat(document.getElementById('desp_fixas_mes1').value) || 0,
-                    parseFloat(document.getElementById('desp_fixas_mes2').value) || 0,
-                    parseFloat(document.getElementById('desp_fixas_mes3').value) || 0,
-                    parseFloat(document.getElementById('desp_fixas_mes4').value) || 0,
-                    parseFloat(document.getElementById('desp_fixas_mes5').value) || 0,
-                    parseFloat(document.getElementById('desp_fixas_mes6').value) || 0
-                ],
-                setup: {
+            successMessage.style.display = 'none';
+            resultsContent.style.display = 'none';
+
+            try {
+                // Coletar dados do setup
+                const setup = {
                     vendas_vista: parseFloat(document.getElementById('vendas_vista').value),
                     vendas_parcelamento: parseInt(document.getElementById('vendas_parcelamento').value),
                     plus_vendas: parseFloat(document.getElementById('plus_vendas').value),
@@ -754,114 +561,130 @@
                     compras_parcelamento: parseInt(document.getElementById('compras_parcelamento').value),
                     comissoes: parseFloat(document.getElementById('comissoes').value),
                     desp_variaveis_impostos: parseFloat(document.getElementById('desp_variaveis_impostos').value)
-                }
-            };
-            
-            try {
-                // Simulação de cálculo - substituir por chamada real à API
-                const resultados = await simularCalculo(dados);
-                
-                // Adicionar a previsão de vendas aos resultados
-                resultados.resultados["PREVISÃO DE VENDAS"] = [
-                    ...previsaoVendas.map(valor => `R$ ${valor.toLocaleString('pt-BR')}`),
-                    `R$ ${previsaoVendas.reduce((a, b) => a + b, 0).toLocaleString('pt-BR')}`
+                };
+
+                // Coletar previsão de vendas
+                const previsao_vendas = [
+                    parseFloat(document.getElementById('venda_mes1').value) || 0,
+                    parseFloat(document.getElementById('venda_mes2').value) || 0,
+                    parseFloat(document.getElementById('venda_mes3').value) || 0,
+                    parseFloat(document.getElementById('venda_mes4').value) || 0,
+                    parseFloat(document.getElementById('venda_mes5').value) || 0,
+                    parseFloat(document.getElementById('venda_mes6').value) || 0
                 ];
-                
-                exibirIndicadores(resultados.indicadores);
-                exibirGraficos(resultados.graficos);
-                exibirTabela(resultados.resultados, resultados.meses);
-                
+
+                // Coletar venda mês 0
+                const venda_mes0 = parseFloat(document.getElementById('venda_mes0').value) || 0;
+
+                const dados = {
+                    setup: setup,
+                    previsao_vendas: previsao_vendas,
+                    venda_mes0: venda_mes0,
+                    contas_receber_anteriores: [0, 0, 0, 0, 0, 0],
+                    comissoes_anteriores: [0, 0, 0, 0, 0, 0],
+                    contas_pagar_anteriores: [0, 0, 0, 0, 0, 0],
+                    desp_fixas_manuais: [0, 0, 0, 0, 0, 0],
+                    desp_variaveis_manuais: [0]
+                };
+
+                const response = await fetch('/calcular', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dados)
+                });
+
+                const resultados = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(resultados.error || 'Erro ao calcular projeção');
+                }
+
                 loading.style.display = 'none';
-                results.style.display = 'block';
-                
+                resultsContent.style.display = 'block';
+                successMessage.textContent = 'Projeção calculada com sucesso!';
+                successMessage.style.display = 'block';
+
+                exibirResultados(resultados);
+                exibirGraficos(resultados.graficos);
+
             } catch (error) {
                 loading.style.display = 'none';
                 errorMessage.textContent = error.message;
                 errorMessage.style.display = 'block';
+                console.error('Erro:', error);
             }
         }
-        
-        // Função para simular o cálculo (substituir por implementação real)
-        function simularCalculo(dados) {
-            return new Promise((resolve) => {
-                // Simulação de processamento
-                setTimeout(() => {
-                    const meses = ["Mês 1", "Mês 2", "Mês 3", "Mês 4", "Mês 5", "Mês 6", "Total"];
-                    
-                    // Simulação de resultados
-                    const resultados = {
-                        indicadores: {
-                            "Saldo Inicial": "R$ 15.000",
-                            "Saldo Final": "R$ 25.450",
-                            "Vendas Totais": "R$ 120.000",
-                            "Lucro Líquido": "R$ 18.200"
-                        },
-                        graficos: {
-                            meses: meses.slice(0, 6),
-                            saldo_final_caixa: [15000, 18000, 21000, 23000, 24500, 25450],
-                            receitas: [20000, 22000, 24000, 21000, 19000, 20000],
-                            despesas: [15000, 16000, 17000, 15000, 14000, 14500]
-                        },
-                        resultados: {
-                            "Recebimento de vendas à vista": ["R$ 6.000", "R$ 6.600", "R$ 7.200", "R$ 6.300", "R$ 5.700", "R$ 6.000", "R$ 37.800"],
-                            "Contas a receber Parcelado": ["R$ 14.000", "R$ 15.400", "R$ 16.800", "R$ 14.700", "R$ 13.300", "R$ 14.000", "R$ 88.200"],
-                            "Contas a receber anteriores": ["R$ 15.000", "R$ 0", "R$ 0", "R$ 0", "R$ 0", "R$ 0", "R$ 15.000"],
-                            "Total de Contas a Receber": ["R$ 35.000", "R$ 22.000", "R$ 24.000", "R$ 21.000", "R$ 19.000", "R$ 20.000", "R$ 141.000"],
-                            "Pagamento de comissões à vista": ["R$ 456", "R$ 502", "R$ 547", "R$ 479", "R$ 434", "R$ 456", "R$ 2.874"],
-                            "Comissões a pagar Parcelado": ["R$ 1.065", "R$ 1.171", "R$ 1.277", "R$ 1.118", "R$ 1.012", "R$ 1.065", "R$ 6.708"],
-                            "Comissões a pagar anteriores": ["R$ 0", "R$ 0", "R$ 0", "R$ 0", "R$ 0", "R$ 0", "R$ 0"],
-                            "Total de Comissões a Pagar": ["R$ 1.521", "R$ 1.673", "R$ 1.824", "R$ 1.597", "R$ 1.446", "R$ 1.521", "R$ 9.582"],
-                            "Pagamento de compras à vista": ["R$ 1.700", "R$ 1.870", "R$ 2.040", "R$ 1.785", "R$ 1.615", "R$ 1.700", "R$ 10.710"],
-                            "Compras a pagar Parcelado": ["R$ 6.800", "R$ 7.480", "R$ 8.160", "R$ 7.140", "R$ 6.460", "R$ 6.800", "R$ 42.840"],
-                            "Contas a pagar anteriores": ["R$ 0", "R$ 0", "R$ 0", "R$ 0", "R$ 0", "R$ 0", "R$ 0"],
-                            "Total de Compras a Pagar": ["R$ 8.500", "R$ 9.350", "R$ 10.200", "R$ 8.925", "R$ 8.075", "R$ 8.500", "R$ 53.550"],
-                            "Despesas variáveis e impostos": ["R$ 1.700", "R$ 1.870", "R$ 2.040", "R$ 1.785", "R$ 1.615", "R$ 1.700", "R$ 10.710"],
-                            "Despesas fixas": ["R$ 438", "R$ 438", "R$ 438", "R$ 438", "R$ 438", "R$ 438", "R$ 2.628"],
-                            "Total de Despesas": ["R$ 12.159", "R$ 13.331", "R$ 14.502", "R$ 12.745", "R$ 11.574", "R$ 12.159", "R$ 76.470"],
-                            "Saldo Final de Caixa": ["R$ 22.841", "R$ 8.669", "R$ 9.498", "R$ 8.255", "R$ 7.426", "R$ 7.841", "R$ 64.530"]
-                        },
-                        meses: meses
-                    };
-                    
-                    resolve(resultados);
-                }, 1000);
-            });
-        }
-        
-        // Função para exibir indicadores
-        function exibirIndicadores(indicadores) {
-            const container = document.getElementById('indicadores');
-            container.innerHTML = '';
+
+        // Exibir resultados na tabela
+        function exibirResultados(resultados) {
+            const resultsBody = document.getElementById('resultsBody');
+            const indicadoresDiv = document.getElementById('indicadores');
             
-            for (const [nome, valor] of Object.entries(indicadores)) {
-                const indicador = document.createElement('div');
-                indicador.className = 'indicador';
-                indicador.innerHTML = `
-                    <h3>${nome}</h3>
-                    <div class="valor">${valor}</div>
+            // Limpar resultados anteriores
+            resultsBody.innerHTML = '';
+            indicadoresDiv.innerHTML = '';
+
+            // Exibir indicadores
+            for (const [key, value] of Object.entries(resultados.indicadores)) {
+                const indicadorCard = document.createElement('div');
+                indicadorCard.className = 'indicador-card';
+                indicadorCard.innerHTML = `
+                    <div class="indicador-label">${key}</div>
+                    <div class="indicador-valor">${value}</div>
                 `;
-                container.appendChild(indicador);
+                indicadoresDiv.appendChild(indicadorCard);
+            }
+
+            // Exibir tabela de resultados
+            for (const [descricao, valores] of Object.entries(resultados.resultados)) {
+                const row = document.createElement('tr');
+                
+                // Aplicar classes de hierarquia
+                if (descricao === 'Compras') {
+                    row.className = 'parent-row';
+                } else if (descricao === 'Fornecedores à vista') {
+                    row.className = 'child-row';
+                } else if (descricao.includes('Parcelado') || descricao.includes('Anteriores')) {
+                    row.className = 'grandchild-row';
+                } else if (descricao.includes('TOTAL') || descricao.includes('SALDO')) {
+                    row.className = 'total-row';
+                }
+
+                // Célula de descrição
+                const descCell = document.createElement('td');
+                descCell.textContent = descricao;
+                descCell.style.textAlign = 'left';
+                descCell.style.fontWeight = descricao.includes('TOTAL') || descricao.includes('SALDO') ? 'bold' : 'normal';
+                row.appendChild(descCell);
+
+                // Células de valores
+                valores.forEach(valor => {
+                    const cell = document.createElement('td');
+                    cell.textContent = valor;
+                    cell.style.fontWeight = descricao.includes('TOTAL') || descricao.includes('SALDO') ? 'bold' : 'normal';
+                    row.appendChild(cell);
+                });
+
+                resultsBody.appendChild(row);
             }
         }
-        
-        // Função para exibir gráficos
-        function exibirGraficos(dados) {
-            // Destruir gráficos anteriores se existirem
-            if (graficoSaldo) graficoSaldo.destroy();
-            if (graficoReceitasDespesas) graficoReceitasDespesas.destroy();
-            
-            // Gráfico de Saldo de Caixa
-            const ctxSaldo = document.getElementById('graficoSaldo').getContext('2d');
-            graficoSaldo = new Chart(ctxSaldo, {
+
+        // Exibir gráficos
+        function exibirGraficos(dadosGraficos) {
+            // Gráfico de Saldo Final de Caixa
+            const saldoCtx = document.getElementById('saldoChart').getContext('2d');
+            new Chart(saldoCtx, {
                 type: 'line',
                 data: {
-                    labels: dados.meses,
+                    labels: dadosGraficos.meses,
                     datasets: [{
                         label: 'Saldo Final de Caixa',
-                        data: dados.saldo_final_caixa,
-                        borderColor: '#007bff',
-                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                        borderWidth: 2,
+                        data: dadosGraficos.saldo_final_caixa,
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                        borderWidth: 3,
                         fill: true,
                         tension: 0.4
                     }]
@@ -872,46 +695,33 @@
                         legend: {
                             position: 'top',
                         },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `R$ ${context.raw.toLocaleString('pt-BR')}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'R$ ' + value.toLocaleString('pt-BR');
-                                }
-                            }
+                        title: {
+                            display: true,
+                            text: 'Evolução do Saldo de Caixa'
                         }
                     }
                 }
             });
-            
+
             // Gráfico de Receitas vs Despesas
-            const ctxReceitasDespesas = document.getElementById('graficoReceitasDespesas').getContext('2d');
-            graficoReceitasDespesas = new Chart(ctxReceitasDespesas, {
+            const receitasDespesasCtx = document.getElementById('receitasDespesasChart').getContext('2d');
+            new Chart(receitasDespesasCtx, {
                 type: 'bar',
                 data: {
-                    labels: dados.meses,
+                    labels: dadosGraficos.meses,
                     datasets: [
                         {
                             label: 'Receitas',
-                            data: dados.receitas,
-                            backgroundColor: '#28a745',
-                            borderColor: '#28a745',
+                            data: dadosGraficos.receitas,
+                            backgroundColor: 'rgba(52, 152, 219, 0.8)',
+                            borderColor: '#3498db',
                             borderWidth: 1
                         },
                         {
                             label: 'Despesas',
-                            data: dados.despesas,
-                            backgroundColor: '#dc3545',
-                            borderColor: '#dc3545',
+                            data: dadosGraficos.despesas,
+                            backgroundColor: 'rgba(231, 76, 60, 0.8)',
+                            borderColor: '#e74c3c',
                             borderWidth: 1
                         }
                     ]
@@ -922,104 +732,24 @@
                         legend: {
                             position: 'top',
                         },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `R$ ${context.raw.toLocaleString('pt-BR')}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'R$ ' + value.toLocaleString('pt-BR');
-                                }
-                            }
+                        title: {
+                            display: true,
+                            text: 'Receitas vs Despesas'
                         }
                     }
                 }
             });
         }
-        
-        // Função para exibir tabela de resultados
-        function exibirTabela(resultados, meses) {
-            const container = document.getElementById('tabela-resultados');
-            let html = '<table>';
-            
-            // Cabeçalho
-            html += '<thead><tr><th>Descrição</th>';
-            meses.forEach(mes => {
-                html += `<th>${mes}</th>`;
-            });
-            html += '</tr></thead>';
-            
-            // Corpo da tabela
-            html += '<tbody>';
-            
-            // Ordem específica para as linhas
-            const ordemLinhas = [
-                "PREVISÃO DE VENDAS",
-                "Recebimento de vendas à vista",
-                "Contas a receber Parcelado", 
-                "Contas a receber anteriores",
-                "Total de Contas a Receber",
-                "Pagamento de comissões à vista",
-                "Comissões a pagar Parcelado",
-                "Comissões a pagar anteriores",
-                "Total de Comissões a Pagar",
-                "Pagamento de compras à vista",
-                "Compras a pagar Parcelado",
-                "Contas a pagar anteriores",
-                "Total de Compras a Pagar",
-                "Despesas variáveis e impostos",
-                "Despesas fixas",
-                "Total de Despesas",
-                "Saldo Final de Caixa"
-            ];
-            
-            ordemLinhas.forEach((chave, index) => {
-                if (resultados[chave]) {
-                    const isSectionHeader = chave === "PREVISÃO DE VENDAS";
-                    const isTotal = chave.includes("Total");
-                    const isBold = chave.includes("Total") || chave.includes("Saldo Final");
-                    
-                    html += `<tr class="${isSectionHeader ? 'section-header' : isTotal ? 'total-row' : isBold ? 'bold-row' : ''}">`;
-                    html += `<td>${chave}</td>`;
-                    
-                    resultados[chave].forEach(valor => {
-                        html += `<td>${valor}</td>`;
-                    });
-                    
-                    html += '</tr>';
-                    
-                    // Adicionar linha vazia após seções importantes
-                    if (chave === "Total de Contas a Receber" || chave === "Total de Comissões a Pagar" || chave === "Total de Compras a Pagar") {
-                        html += '<tr class="empty-row"><td colspan="8"></td></tr>';
-                    }
-                }
-            });
-            
-            html += '</tbody></table>';
-            container.innerHTML = html;
+
+        // Exportar para Excel
+        function exportToExcel() {
+            // Implementação simplificada - em produção usar biblioteca como SheetJS
+            alert('Funcionalidade de exportação será implementada em breve!');
         }
-        
-        // Inicialização
-        document.addEventListener('DOMContentLoaded', async function() {
-            const userEmail = await getUserEmail();
-            document.getElementById('user-email').textContent = userEmail;
-            
-            await checkSubscription();
-            
-            // Adicionar event listeners para validação em tempo real
-            const inputs = document.querySelectorAll('input[type="number"]');
-            inputs.forEach(input => {
-                input.addEventListener('input', function() {
-                    if (this.value < 0) this.value = 0;
-                });
-            });
+
+        // Carregar informações iniciais
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserInfo();
         });
     </script>
 </body>
