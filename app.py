@@ -348,7 +348,7 @@ class PlanejamentoCaixa:
         resultados_ordenados["Contas a Pagar Anteriores"] = self.contas_pagar_anteriores
         
         # 13: Total Pagamento de Fornecedores (negrito)
-        resultados_ordenados["Total Pagamento de Fornecedores"] = self.total_pagamento_compras
+        resultados_ordenados["Total Pagamento de Fornecedores e Contas a Pagar"] = self.total_pagamento_compras
         
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
         
@@ -561,5 +561,6 @@ with app.app_context():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host="0.0.0.0", port=port)
+
 
 
