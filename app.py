@@ -66,6 +66,7 @@ class PlanejamentoCaixa:
             "percent_compras": 0.2,
             "compras_vista": 0.2,
             "compras_parcelamento": 6,
+            "comissoes": 0.0761,
             "desp_variaveis_impostos": 0.085
         }
         self.previsao_vendas = [0] * self.num_meses
@@ -73,18 +74,24 @@ class PlanejamentoCaixa:
         self.contas_pagar_anteriores = [0] * self.num_meses
         self.desp_fixas_manuais = [0] * self.num_meses
         self.desp_variaveis_manuais = [0]
-        self.venda_mes0 = 0  # Novo campo para armazenar a venda do mês 0
+        self.venda_mes0 = 0  # Vendas do mês anterior
+        self.saldo_caixa_mes0 = 0  # Saldo de caixa inicial (Mês 0)
 
     def calcular(self, dados):
         for key in self.setup:
             if key in dados.get("setup", {}):
                 self.setup[key] = float(dados["setup"][key])
 
-        # Obter venda_mes0 dos dados recebidos
+        # Obter venda_mes0 e saldo_caixa_mes0 dos dados recebidos
         if "venda_mes0" in dados:
             self.venda_mes0 = float(dados["venda_mes0"])
         else:
             self.venda_mes0 = 0
+
+        if "saldo_caixa_mes0" in dados:
+            self.saldo_caixa_mes0 = float(dados["saldo_caixa_mes0"])
+        else:
+            self.saldo_caixa_mes0 = 0
 
         if "previsao_vendas" in dados:
             self.previsao_vendas = [float(x) for x in dados["previsao_vendas"]]
@@ -217,8 +224,8 @@ class PlanejamentoCaixa:
                      self.desp_fixas[mes])
             self.saldo_operacional.append(saldo)
 
-        # 7. Saldo final de caixa
-        self.saldo_final_caixa = [self.saldo_operacional[0]]
+        # 7. Saldo final de caixa - COMEÇANDO COM SALDO MÊS 0
+        self.saldo_final_caixa = [self.saldo_caixa_mes0 + self.saldo_operacional[0]]
         for mes in range(1, self.num_meses):
             self.saldo_final_caixa.append(self.saldo_final_caixa[-1] + self.saldo_operacional[mes])
 
