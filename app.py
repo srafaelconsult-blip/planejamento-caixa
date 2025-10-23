@@ -218,6 +218,7 @@ class PlanejamentoCaixa:
         n_parcelas_vendas = int(self.setup["vendas_parcelamento"])
 
         # 2.1) Despesas Variáveis à Vista (% Despesas variáveis s/ Parcelamento das Vendas * % Vendas a Vista)
+        # CORREÇÃO: Considerar referência às vendas do mês atual
         self.desp_variaveis_vista = [
             venda * percent_desp_var_parcelamento * self.setup["vendas_vista"]
             for venda in self.vendas_escalonadas
@@ -228,7 +229,10 @@ class PlanejamentoCaixa:
 
         # Para o primeiro mês, usar venda_mes0 como base
         if self.venda_mes0 > 0:
-            valor_parcelado_desp_mes0 = (self.venda_mes0 * percent_desp_var_parcelamento * (1 - self.setup["vendas_vista"])) / n_parcelas_vendas
+            # CORREÇÃO: Usar venda_mes0 como referência para o mês anterior
+            total_desp_var_mes0 = self.venda_mes0 * percent_desp_var_parcelamento
+            desp_vista_mes0 = total_desp_var_mes0 * self.setup["vendas_vista"]
+            valor_parcelado_desp_mes0 = (total_desp_var_mes0 - desp_vista_mes0) / n_parcelas_vendas
             for parcela_idx in range(n_parcelas_vendas):
                 mes_pagamento = parcela_idx
                 if mes_pagamento < self.num_meses:
@@ -236,7 +240,10 @@ class PlanejamentoCaixa:
 
         # Para os demais meses
         for mes in range(self.num_meses):
-            valor_parcelado_desp = (self.vendas_escalonadas[mes] * percent_desp_var_parcelamento * (1 - self.setup["vendas_vista"])) / n_parcelas_vendas
+            # CORREÇÃO: Usar vendas do mês atual como referência
+            total_desp_var_mes = self.vendas_escalonadas[mes] * percent_desp_var_parcelamento
+            desp_vista_mes = total_desp_var_mes * self.setup["vendas_vista"]
+            valor_parcelado_desp = (total_desp_var_mes - desp_vista_mes) / n_parcelas_vendas
             for parcela_idx in range(n_parcelas_vendas):
                 mes_pagamento = mes + parcela_idx + 1
                 if mes_pagamento < self.num_meses:
@@ -317,14 +324,14 @@ class PlanejamentoCaixa:
         # 5: Total de Contas a Receber (negrito)
         resultados_ordenados["Total de Contas a Receber"] = total_contas_receber
         
-        # 6: Despesas variáveis s/ Parcelamento das Vendas
-        resultados_ordenados["Despesas variáveis s/ Parcelamento das Vendas"] = self.total_desp_variaveis_parcelamento
-        
-        # 7: Despesas Variáveis à Vista
+        # 6: Despesas Variáveis à Vista
         resultados_ordenados["Despesas Variáveis à Vista"] = self.desp_variaveis_vista
         
-        # 8: Despesas Variáveis Parceladas
+        # 7: Despesas Variáveis Parceladas
         resultados_ordenados["Despesas Variáveis Parceladas"] = self.total_desp_variaveis_parceladas
+        
+        # 8: Despesas variáveis s/ Parcelamento das Vendas
+        resultados_ordenados["Despesas variáveis s/ Parcelamento das Vendas"] = self.total_desp_variaveis_parcelamento
         
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
         
