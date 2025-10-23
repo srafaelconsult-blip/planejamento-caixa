@@ -361,333 +361,323 @@
                     <h4>📋 Instruções de Uso</h4>
                     <p><strong>Para iniciar o planejamento:</strong></p>
                     <ul>
-                        <li>No campo <span class="highlight">"Contas a receber anteriores - Mês 1"</span> abaixo, insira:</li>
-                        <li><strong>Saldo Inicial de Caixa + Contas a Receber</strong></li>
+                        <li>No campo <span class="highlight">"Saldo de Caixa (Mês 0)"</span> abaixo, insira o saldo inicial de caixa</li>
+                        <li>No campo <span class="highlight">"Contas a receber anteriores - Mês 1"</span>, insira as contas a receber</li>
                     </ul>
-                    <p><em>Exemplo: Se você tem R$ 10.000 em caixa e R$ 5.000 a receber, digite R$ 15.000</em></p>
+                    <p><em>Exemplo: Se você tem R$ 5.000 em caixa e R$ 10.000 a receber, insira R$ 5.000 no Saldo Mês 0 e R$ 10.000 no Mês 1 de Contas a Receber.</em></p>
+                </div>
+
+                <div class="section-title">Dados Iniciais</div>
+                <div class="form-group">
+                    <label for="saldo_caixa_mes0">Saldo de Caixa (Mês 0) (R$):</label>
+                    <input type="number" id="saldo_caixa_mes0" step="100" min="0" value="0" placeholder="Saldo inicial de caixa">
                 </div>
                 
                 <div class="form-group">
-                    <label for="venda_mes0">Vendas do Mês Anterior (Mês 0) - Base para Cálculo do Mês 1:</label>
-                    <input type="number" id="venda_mes0" placeholder="Digite o valor das vendas do mês anterior" step="1000" min="0">
+                    <label for="venda_mes0">Vendas Mês 0 (R$):</label>
+                    <input type="number" id="venda_mes0" step="100" min="0" value="0" placeholder="Vendas do mês anterior">
                 </div>
                 
-                <div class="section-title">PARAMETROS DE VENDAS</div>
-                
-                <div class="form-group">
-                    <label for="vendas_vista">% Vendas a Vista</label>
-                    <input type="number" id="vendas_vista" value="30" step="1" min="0" max="100">
-                </div>
-                
-                <div class="form-group">
-                    <label for="vendas_parcelamento">Parcelamento das Vendas (meses)</label>
-                    <input type="number" id="vendas_parcelamento" value="5" step="1" min="1">
-                </div>
-                
-                <div class="form-group">
-                    <label for="plus_vendas">Plus de Vendas (%)</label>
-                    <input type="number" id="plus_vendas" value="0" step="1" min="0">
-                </div>
-                
-                <div class="section-title">PARAMETROS DE CUSTOS</div>
-                
-                <div class="form-group">
-                    <label for="cmv">CMV - Custo da Mercadoria Vendida (%)</label>
-                    <input type="number" id="cmv" value="42.5" step="0.1" min="0" max="100">
-                </div>
-                
-                <div class="form-group">
-                    <label for="percent_compras">% Compras sobre CMV</label>
-                    <input type="number" id="percent_compras" value="20" step="1" min="0" max="100">
-                </div>
-                
-                <div class="form-group">
-                    <label for="compras_vista">% Compras a Vista</label>
-                    <input type="number" id="compras_vista" value="20" step="1" min="0" max="100">
-                </div>
-                
-                <div class="form-group">
-                    <label for="compras_parcelamento">Parcelamento das Compras (meses)</label>
-                    <input type="number" id="compras_parcelamento" value="6" step="1" min="1">
-                </div>
-                
-                <div class="form-group">
-                    <label for="desp_variaveis_impostos">Despesas Variaveis e Impostos (%)</label>
-                    <input type="number" id="desp_variaveis_impostos" value="8.5" step="0.1" min="0" max="100">
-                </div>
-                
-                <div class="section-title">PREVISAO DE VENDAS (MESES 1 A 6)</div>
-                
+                <div class="section-title">Previsao de Vendas por Mes</div>
                 <div class="vendas-mes">
                     <div class="form-group">
-                        <label for="venda_mes1">Mês 1</label>
-                        <input type="number" id="venda_mes1" placeholder="0" step="1000" min="0">
+                        <label for="venda_mes1">Mes 1 (R$):</label>
+                        <input type="number" id="venda_mes1" step="100" min="0" value="0">
                     </div>
                     <div class="form-group">
-                        <label for="venda_mes2">Mês 2</label>
-                        <input type="number" id="venda_mes2" placeholder="0" step="1000" min="0">
+                        <label for="venda_mes2">Mes 2 (R$):</label>
+                        <input type="number" id="venda_mes2" step="100" min="0" value="0">
                     </div>
                     <div class="form-group">
-                        <label for="venda_mes3">Mês 3</label>
-                        <input type="number" id="venda_mes3" placeholder="0" step="1000" min="0">
+                        <label for="venda_mes3">Mes 3 (R$):</label>
+                        <input type="number" id="venda_mes3" step="100" min="0" value="0">
                     </div>
                     <div class="form-group">
-                        <label for="venda_mes4">Mês 4</label>
-                        <input type="number" id="venda_mes4" placeholder="0" step="1000" min="0">
+                        <label for="venda_mes4">Mes 4 (R$):</label>
+                        <input type="number" id="venda_mes4" step="100" min="0" value="0">
                     </div>
                     <div class="form-group">
-                        <label for="venda_mes5">Mês 5</label>
-                        <input type="number" id="venda_mes5" placeholder="0" step="1000" min="0">
+                        <label for="venda_mes5">Mes 5 (R$):</label>
+                        <input type="number" id="venda_mes5" step="100" min="0" value="0">
                     </div>
                     <div class="form-group">
-                        <label for="venda_mes6">Mês 6</label>
-                        <input type="number" id="venda_mes6" placeholder="0" step="1000" min="0">
+                        <label for="venda_mes6">Mes 6 (R$):</label>
+                        <input type="number" id="venda_mes6" step="100" min="0" value="0">
                     </div>
                 </div>
                 
-                <div class="section-title">CONTAS A RECEBER ANTERIORES</div>
-                
+                <div class="section-title">Contas a Receber Anteriores por Mes</div>
                 <div class="contas-receber-anteriores">
                     <div class="form-group">
-                        <label for="contas_receber_mes1">Mês 1</label>
-                        <input type="number" id="contas_receber_mes1" placeholder="0" step="1000" min="0">
+                        <label for="receber_anteriores_mes1">Mes 1 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes1" step="100" min="0" value="0">
                     </div>
                     <div class="form-group">
-                        <label for="contas_receber_mes2">Mês 2</label>
-                        <input type="number" id="contas_receber_mes2" placeholder="0" step="1000" min="0">
+                        <label for="receber_anteriores_mes2">Mes 2 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes2" step="100" min="0" value="0">
                     </div>
                     <div class="form-group">
-                        <label for="contas_receber_mes3">Mês 3</label>
-                        <input type="number" id="contas_receber_mes3" placeholder="0" step="1000" min="0">
+                        <label for="receber_anteriores_mes3">Mes 3 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes3" step="100" min="0" value="0">
                     </div>
                     <div class="form-group">
-                        <label for="contas_receber_mes4">Mês 4</label>
-                        <input type="number" id="contas_receber_mes4" placeholder="0" step="1000" min="0">
+                        <label for="receber_anteriores_mes4">Mes 4 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes4" step="100" min="0" value="0">
                     </div>
                     <div class="form-group">
-                        <label for="contas_receber_mes5">Mês 5</label>
-                        <input type="number" id="contas_receber_mes5" placeholder="0" step="1000" min="0">
+                        <label for="receber_anteriores_mes5">Mes 5 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes5" step="100" min="0" value="0">
                     </div>
                     <div class="form-group">
-                        <label for="contas_receber_mes6">Mês 6</label>
-                        <input type="number" id="contas_receber_mes6" placeholder="0" step="1000" min="0">
+                        <label for="receber_anteriores_mes6">Mes 6 (R$):</label>
+                        <input type="number" id="receber_anteriores_mes6" step="100" min="0" value="0">
                     </div>
                 </div>
                 
-                <div class="section-title">FORNECEDORES ANTERIORES</div>
-                
+                <div class="section-title">Fornecedores Anteriores por Mes</div>
                 <div class="contas-pagar-anteriores">
                     <div class="form-group">
-                        <label for="contas_pagar_mes1">Mês 1</label>
-                        <input type="number" id="contas_pagar_mes1" placeholder="0" step="1000" min="0">
+                        <label for="pagar_anteriores_mes1">Mes 1 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes1" step="100" min="0" value="0">
                     </div>
                     <div class="form-group">
-                        <label for="contas_pagar_mes2">Mês 2</label>
-                        <input type="number" id="contas_pagar_mes2" placeholder="0" step="1000" min="0">
+                        <label for="pagar_anteriores_mes2">Mes 2 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes2" step="100" min="0" value="0">
                     </div>
                     <div class="form-group">
-                        <label for="contas_pagar_mes3">Mês 3</label>
-                        <input type="number" id="contas_pagar_mes3" placeholder="0" step="1000" min="0">
+                        <label for="pagar_anteriores_mes3">Mes 3 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes3" step="100" min="0" value="0">
                     </div>
                     <div class="form-group">
-                        <label for="contas_pagar_mes4">Mês 4</label>
-                        <input type="number" id="contas_pagar_mes4" placeholder="0" step="1000" min="0">
+                        <label for="pagar_anteriores_mes4">Mes 4 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes4" step="100" min="0" value="0">
                     </div>
                     <div class="form-group">
-                        <label for="contas_pagar_mes5">Mês 5</label>
-                        <input type="number" id="contas_pagar_mes5" placeholder="0" step="1000" min="0">
+                        <label for="pagar_anteriores_mes5">Mes 5 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes5" step="100" min="0" value="0">
                     </div>
                     <div class="form-group">
-                        <label for="contas_pagar_mes6">Mês 6</label>
-                        <input type="number" id="contas_pagar_mes6" placeholder="0" step="1000" min="0">
+                        <label for="pagar_anteriores_mes6">Mes 6 (R$):</label>
+                        <input type="number" id="pagar_anteriores_mes6" step="100" min="0" value="0">
                     </div>
                 </div>
                 
-                <div class="section-title">DESPESAS FIXAS</div>
+                <div class="section-title">Parametros do Negocio</div>
                 
-                <div class="contas-pagar-anteriores">
+                <div class="form-group">
+                    <label for="vendas_vista">% Vendas a Vista:</label>
+                    <input type="number" id="vendas_vista" step="0.01" min="0" max="1" value="0.3">
+                </div>
+                
+                <div class="form-group">
+                    <label for="vendas_parcelamento">Parcelamento Vendas (meses):</label>
+                    <input type="number" id="vendas_parcelamento" min="1" value="5">
+                </div>
+                
+                <div class="form-group">
+                    <label for="plus_vendas">Plus de Vendas (%):</label>
+                    <input type="number" id="plus_vendas" step="0.01" value="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="cmv">CMV (Custo Mercadoria Vendida):</label>
+                    <input type="number" id="cmv" step="0.01" min="0" max="1" value="0.425">
+                </div>
+                
+                <div class="form-group">
+                    <label for="percent_compras">% Compras sobre CMV:</label>
+                    <input type="number" id="percent_compras" step="0.01" min="0" max="1" value="0.2">
+                </div>
+                
+                <div class="form-group">
+                    <label for="compras_vista">% Compras a Vista:</label>
+                    <input type="number" id="compras_vista" step="0.01" min="0" max="1" value="0.2">
+                </div>
+                
+                <div class="form-group">
+                    <label for="compras_parcelamento">Parcelamento Compras (meses):</label>
+                    <input type="number" id="compras_parcelamento" min="1" value="6">
+                </div>
+                
+                <div class="form-group">
+                    <label for="desp_variaveis_impostos">% Despesas Variaveis e Impostos sobre Vendas:</label>
+                    <input type="number" id="desp_variaveis_impostos" step="0.001" min="0" max="1" value="0.085">
+                </div>
+
+                <div class="section-title">Despesas Fixas Manuais por Mes</div>
+                <div class="vendas-mes">
                     <div class="form-group">
-                        <label for="desp_fixas_mes1">Mês 1</label>
-                        <input type="number" id="desp_fixas_mes1" placeholder="0" step="1000" min="0">
+                        <label for="desp_fixas_mes1">Mes 1 (R$):</label>
+                        <input type="number" id="desp_fixas_mes1" step="100" min="0" value="438">
                     </div>
                     <div class="form-group">
-                        <label for="desp_fixas_mes2">Mês 2</label>
-                        <input type="number" id="desp_fixas_mes2" placeholder="0" step="1000" min="0">
+                        <label for="desp_fixas_mes2">Mes 2 (R$):</label>
+                        <input type="number" id="desp_fixas_mes2" step="100" min="0" value="438">
                     </div>
                     <div class="form-group">
-                        <label for="desp_fixas_mes3">Mês 3</label>
-                        <input type="number" id="desp_fixas_mes3" placeholder="0" step="1000" min="0">
+                        <label for="desp_fixas_mes3">Mes 3 (R$):</label>
+                        <input type="number" id="desp_fixas_mes3" step="100" min="0" value="438">
                     </div>
                     <div class="form-group">
-                        <label for="desp_fixas_mes4">Mês 4</label>
-                        <input type="number" id="desp_fixas_mes4" placeholder="0" step="1000" min="0">
+                        <label for="desp_fixas_mes4">Mes 4 (R$):</label>
+                        <input type="number" id="desp_fixas_mes4" step="100" min="0" value="438">
                     </div>
                     <div class="form-group">
-                        <label for="desp_fixas_mes5">Mês 5</label>
-                        <input type="number" id="desp_fixas_mes5" placeholder="0" step="1000" min="0">
+                        <label for="desp_fixas_mes5">Mes 5 (R$):</label>
+                        <input type="number" id="desp_fixas_mes5" step="100" min="0" value="438">
                     </div>
                     <div class="form-group">
-                        <label for="desp_fixas_mes6">Mês 6</label>
-                        <input type="number" id="desp_fixas_mes6" placeholder="0" step="1000" min="0">
+                        <label for="desp_fixas_mes6">Mes 6 (R$):</label>
+                        <input type="number" id="desp_fixas_mes6" step="100" min="0" value="438">
                     </div>
                 </div>
                 
-                <button class="calculate-btn" onclick="calcularProjecao()">
-                    Calcular Projecao de Caixa
+                <button class="calculate-btn" onclick="calcular()">
+                    Calcular Projecao
                 </button>
             </div>
             
             <div class="content">
                 <div id="loading" class="loading">
-                    <p>Preencha os dados e clique em "Calcular Projecao de Caixa"</p>
+                    <h2>Calculadora de Planejamento de Caixa - 6 Meses</h2>
+                    <p>Preencha as vendas mensais e as configuracoes ao lado e clique em "Calcular Projecao" para gerar sua analise financeira.</p>
+                    <p>Esta ferramenta ira projetar seu fluxo de caixa para os proximos 6 meses.</p>
                 </div>
                 
                 <div id="results" class="results-section">
-                    <div class="result-section-title">INDICADORES PRINCIPAIS</div>
+                    <div class="subscription-info" id="subscription-info">
+                        Assinatura ativa ate: <span id="subscription-end"></span>
+                    </div>
                     
                     <div class="indicadores" id="indicadores">
-                        <!-- Os indicadores serao inseridos aqui via JavaScript -->
                     </div>
                     
                     <div class="graficos">
                         <div class="grafico-container">
+                            <div class="result-section-title">Saldo de Caixa (6 meses)</div>
                             <canvas id="graficoSaldo"></canvas>
                         </div>
                         <div class="grafico-container">
+                            <div class="result-section-title">Receitas vs Despesas (6 meses)</div>
                             <canvas id="graficoReceitasDespesas"></canvas>
                         </div>
                     </div>
                     
                     <div class="tabela-container">
-                        <div class="result-section-title">PROJECAO DETALHADA - 6 MESES</div>
-                        <table id="tabelaResultados">
-                            <!-- A tabela sera preenchida via JavaScript -->
-                        </table>
+                        <div class="result-section-title">Resultados Detalhados - Projecao 6 Meses</div>
+                        <div id="tabela-resultados">
+                        </div>
                     </div>
+                </div>
+                
+                <div id="error-message" class="alert alert-danger" style="display: none;">
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Funcoes de autenticacao
-        async function checkAuth() {
-            try {
-                const response = await fetch('/user_info');
-                const data = await response.json();
-                
-                if (data.email) {
-                    document.getElementById('user-email').textContent = data.email;
-                    return true;
-                } else {
-                    window.location.href = '/login';
-                    return false;
-                }
-            } catch (error) {
-                console.error('Erro ao verificar autenticacao:', error);
-                window.location.href = '/login';
-                return false;
-            }
-        }
-
+        let graficoSaldo = null;
+        let graficoReceitasDespesas = null;
+        
         async function checkSubscription() {
             try {
                 const response = await fetch('/subscription_info');
                 const data = await response.json();
                 
-                if (!data.active) {
+                if (data.active && data.end_date) {
+                    const endDate = new Date(data.end_date);
+                    document.getElementById('subscription-end').textContent = endDate.toLocaleDateString('pt-BR');
+                    document.getElementById('subscription-info').style.display = 'block';
+                } else {
+                    document.getElementById('subscription-info').style.display = 'none';
                     window.location.href = '/payment';
-                    return false;
                 }
-                return true;
             } catch (error) {
                 console.error('Erro ao verificar assinatura:', error);
-                return false;
             }
         }
-
+        
+        async function getUserEmail() {
+            try {
+                const response = await fetch('/user_info');
+                const data = await response.json();
+                return data.email || 'usuario@exemplo.com';
+            } catch (error) {
+                console.error('Erro ao obter email do usuario:', error);
+                return 'usuario@exemplo.com';
+            }
+        }
+        
         async function logout() {
             try {
                 await fetch('/logout');
                 window.location.href = '/login';
             } catch (error) {
                 console.error('Erro ao fazer logout:', error);
-                window.location.href = '/login';
             }
         }
-
-        // Inicializacao
-        document.addEventListener('DOMContentLoaded', async function() {
-            const isAuthenticated = await checkAuth();
-            if (isAuthenticated) {
-                const hasSubscription = await checkSubscription();
-                if (!hasSubscription) {
-                    return;
-                }
-            }
-        });
-
-        // Funcao para calcular a projecao
-        async function calcularProjecao() {
-            const btn = document.querySelector('.calculate-btn');
+        
+        async function calcular() {
             const loading = document.getElementById('loading');
             const results = document.getElementById('results');
+            const errorMessage = document.getElementById('error-message');
             
-            btn.disabled = true;
-            btn.textContent = 'Calculando...';
             loading.style.display = 'block';
             results.style.display = 'none';
-
+            errorMessage.style.display = 'none';
+            
+            // Capturar os valores de previsão de vendas para usar na tabela
+            const previsaoVendas = [
+                parseFloat(document.getElementById('venda_mes1').value) || 0,
+                parseFloat(document.getElementById('venda_mes2').value) || 0,
+                parseFloat(document.getElementById('venda_mes3').value) || 0,
+                parseFloat(document.getElementById('venda_mes4').value) || 0,
+                parseFloat(document.getElementById('venda_mes5').value) || 0,
+                parseFloat(document.getElementById('venda_mes6').value) || 0
+            ];
+            
+            const dados = {
+                venda_mes0: parseFloat(document.getElementById('venda_mes0').value) || 0,
+                saldo_caixa_mes0: parseFloat(document.getElementById('saldo_caixa_mes0').value) || 0,
+                previsao_vendas: previsaoVendas,
+                contas_receber_anteriores: [
+                    parseFloat(document.getElementById('receber_anteriores_mes1').value) || 0,
+                    parseFloat(document.getElementById('receber_anteriores_mes2').value) || 0,
+                    parseFloat(document.getElementById('receber_anteriores_mes3').value) || 0,
+                    parseFloat(document.getElementById('receber_anteriores_mes4').value) || 0,
+                    parseFloat(document.getElementById('receber_anteriores_mes5').value) || 0,
+                    parseFloat(document.getElementById('receber_anteriores_mes6').value) || 0
+                ],
+                contas_pagar_anteriores: [
+                    parseFloat(document.getElementById('pagar_anteriores_mes1').value) || 0,
+                    parseFloat(document.getElementById('pagar_anteriores_mes2').value) || 0,
+                    parseFloat(document.getElementById('pagar_anteriores_mes3').value) || 0,
+                    parseFloat(document.getElementById('pagar_anteriores_mes4').value) || 0,
+                    parseFloat(document.getElementById('pagar_anteriores_mes5').value) || 0,
+                    parseFloat(document.getElementById('pagar_anteriores_mes6').value) || 0
+                ],
+                desp_fixas_manuais: [
+                    parseFloat(document.getElementById('desp_fixas_mes1').value) || 0,
+                    parseFloat(document.getElementById('desp_fixas_mes2').value) || 0,
+                    parseFloat(document.getElementById('desp_fixas_mes3').value) || 0,
+                    parseFloat(document.getElementById('desp_fixas_mes4').value) || 0,
+                    parseFloat(document.getElementById('desp_fixas_mes5').value) || 0,
+                    parseFloat(document.getElementById('desp_fixas_mes6').value) || 0
+                ],
+                setup: {
+                    vendas_vista: parseFloat(document.getElementById('vendas_vista').value),
+                    vendas_parcelamento: parseInt(document.getElementById('vendas_parcelamento').value),
+                    plus_vendas: parseFloat(document.getElementById('plus_vendas').value),
+                    cmv: parseFloat(document.getElementById('cmv').value),
+                    percent_compras: parseFloat(document.getElementById('percent_compras').value),
+                    compras_vista: parseFloat(document.getElementById('compras_vista').value),
+                    compras_parcelamento: parseInt(document.getElementById('compras_parcelamento').value),
+                    desp_variaveis_impostos: parseFloat(document.getElementById('desp_variaveis_impostos').value)
+                }
+            };
+            
             try {
-                // Coletar dados do formulario
-                const dados = {
-                    setup: {
-                        vendas_vista: parseFloat(document.getElementById('vendas_vista').value) / 100,
-                        vendas_parcelamento: parseInt(document.getElementById('vendas_parcelamento').value),
-                        plus_vendas: parseFloat(document.getElementById('plus_vendas').value) / 100,
-                        cmv: parseFloat(document.getElementById('cmv').value) / 100,
-                        percent_compras: parseFloat(document.getElementById('percent_compras').value) / 100,
-                        compras_vista: parseFloat(document.getElementById('compras_vista').value) / 100,
-                        compras_parcelamento: parseInt(document.getElementById('compras_parcelamento').value),
-                        desp_variaveis_impostos: parseFloat(document.getElementById('desp_variaveis_impostos').value) / 100
-                    },
-                    venda_mes0: parseFloat(document.getElementById('venda_mes0').value) || 0,
-                    previsao_vendas: [
-                        parseFloat(document.getElementById('venda_mes1').value) || 0,
-                        parseFloat(document.getElementById('venda_mes2').value) || 0,
-                        parseFloat(document.getElementById('venda_mes3').value) || 0,
-                        parseFloat(document.getElementById('venda_mes4').value) || 0,
-                        parseFloat(document.getElementById('venda_mes5').value) || 0,
-                        parseFloat(document.getElementById('venda_mes6').value) || 0
-                    ],
-                    contas_receber_anteriores: [
-                        parseFloat(document.getElementById('contas_receber_mes1').value) || 0,
-                        parseFloat(document.getElementById('contas_receber_mes2').value) || 0,
-                        parseFloat(document.getElementById('contas_receber_mes3').value) || 0,
-                        parseFloat(document.getElementById('contas_receber_mes4').value) || 0,
-                        parseFloat(document.getElementById('contas_receber_mes5').value) || 0,
-                        parseFloat(document.getElementById('contas_receber_mes6').value) || 0
-                    ],
-                    contas_pagar_anteriores: [
-                        parseFloat(document.getElementById('contas_pagar_mes1').value) || 0,
-                        parseFloat(document.getElementById('contas_pagar_mes2').value) || 0,
-                        parseFloat(document.getElementById('contas_pagar_mes3').value) || 0,
-                        parseFloat(document.getElementById('contas_pagar_mes4').value) || 0,
-                        parseFloat(document.getElementById('contas_pagar_mes5').value) || 0,
-                        parseFloat(document.getElementById('contas_pagar_mes6').value) || 0
-                    ],
-                    desp_fixas_manuais: [
-                        parseFloat(document.getElementById('desp_fixas_mes1').value) || 0,
-                        parseFloat(document.getElementById('desp_fixas_mes2').value) || 0,
-                        parseFloat(document.getElementById('desp_fixas_mes3').value) || 0,
-                        parseFloat(document.getElementById('desp_fixas_mes4').value) || 0,
-                        parseFloat(document.getElementById('desp_fixas_mes5').value) || 0,
-                        parseFloat(document.getElementById('desp_fixas_mes6').value) || 0
-                    ],
-                    desp_variaveis_manuais: [0] // Campo para possivel entrada manual futura
-                };
-
-                // Fazer requisicao para o backend
                 const response = await fetch('/calcular', {
                     method: 'POST',
                     headers: {
@@ -695,192 +685,179 @@
                     },
                     body: JSON.stringify(dados)
                 });
-
-                const resultado = await response.json();
-
+                
                 if (!response.ok) {
-                    throw new Error(resultado.error || 'Erro ao calcular projecao');
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Erro ao calcular');
                 }
-
-                // Exibir resultados
-                exibirResultados(resultado);
-
-            } catch (error) {
-                console.error('Erro:', error);
-                alert('Erro ao calcular projecao: ' + error.message);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Calcular Projecao de Caixa';
+                
+                const resultados = await response.json();
+                
+                // Adicionar a previsão de vendas aos resultados
+                resultados.resultados["PREVISÃO DE VENDAS"] = [
+                    ...previsaoVendas.map(valor => `R$ ${valor.toLocaleString('pt-BR')}`),
+                    `R$ ${previsaoVendas.reduce((a, b) => a + b, 0).toLocaleString('pt-BR')}`
+                ];
+                
+                exibirIndicadores(resultados.indicadores);
+                exibirGraficos(resultados.graficos);
+                exibirTabela(resultados.resultados, resultados.meses);
+                
                 loading.style.display = 'none';
+                results.style.display = 'block';
+                
+            } catch (error) {
+                loading.style.display = 'none';
+                errorMessage.textContent = error.message;
+                errorMessage.style.display = 'block';
+            }
+        }
+        
+        function exibirIndicadores(indicadores) {
+            const container = document.getElementById('indicadores');
+            container.innerHTML = '';
+            
+            for (const [nome, valor] of Object.entries(indicadores)) {
+                const div = document.createElement('div');
+                div.className = 'indicador';
+                div.innerHTML = `
+                    <h3>${nome}</h3>
+                    <p class="valor">${valor}</p>
+                `;
+                container.appendChild(div);
             }
         }
 
-        // Funcao para exibir os resultados
-        function exibirResultados(resultado) {
-            const results = document.getElementById('results');
-            const indicadores = document.getElementById('indicadores');
-            const tabela = document.getElementById('tabelaResultados');
-            
-            // Exibir indicadores
-            indicadores.innerHTML = '';
-            for (const [key, value] of Object.entries(resultado.indicadores)) {
-                const indicadorDiv = document.createElement('div');
-                indicadorDiv.className = 'indicador';
-                indicadorDiv.innerHTML = `
-                    <h3>${key}</h3>
-                    <div class="valor">${value}</div>
-                `;
-                indicadores.appendChild(indicadorDiv);
-            }
-            
-            // Criar grafico de saldo final
+        function exibirGraficos(dadosGraficos) {
             const ctxSaldo = document.getElementById('graficoSaldo').getContext('2d');
-            new Chart(ctxSaldo, {
+            if (graficoSaldo) {
+                graficoSaldo.destroy();
+            }
+            graficoSaldo = new Chart(ctxSaldo, {
                 type: 'line',
                 data: {
-                    labels: resultado.graficos.meses,
+                    labels: dadosGraficos.meses,
                     datasets: [{
                         label: 'Saldo Final de Caixa',
-                        data: resultado.graficos.saldo_final_caixa,
-                        borderColor: '#28a745',
-                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4
+                        data: dadosGraficos.saldo_final_caixa,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1,
+                        fill: false
                     }]
                 },
                 options: {
                     responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Evolucao do Saldo de Caixa'
-                        }
-                    },
                     scales: {
                         y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'R$ ' + value.toLocaleString('pt-BR');
-                                }
-                            }
+                            beginAtZero: true
                         }
                     }
                 }
             });
-            
-            // Criar grafico de receitas vs despesas
+
             const ctxReceitasDespesas = document.getElementById('graficoReceitasDespesas').getContext('2d');
-            new Chart(ctxReceitasDespesas, {
+            if (graficoReceitasDespesas) {
+                graficoReceitasDespesas.destroy();
+            }
+            graficoReceitasDespesas = new Chart(ctxReceitasDespesas, {
                 type: 'bar',
                 data: {
-                    labels: resultado.graficos.meses,
+                    labels: dadosGraficos.meses,
                     datasets: [
                         {
                             label: 'Receitas',
-                            data: resultado.graficos.receitas,
-                            backgroundColor: 'rgba(40, 167, 69, 0.7)',
-                            borderColor: '#28a745',
-                            borderWidth: 1
+                            data: dadosGraficos.receitas,
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)'
                         },
                         {
                             label: 'Despesas',
-                            data: resultado.graficos.despesas,
-                            backgroundColor: 'rgba(220, 53, 69, 0.7)',
-                            borderColor: '#dc3545',
-                            borderWidth: 1
+                            data: dadosGraficos.despesas,
+                            backgroundColor: 'rgba(255, 99, 132, 0.6)'
                         }
                     ]
                 },
                 options: {
                     responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Receitas vs Despesas'
-                        }
-                    },
                     scales: {
+                        x: {
+                            stacked: true
+                        },
                         y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'R$ ' + value.toLocaleString('pt-BR');
-                                }
-                            }
+                            stacked: true,
+                            beginAtZero: true
                         }
                     }
                 }
             });
-            
-            // Preencher tabela
-            tabela.innerHTML = '';
-            
-            // Cabecalho
-            let thead = document.createElement('thead');
-            let headerRow = document.createElement('tr');
-            headerRow.innerHTML = '<th>Descricao</th>' + 
-                resultado.meses.map(mes => `<th>${mes}</th>`).join('');
-            thead.appendChild(headerRow);
-            tabela.appendChild(thead);
-            
-            // Corpo da tabela
-            let tbody = document.createElement('tbody');
-            
-            for (const [descricao, valores] of Object.entries(resultado.resultados)) {
-                const row = document.createElement('tr');
-                
-                // Adicionar classes especiais para linhas especiais
-                if (descricao === '') {
-                    row.className = 'empty-row';
-                } else if (descricao === 'PREVISÃO DE VENDAS') {
-                    row.className = 'section-header';
-                } else if (descricao === 'Total de Contas a Receber' || 
-                          descricao === 'Total Pagamento de Fornecedores' ||
-                          descricao === 'Despesas variáveis' ||
-                          descricao === 'Despesas fixas' ||
-                          descricao === 'SALDO OPERACIONAL' ||
-                          descricao === 'SALDO FINAL DE CAIXA PREVISTO') {
-                    row.className = 'bold-row';
-                }
-                
-                let cells = `<td>${descricao}</td>`;
-                valores.forEach(valor => {
-                    cells += `<td>${valor}</td>`;
-                });
-                
-                row.innerHTML = cells;
-                tbody.appendChild(row);
-            }
-            
-            tabela.appendChild(tbody);
-            
-            // Exibir resultados
-            results.style.display = 'block';
-            results.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Formatar inputs automaticamente
-        document.addEventListener('DOMContentLoaded', function() {
-            // Adicionar formatacao para inputs numericos
-            const numberInputs = document.querySelectorAll('input[type="number"]');
-            numberInputs.forEach(input => {
-                input.addEventListener('blur', function() {
-                    if (this.value) {
-                        const value = parseFloat(this.value);
-                        if (!isNaN(value)) {
-                            this.value = value.toLocaleString('pt-BR');
-                        }
-                    }
-                });
-                
-                input.addEventListener('focus', function() {
-                    if (this.value) {
-                        this.value = this.value.replace(/\./g, '').replace(',', '.');
-                    }
-                });
+        function exibirTabela(resultados, meses) {
+            const container = document.getElementById('tabela-resultados');
+            container.innerHTML = '';
+
+            // Ordem fixa das linhas
+            const ordemCorreta = [
+                "PREVISÃO DE VENDAS",
+                "Recebimento de vendas à vista",
+                "Contas a receber Parcelado",
+                "Contas a receber anteriores",
+                "Total de Contas a Receber",
+                "",
+                "Planejamento de Compras",
+                "Fornecedores à vista",
+                "Fornecedores Parcelados",
+                "Fornecedores Anteriores",
+                "Total Pagamento de Fornecedores",
+                "",
+                "Despesas variáveis",
+                "Despesas fixas",
+                "",
+                "SALDO OPERACIONAL",
+                "SALDO FINAL DE CAIXA PREVISTO"
+            ];
+
+            let tableHTML = '<table><thead><tr><th>Descricao</th>';
+            meses.forEach(mes => {
+                tableHTML += `<th>${mes}</th>`;
             });
+            tableHTML += '</tr></thead><tbody>';
+
+            // Criar a tabela na ordem correta
+            ordemCorreta.forEach(descricao => {
+                if (descricao === "") {
+                    tableHTML += '<tr class="empty-row"><td colspan="' + (meses.length + 1) + '"></td></tr>';
+                } else if (resultados[descricao]) {
+                    // Definir classes para linhas em negrito
+                    let rowClass = '';
+                    if ([
+                        "Total de Contas a Receber",
+                        "Total Pagamento de Fornecedores",
+                        "Despesas variáveis",
+                        "Despesas fixas",
+                        "SALDO OPERACIONAL",
+                        "SALDO FINAL DE CAIXA PREVISTO"
+                    ].includes(descricao)) {
+                        rowClass = 'bold-row';
+                    } else if (descricao === "PREVISÃO DE VENDAS") {
+                        rowClass = 'section-header';
+                    }
+
+                    tableHTML += `<tr class="${rowClass}">`;
+                    tableHTML += `<td>${descricao}</td>`;
+                    resultados[descricao].forEach(valor => {
+                        tableHTML += `<td>${valor}</td>`;
+                    });
+                    tableHTML += '</tr>';
+                }
+            });
+            tableHTML += '</tbody></table>';
+            container.innerHTML = tableHTML;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const userEmail = await getUserEmail();
+            document.getElementById('user-email').textContent = userEmail;
+            checkSubscription();
         });
     </script>
 </body>
