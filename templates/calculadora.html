@@ -362,7 +362,7 @@
                     <p><strong>Para iniciar o planejamento:</strong></p>
                     <ul>
                         <li>No campo <span class="highlight">"Saldo de Caixa (Mês 0)"</span> abaixo, insira o saldo inicial de caixa</li>
-                        <li>No campo <span class="highlight">"Vendas (Mês 0)"</span> abaixo, insira o valor das vendas do mês anterior</li>
+                        <li>No campo <span class="highlight">"Vendas Mês 0"</span> abaixo, insira o valor das vendas do mês anterior</li>
                         <li>No campo <span class="highlight">"Contas a receber anteriores - Mês 1"</span>, insira os contas a receber de vendas anteriores</li>
                     </ul>
                     <p><em>Exemplo: Se você tem R$ 5.000 em caixa e R$ 10.000 a receber, insira R$ 5.000 no Saldo Mês 0 e R$ 10.000 no Mês 1 de Contas a Receber Anteriores.</em></p>
@@ -501,8 +501,13 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="desp_variaveis_impostos">% Despesas Variaveis e Impostos sobre Vendas:</label>
+                    <label for="desp_variaveis_impostos">% Despesas variáveis s/ Vendas:</label>
                     <input type="number" id="desp_variaveis_impostos" step="0.001" min="0" max="1" value="0.085">
+                </div>
+
+                <div class="form-group">
+                    <label for="desp_variaveis_parcelamento">% Despesas variáveis s/ Parcelamento das Vendas:</label>
+                    <input type="number" id="desp_variaveis_parcelamento" step="0.001" min="0" max="1" value="0">
                 </div>
 
                 <div class="section-title">Despesas Fixas Manuais por Mes</div>
@@ -674,7 +679,8 @@
                     percent_compras: parseFloat(document.getElementById('percent_compras').value),
                     compras_vista: parseFloat(document.getElementById('compras_vista').value),
                     compras_parcelamento: parseInt(document.getElementById('compras_parcelamento').value),
-                    desp_variaveis_impostos: parseFloat(document.getElementById('desp_variaveis_impostos').value)
+                    desp_variaveis_impostos: parseFloat(document.getElementById('desp_variaveis_impostos').value),
+                    desp_variaveis_parcelamento: parseFloat(document.getElementById('desp_variaveis_parcelamento').value)
                 }
             };
             
@@ -803,6 +809,9 @@
                 "Contas a receber Parcelado",
                 "Contas a receber anteriores",
                 "Total de Contas a Receber",
+                "Despesas variáveis s/ Parcelamento das Vendas",
+                "Despesas Variáveis à Vista",
+                "Despesas Variáveis Parceladas",
                 "",
                 "Planejamento de Compras",
                 "Fornecedores à vista",
@@ -810,7 +819,7 @@
                 "Fornecedores Anteriores",
                 "Total Pagamento de Fornecedores",
                 "",
-                "Despesas variáveis",
+                "Despesas variáveis s/ Vendas",
                 "Despesas fixas",
                 "",
                 "SALDO OPERACIONAL",
@@ -832,8 +841,9 @@
                     let rowClass = '';
                     if ([
                         "Total de Contas a Receber",
+                        "Despesas variáveis s/ Parcelamento das Vendas",
                         "Total Pagamento de Fornecedores",
-                        "Despesas variáveis",
+                        "Despesas variáveis s/ Vendas",
                         "Despesas fixas",
                         "SALDO OPERACIONAL",
                         "SALDO FINAL DE CAIXA PREVISTO"
@@ -863,4 +873,3 @@
     </script>
 </body>
 </html>
-
