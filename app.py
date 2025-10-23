@@ -66,12 +66,10 @@ class PlanejamentoCaixa:
             "percent_compras": 0.2,
             "compras_vista": 0.2,
             "compras_parcelamento": 6,
-            "comissoes": 0.0761,
             "desp_variaveis_impostos": 0.085
         }
         self.previsao_vendas = [0] * self.num_meses
         self.contas_receber_anteriores = [0] * self.num_meses
-        self.comissoes_anteriores = [0] * self.num_meses
         self.contas_pagar_anteriores = [0] * self.num_meses
         self.desp_fixas_manuais = [0] * self.num_meses
         self.desp_variaveis_manuais = [0]
@@ -92,8 +90,6 @@ class PlanejamentoCaixa:
             self.previsao_vendas = [float(x) for x in dados["previsao_vendas"]]
         if "contas_receber_anteriores" in dados:
             self.contas_receber_anteriores = [float(x) for x in dados["contas_receber_anteriores"]]
-        if "comissoes_anteriores" in dados:
-            self.comissoes_anteriores = [float(x) for x in dados["comissoes_anteriores"]]
         if "contas_pagar_anteriores" in dados:
             self.contas_pagar_anteriores = [float(x) for x in dados["contas_pagar_anteriores"]]
         if "desp_fixas_manuais" in dados:
@@ -142,47 +138,18 @@ class PlanejamentoCaixa:
             total += self.contas_receber_anteriores[mes]
             self.total_recebimentos.append(total)
 
-        # 3. Comissões
-        self.comissoes_mes = [
-            venda * self.setup["comissoes"]
-            for venda in self.vendas_escalonadas
-        ]
-
-        n_parcelas_comissoes = 4
-        self.comissoes_pagar = [[0] * self.num_meses for _ in range(n_parcelas_comissoes)]
-
-        # CALCULAR COMISSÕES PARCELADAS REFERENTE AO MÊS 1 COM BASE NO MÊS 0
-        # Para o primeiro mês, usar venda_mes0 como base
-        if self.venda_mes0 > 0:
-            comissao_mes0 = self.venda_mes0 * self.setup["comissoes"]
-            valor_parcelado_comissao_mes0 = comissao_mes0 / n_parcelas_comissoes
-            for parcela_idx in range(n_parcelas_comissoes):
-                mes_pagamento = parcela_idx  # Mês 0, 1, 2, ... (ajustado para índice 0-based)
-                if mes_pagamento < self.num_meses:
-                    self.comissoes_pagar[parcela_idx][mes_pagamento] += valor_parcelado_comissao_mes0
-
-        # Para os demais meses, usar as comissões normalmente
-        for mes in range(self.num_meses):
-            valor_comissao = self.comissoes_mes[mes]
-            valor_parcelado = valor_comissao / n_parcelas_comissoes
-            for parcela_idx in range(n_parcelas_comissoes):
-                mes_pagamento = mes + parcela_idx + 1
-                if mes_pagamento < self.num_meses:
-                    self.comissoes_pagar[parcela_idx][mes_pagamento] += valor_parcelado
-
-        self.total_comissoes = []
-        for mes in range(self.num_meses):
-            total = self.comissoes_anteriores[mes]
-            for p in range(n_parcelas_comissoes):
-                total += self.comissoes_pagar[p][mes]
-            self.total_comissoes.append(total)
-
-        # 4. Planejamento de Compras - CÁLCULO CORRIGIDO
+        # 3. Planejamento de Compras - CÁLCULO CORRIGIDO
         # LINHA MÃE: Compras (CMV * % Compras sobre CMV)
-        self.compras_totais = [
-            venda * self.setup["cmv"] * self.setup["percent_compras"]
-            for venda in self.vendas_escalonadas
-        ]
+        self.compras_totais = [0] * self.num_meses
+        
+        # CALCULAR COMPRAS REFERENTE AO MÊS 1 COM BASE NO MÊS 0
+        # Para o primeiro mês, usar venda_mes0 como base
+        if self.venda_mes0 > 0 and self.num_meses > 0:
+            self.compras_totais[0] = self.venda_mes0 * self.setup["cmv"] * self.setup["percent_compras"]
+        
+        # Para os demais meses, usar as vendas do mês anterior normalmente
+        for mes in range(1, self.num_meses):
+            self.compras_totais[mes] = self.vendas_escalonadas[mes - 1] * self.setup["cmv"] * self.setup["percent_compras"]
 
         # LINHA FILHA: Fornecedores à Vista (Compras * % Compras a Vista)
         self.fornecedores_vista = [
@@ -222,7 +189,7 @@ class PlanejamentoCaixa:
             total += self.contas_pagar_anteriores[mes]
             self.total_pagamento_compras.append(total)
 
-        # 5. Despesas variáveis
+        # 4. Despesas variáveis
         self.desp_variaveis = [0] * self.num_meses
         
         # DESPESAS VARIÁVEIS REFERENTE AO MÊS 1 COM BASE NO MÊS 0
@@ -238,20 +205,19 @@ class PlanejamentoCaixa:
         for mes in range(1, self.num_meses):
             self.desp_variaveis[mes] = self.vendas_escalonadas[mes - 1] * self.setup["desp_variaveis_impostos"]
 
-        # 6. Despesas fixas
+        # 5. Despesas fixas
         self.desp_fixas = self.desp_fixas_manuais
 
-        # 7. Saldo operacional
+        # 6. Saldo operacional
         self.saldo_operacional = []
         for mes in range(self.num_meses):
             saldo = (self.total_recebimentos[mes] -
-                     self.total_comissoes[mes] -
                      self.total_pagamento_compras[mes] -
                      self.desp_variaveis[mes] -
                      self.desp_fixas[mes])
             self.saldo_operacional.append(saldo)
 
-        # 8. Saldo final de caixa
+        # 7. Saldo final de caixa
         self.saldo_final_caixa = [self.saldo_operacional[0]]
         for mes in range(1, self.num_meses):
             self.saldo_final_caixa.append(self.saldo_final_caixa[-1] + self.saldo_operacional[mes])
@@ -264,7 +230,6 @@ class PlanejamentoCaixa:
         # Calcular totais agrupados CORRETAMENTE
         n_parcelas_vendas = int(self.setup["vendas_parcelamento"])
         n_parcelas_compras = int(self.setup["compras_parcelamento"])
-        n_parcelas_comissoes = 4
 
         # 1. CONTAS A RECEBER PARCELADO - Somar TODAS as parcelas (da 1ª à última)
         total_receber_parcelado = [0] * self.num_meses
@@ -272,20 +237,11 @@ class PlanejamentoCaixa:
             for mes in range(self.num_meses):
                 total_receber_parcelado[mes] += self.duplicatas_receber[p][mes]
         
-        # 2. COMISSÕES PARCELADAS - Somar APENAS as parcelas 2, 3 e 4 (excluir a 1ª parcela que é à vista)
-        total_comissoes_parceladas = [0] * self.num_meses
-        for p in range(1, n_parcelas_comissoes):  # Começa de 1 para pular a parcela à vista (índice 0)
-            for mes in range(self.num_meses):
-                total_comissoes_parceladas[mes] += self.comissoes_pagar[p][mes]
-        
-        # 3. FORNECEDORES PARCELADOS - Somar TODAS as parcelas (da 1ª à última)
+        # 2. FORNECEDORES PARCELADOS - Somar TODAS as parcelas (da 1ª à última)
         total_fornecedores_parcelados = [0] * self.num_meses
         for p in range(n_parcelas_compras):
             for mes in range(self.num_meses):
                 total_fornecedores_parcelados[mes] += self.duplicatas_pagar[p][mes]
-
-        # Comissões à vista (primeira parcela)
-        comissoes_vista = [self.comissoes_pagar[0][mes] for mes in range(self.num_meses)]
 
         # Calcular totais
         total_contas_receber = [
@@ -308,54 +264,40 @@ class PlanejamentoCaixa:
         # 4: Contas a receber anteriores
         resultados_ordenados["Contas a receber anteriores"] = self.contas_receber_anteriores
         
-        # 6: Total de Contas a Receber (negrito)
+        # 5: Total de Contas a Receber (negrito)
         resultados_ordenados["Total de Contas a Receber"] = total_contas_receber
         
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
         
-        # 7: Pagamento de comissões à vista (APENAS a 1ª parcela)
-        resultados_ordenados["Pagamento de comissões à vista"] = comissoes_vista
+        # 6: LINHA MÃE: COMPRAS (CMV * % Compras sobre CMV)
+        resultados_ordenados["Planejamento de Compras"] = self.compras_totais
         
-        # 8: Comissões parceladas (total) - APENAS parcelas 2, 3 e 4
-        resultados_ordenados["Comissões parceladas"] = total_comissoes_parceladas
-        
-        # 9: Comissões a pagar anteriores
-        resultados_ordenados["Comissões a pagar anteriores"] = self.comissoes_anteriores
-        
-        # 10: Total de Comissões a pagar
-        resultados_ordenados["Total de Comissões a pagar"] = self.total_comissoes
-        
-        resultados_ordenados[""] = [""] * (self.num_meses + 1)
-        
-        # 11: LINHA MÃE: COMPRAS (CMV * % Compras sobre CMV)
-        resultados_ordenados["Compras"] = self.compras_totais
-        
-        # 12: LINHA FILHA: FORNECEDORES À VISTA (Compras * % Compras a Vista)
+        # 7: LINHA FILHA: FORNECEDORES À VISTA (Compras * % Compras a Vista)
         resultados_ordenados["Fornecedores à vista"] = self.fornecedores_vista
         
-        # 13: Fornecedores Parcelados (total) - TODAS as parcelas
+        # 8: Fornecedores Parcelados (total) - TODAS as parcelas
         resultados_ordenados["Fornecedores Parcelados"] = total_fornecedores_parcelados
         
-        # 14: Fornecedores Anteriores
+        # 9: Fornecedores Anteriores
         resultados_ordenados["Fornecedores Anteriores"] = self.contas_pagar_anteriores
         
-        # 15: Total Pagamento de Fornecedores (negrito)
+        # 10: Total Pagamento de Fornecedores (negrito)
         resultados_ordenados["Total Pagamento de Fornecedores"] = self.total_pagamento_compras
         
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
         
-        # 16: Despesas variáveis (negrito)
+        # 11: Despesas variáveis (negrito)
         resultados_ordenados["Despesas variáveis"] = self.desp_variaveis
         
-        # 17: Despesas fixas (negrito)
+        # 12: Despesas fixas (negrito)
         resultados_ordenados["Despesas fixas"] = self.desp_fixas
         
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
         
-        # 18: SALDO OPERACIONAL (negrito)
+        # 13: SALDO OPERACIONAL (negrito)
         resultados_ordenados["SALDO OPERACIONAL"] = self.saldo_operacional
         
-        # 19: SALDO FINAL DE CAIXA PREVISTO (negrito)
+        # 14: SALDO FINAL DE CAIXA PREVISTO (negrito)
         resultados_ordenados["SALDO FINAL DE CAIXA PREVISTO"] = self.saldo_final_caixa
 
         # Formatar resultados
@@ -374,7 +316,7 @@ class PlanejamentoCaixa:
         indicadores = {
             "Total de Vendas": f"R$ {sum(self.previsao_vendas):,.0f}",
             "Total de Recebimentos": f"R$ {sum(self.total_recebimentos):,.0f}",
-            "Total de Despesas": f"R$ {sum(self.total_comissoes) + sum(self.total_pagamento_compras) + sum(self.desp_variaveis) + sum(self.desp_fixas):,.0f}",
+            "Total de Despesas": f"R$ {sum(self.total_pagamento_compras) + sum(self.desp_variaveis) + sum(self.desp_fixas):,.0f}",
             "Saldo Final Acumulado": f"R$ {self.saldo_final_caixa[-1]:,.0f}",
             "Margem Líquida": f"{(sum(self.saldo_operacional) / sum(self.total_recebimentos)) * 100:.1f}%" if sum(self.total_recebimentos) > 0 else "0%"
         }
@@ -384,8 +326,7 @@ class PlanejamentoCaixa:
             "saldo_final_caixa": self.saldo_final_caixa,
             "receitas": self.total_recebimentos,
             "despesas": [
-                a + b + c + d for a, b, c, d in zip(
-                    self.total_comissoes,
+                a + b + c for a, b, c in zip(
                     self.total_pagamento_compras,
                     self.desp_variaveis,
                     self.desp_fixas
