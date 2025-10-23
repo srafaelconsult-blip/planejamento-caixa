@@ -369,7 +369,7 @@ class PlanejamentoCaixa:
         resultados_formatados = OrderedDict()
         for key, values in resultados_ordenados.items():
             if key == "":
-                resultados_formatados[key] = [""] * (self.num_meses + 1)
+                resultados_formatados[key] = [""] * (self.num_meses + 1) + ["TOTAL"]
             else:
                 if values and key != "PREVISÃO DE VENDAS":
                     total = sum(values) if len(values) == self.num_meses else values[-1]
@@ -560,6 +560,7 @@ with app.app_context():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host="0.0.0.0", port=port)
+
 
 
 
