@@ -325,13 +325,13 @@ class PlanejamentoCaixa:
         resultados_ordenados["Total de Contas a Receber"] = total_contas_receber
         
         # 6: Despesas Variáveis à Vista
-        resultados_ordenados["Despesas Variáveis à Vista"] = self.desp_variaveis_vista
+        resultados_ordenados["Despesas Variáveis s/ a receber à Vista"] = self.desp_variaveis_vista
         
         # 7: Despesas Variáveis Parceladas
-        resultados_ordenados["Despesas Variáveis Parceladas"] = self.total_desp_variaveis_parceladas
+        resultados_ordenados["Despesas Variáveis a receber Parcelados"] = self.total_desp_variaveis_parceladas
         
         # 8: Despesas variáveis s/ Parcelamento das Vendas
-        resultados_ordenados["Despesas variáveis s/ Parcelamento das Vendas"] = self.total_desp_variaveis_parcelamento
+        resultados_ordenados["Total Despesas variáveis s/ Parcelamento das Vendas"] = self.total_desp_variaveis_parcelamento
         
         resultados_ordenados[""] = [""] * (self.num_meses + 1)
         
@@ -561,3 +561,4 @@ with app.app_context():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host="0.0.0.0", port=port)
+
