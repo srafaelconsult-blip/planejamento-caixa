@@ -361,9 +361,6 @@ class PlanejamentoCaixa:
         
         # 16: SALDO OPERACIONAL (negrito)
         resultados_ordenados["SALDO OPERACIONAL"] = self.saldo_operacional
-        
-        # 17: SALDO FINAL DE CAIXA PREVISTO (negrito)
-        resultados_ordenados["SALDO FINAL DE CAIXA PREVISTO"] = self.saldo_final_caixa
 
         # Formatar resultados
         resultados_formatados = OrderedDict()
@@ -383,7 +380,7 @@ class PlanejamentoCaixa:
             "Total de Recebimentos": f"R$ {sum(self.total_recebimentos):,.0f}",
             "Total de Despesas": f"R$ {sum(self.total_pagamento_compras) + sum(self.desp_variaveis) + sum(self.desp_fixas) + sum(self.total_desp_variaveis_parcelamento):,.0f}",
             "Saldo Final Acumulado": f"R$ {self.saldo_final_caixa[-1]:,.0f}",
-            "Margem Líquida": f"{(sum(self.saldo_operacional) / sum(self.total_recebimentos)) * 100:.1f}%" if sum(self.total_recebimentos) > 0 else "0%"
+            "Margem de Fluxo de Caixa (Geração de Caixa / Vendas)": f"{(sum(self.saldo_operacional) / sum(self.previsao_vendas)) * 100:.1f}%" if sum(self.previsao_vendas) > 0 else "0%"
         }
 
         dados_graficos = {
@@ -560,6 +557,7 @@ with app.app_context():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host="0.0.0.0", port=port)
+
 
 
 
