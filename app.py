@@ -362,6 +362,9 @@ class PlanejamentoCaixa:
         # 16: SALDO OPERACIONAL (negrito)
         resultados_ordenados["SALDO OPERACIONAL"] = self.saldo_operacional
 
+        # 17: SALDO FINAL DE CAIXA PREVISTO (negrito)
+        resultados_ordenados["SALDO FINAL DE CAIXA PREVISTO"] = self.saldo_final_caixa
+
         # Formatar resultados
         resultados_formatados = OrderedDict()
         for key, values in resultados_ordenados.items():
@@ -557,6 +560,7 @@ with app.app_context():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host="0.0.0.0", port=port)
+
 
 
 
