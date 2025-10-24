@@ -364,22 +364,19 @@ class PlanejamentoCaixa:
 
         # 17: SALDO FINAL DE CAIXA PREVISTO (negrito)
         resultados_ordenados["SALDO FINAL DE CAIXA PREVISTO"] = self.saldo_final_caixa
-        
-# Formatar resultados
-resultados_formatados = OrderedDict()
-for key, values in resultados_ordenados.items():
-    if key == "":
-        resultados_formatados[key] = [""] * (self.num_meses + 1) + [""]
-    else:
-        if values and key != "PREVISÃO DE VENDAS":
-            total = sum(values) if len(values) == self.num_meses else values[-1]
-            valores_formatados = [f"R$ {x:,.0f}" for x in values] + [f"R$ {total:,.0f}"]
-        else:
-            valores_formatados = [""] * (self.num_meses + 1)
-        resultados_formatados[key] = valores_formatados
 
-# Adicionar linha TOTAL como última linha
-resultados_formatados["TOTAL"] = [""] * (self.num_meses + 1) + [""]
+        # Formatar resultados
+        resultados_formatados = OrderedDict()
+        for key, values in resultados_ordenados.items():
+            if key == "":
+                resultados_formatados[key] = [""] * (self.num_meses + 1) + ["TOTAL"]
+            else:
+                if values and key != "PREVISÃO DE VENDAS":
+                    total = sum(values) if len(values) == self.num_meses else values[-1]
+                    valores_formatados = [f"R$ {x:,.0f}" for x in values] + [f"R$ {total:,.0f}"]
+                else:
+                    valores_formatados = [""] * (self.num_meses + 1)
+                resultados_formatados[key] = valores_formatados
 
         indicadores = {
             "Total de Vendas": f"R$ {sum(self.previsao_vendas):,.0f}",
