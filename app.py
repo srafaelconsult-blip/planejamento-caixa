@@ -280,8 +280,8 @@ class PlanejamentoCaixa:
 
         return self.gerar_resultados()
 
-def gerar_resultados(self):
-    meses = [f"Mês {i+1}" for i in range(self.num_meses)] + ["TOTAL"]
+        def gerar_resultados(self):
+        meses = [f"Mês {i+1}" for i in range(self.num_meses)] + ["TOTAL"]
 
         # Calcular totais agrupados CORRETAMENTE
         n_parcelas_vendas = int(self.setup["vendas_parcelamento"])
@@ -560,6 +560,7 @@ with app.app_context():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host="0.0.0.0", port=port)
+
 
 
 
