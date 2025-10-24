@@ -10,7 +10,6 @@ import psycopg2
 from urllib.parse import urlparse
 import re
 from collections import OrderedDict
-import mercadopago
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-12345")
@@ -32,9 +31,9 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 
 db = SQLAlchemy(app)
 
-# Configuração do Mercado Pago
-MP_ACCESS_TOKEN = os.environ.get("MP_ACCESS_TOKEN", "TEST-1234567890123456-123456-123456789012345678901234567890-123456789")
-sdk = mercadopago.SDK(MP_ACCESS_TOKEN)
+# Configuração do Mercado Pago (comentada temporariamente para deploy)
+# MP_ACCESS_TOKEN = os.environ.get("MP_ACCESS_TOKEN", "TEST-1234567890123456-123456-123456789012345678901234567890-123456789")
+# sdk = mercadopago.SDK(MP_ACCESS_TOKEN)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -428,42 +427,43 @@ def validate_email(email):
     pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     return re.match(pattern, email) is not None
 
-def create_mercadopago_preference(user):
-    """Cria uma preferência de pagamento no Mercado Pago"""
-    try:
-        preference_data = {
-            "items": [
-                {
-                    "title": "Assinatura Mensal - Calculadora Financeira",
-                    "quantity": 1,
-                    "currency_id": "BRL",
-                    "unit_price": 29.90,
-                    "description": "Acesso por 30 dias à calculadora de planejamento de caixa"
-                }
-            ],
-            "payer": {
-                "email": user.email,
-            },
-            "back_urls": {
-                "success": f"{request.host_url}payment_success",
-                "failure": f"{request.host_url}payment_failure",
-                "pending": f"{request.host_url}payment_pending"
-            },
-            "auto_return": "approved",
-            "notification_url": f"{request.host_url}mp_webhook",
-            "external_reference": str(user.id),
-            "statement_descriptor": "CALC.FINANCEIRA",
-            "metadata": {
-                "user_id": user.id,
-                "plan": "monthly"
-            }
-        }
+# Funções do Mercado Pago comentadas temporariamente
+# def create_mercadopago_preference(user):
+#     """Cria uma preferência de pagamento no Mercado Pago"""
+#     try:
+#         preference_data = {
+#             "items": [
+#                 {
+#                     "title": "Assinatura Mensal - Calculadora Financeira",
+#                     "quantity": 1,
+#                     "currency_id": "BRL",
+#                     "unit_price": 29.90,
+#                     "description": "Acesso por 30 dias à calculadora de planejamento de caixa"
+#                 }
+#             ],
+#             "payer": {
+#                 "email": user.email,
+#             },
+#             "back_urls": {
+#                 "success": f"{request.host_url}payment_success",
+#                 "failure": f"{request.host_url}payment_failure",
+#                 "pending": f"{request.host_url}payment_pending"
+#             },
+#             "auto_return": "approved",
+#             "notification_url": f"{request.host_url}mp_webhook",
+#             "external_reference": str(user.id),
+#             "statement_descriptor": "CALC.FINANCEIRA",
+#             "metadata": {
+#                 "user_id": user.id,
+#                 "plan": "monthly"
+#             }
+#         }
         
-        preference_response = sdk.preference().create(preference_data)
-        return preference_response["response"]
-    except Exception as e:
-        print(f"Erro ao criar preferência no Mercado Pago: {e}")
-        return None
+#         preference_response = sdk.preference().create(preference_data)
+#         return preference_response["response"]
+#     except Exception as e:
+#         print(f"Erro ao criar preferência no Mercado Pago: {e}")
+#         return None
 
 @app.route("/")
 def index():
@@ -476,8 +476,9 @@ def index():
             session.pop("user_id", None)
             return redirect(url_for("login"))
 
-        if not user.has_active_subscription():
-            return redirect(url_for("payment"))
+        # Temporariamente permitir acesso sem assinatura para testes
+        # if not user.has_active_subscription():
+        #     return redirect(url_for("payment"))
 
         return render_template("calculadora.html")
 
@@ -497,10 +498,11 @@ def login():
 
         if user and user.check_password(password):
             session["user_id"] = user.id
-            if user.has_active_subscription():
-                return redirect(url_for("index"))
-            else:
-                return redirect(url_for("payment"))
+            # Temporariamente permitir acesso sem assinatura
+            # if user.has_active_subscription():
+            return redirect(url_for("index"))
+            # else:
+            #     return redirect(url_for("payment"))
 
         return render_template("login.html", error="Email ou senha inválidos")
 
@@ -530,15 +532,18 @@ def register():
 
             session["user_id"] = user.id
             
-            # Criar preferência de pagamento no Mercado Pago
-            preference = create_mercadopago_preference(user)
-            if preference:
-                return render_template("payment.html", 
-                                    user=user, 
-                                    preference_id=preference["id"],
-                                    init_point=preference["init_point"])
-            else:
-                return render_template("register.html", error="Erro ao processar pagamento. Tente novamente.")
+            # Temporariamente redirecionar direto para a calculadora
+            return redirect(url_for("index"))
+            
+            # Criar preferência de pagamento no Mercado Pago (comentado temporariamente)
+            # preference = create_mercadopago_preference(user)
+            # if preference:
+            #     return render_template("payment.html", 
+            #                         user=user, 
+            #                         preference_id=preference["id"],
+            #                         init_point=preference["init_point"])
+            # else:
+            #     return render_template("register.html", error="Erro ao processar pagamento. Tente novamente.")
 
         except Exception as e:
             db.session.rollback()
@@ -557,15 +562,18 @@ def payment():
         session.pop("user_id", None)
         return redirect(url_for("login"))
     
-    # Criar preferência de pagamento no Mercado Pago
-    preference = create_mercadopago_preference(user)
-    if preference:
-        return render_template("payment.html", 
-                            user=user, 
-                            preference_id=preference["id"],
-                            init_point=preference["init_point"])
-    else:
-        return render_template("payment.html", user=user, error="Erro ao processar pagamento")
+    # Temporariamente redirecionar para a calculadora
+    return redirect(url_for("index"))
+    
+    # Criar preferência de pagamento no Mercado Pago (comentado temporariamente)
+    # preference = create_mercadopago_preference(user)
+    # if preference:
+    #     return render_template("payment.html", 
+    #                         user=user, 
+    #                         preference_id=preference["id"],
+    #                         init_point=preference["init_point"])
+    # else:
+    #     return render_template("payment.html", user=user, error="Erro ao processar pagamento")
 
 @app.route("/payment_success")
 def payment_success():
@@ -591,48 +599,48 @@ def payment_failure():
 def payment_pending():
     return render_template("payment_pending.html")
 
-@app.route("/mp_webhook", methods=["POST"])
-def mp_webhook():
-    """Webhook para receber notificações do Mercado Pago"""
-    try:
-        data = request.get_json()
+# @app.route("/mp_webhook", methods=["POST"])
+# def mp_webhook():
+#     """Webhook para receber notificações do Mercado Pago"""
+#     try:
+#         data = request.get_json()
         
-        if data.get("type") == "payment":
-            payment_id = data.get("data", {}).get("id")
+#         if data.get("type") == "payment":
+#             payment_id = data.get("data", {}).get("id")
             
-            # Buscar informações do pagamento
-            payment_info = sdk.payment().get(payment_id)
-            payment_data = payment_info["response"]
+#             # Buscar informações do pagamento
+#             payment_info = sdk.payment().get(payment_id)
+#             payment_data = payment_info["response"]
             
-            # Verificar status do pagamento
-            status = payment_data.get("status")
-            external_reference = payment_data.get("external_reference")
+#             # Verificar status do pagamento
+#             status = payment_data.get("status")
+#             external_reference = payment_data.get("external_reference")
             
-            if external_reference and status == "approved":
-                user_id = int(external_reference)
-                user = User.query.get(user_id)
+#             if external_reference and status == "approved":
+#                 user_id = int(external_reference)
+#                 user = User.query.get(user_id)
                 
-                if user:
-                    # Ativar assinatura por 30 dias
-                    user.add_subscription_days(30)
+#                 if user:
+#                     # Ativar assinatura por 30 dias
+#                     user.add_subscription_days(30)
                     
-                    # Salvar informações do pagamento
-                    payment = Payment(
-                        user_id=user.id,
-                        mp_payment_id=payment_id,
-                        status=status,
-                        amount=payment_data.get("transaction_amount", 0)
-                    )
-                    db.session.add(payment)
-                    db.session.commit()
+#                     # Salvar informações do pagamento
+#                     payment = Payment(
+#                         user_id=user.id,
+#                         mp_payment_id=payment_id,
+#                         status=status,
+#                         amount=payment_data.get("transaction_amount", 0)
+#                     )
+#                     db.session.add(payment)
+#                     db.session.commit()
                     
-                    print(f"Assinatura ativada para usuário {user.email}")
+#                     print(f"Assinatura ativada para usuário {user.email}")
         
-        return jsonify({"status": "ok"}), 200
+#         return jsonify({"status": "ok"}), 200
         
-    except Exception as e:
-        print(f"Erro no webhook do Mercado Pago: {e}")
-        return jsonify({"status": "error"}), 500
+#     except Exception as e:
+#         print(f"Erro no webhook do Mercado Pago: {e}")
+#         return jsonify({"status": "error"}), 500
 
 @app.route("/check_subscription")
 def check_subscription():
@@ -680,8 +688,9 @@ def calcular_projecao():
         if "user_id" not in session:
             return jsonify({"error": "Usuário não autenticado."}), 401
         user = User.query.get(session["user_id"])
-        if not user or not user.has_active_subscription():
-            return jsonify({"error": "Assinatura inativa ou inválida."}), 403
+        # Temporariamente permitir cálculo sem assinatura
+        # if not user or not user.has_active_subscription():
+        #     return jsonify({"error": "Assinatura inativa ou inválida."}), 403
 
         dados = request.get_json()
         planejamento = PlanejamentoCaixa()
