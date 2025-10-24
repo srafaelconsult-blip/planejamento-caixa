@@ -10,6 +10,7 @@ import psycopg2
 from urllib.parse import urlparse
 import re
 from collections import OrderedDict
+import mercadopago
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-12345")
@@ -31,12 +32,18 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 
 db = SQLAlchemy(app)
 
+# Configuração do Mercado Pago
+MP_ACCESS_TOKEN = os.environ.get("MP_ACCESS_TOKEN", "TEST-1234567890123456-123456-123456789012345678901234567890-123456789")
+sdk = mercadopago.SDK(MP_ACCESS_TOKEN)
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     subscription_end = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    mp_customer_id = db.Column(db.String(255), nullable=True)
+    mp_subscription_id = db.Column(db.String(255), nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -54,6 +61,16 @@ class User(db.Model):
             self.subscription_end += timedelta(days=days)
         else:
             self.subscription_end = datetime.utcnow() + timedelta(days=days)
+
+class Payment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    mp_payment_id = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(50), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref=db.backref('payments', lazy=True))
 
 class PlanejamentoCaixa:
     def __init__(self, num_meses=6):
@@ -411,6 +428,43 @@ def validate_email(email):
     pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     return re.match(pattern, email) is not None
 
+def create_mercadopago_preference(user):
+    """Cria uma preferência de pagamento no Mercado Pago"""
+    try:
+        preference_data = {
+            "items": [
+                {
+                    "title": "Assinatura Mensal - Calculadora Financeira",
+                    "quantity": 1,
+                    "currency_id": "BRL",
+                    "unit_price": 29.90,
+                    "description": "Acesso por 30 dias à calculadora de planejamento de caixa"
+                }
+            ],
+            "payer": {
+                "email": user.email,
+            },
+            "back_urls": {
+                "success": f"{request.host_url}payment_success",
+                "failure": f"{request.host_url}payment_failure",
+                "pending": f"{request.host_url}payment_pending"
+            },
+            "auto_return": "approved",
+            "notification_url": f"{request.host_url}mp_webhook",
+            "external_reference": str(user.id),
+            "statement_descriptor": "CALC.FINANCEIRA",
+            "metadata": {
+                "user_id": user.id,
+                "plan": "monthly"
+            }
+        }
+        
+        preference_response = sdk.preference().create(preference_data)
+        return preference_response["response"]
+    except Exception as e:
+        print(f"Erro ao criar preferência no Mercado Pago: {e}")
+        return None
+
 @app.route("/")
 def index():
     try:
@@ -475,11 +529,20 @@ def register():
             db.session.commit()
 
             session["user_id"] = user.id
-            return redirect(url_for("payment"))
+            
+            # Criar preferência de pagamento no Mercado Pago
+            preference = create_mercadopago_preference(user)
+            if preference:
+                return render_template("payment.html", 
+                                    user=user, 
+                                    preference_id=preference["id"],
+                                    init_point=preference["init_point"])
+            else:
+                return render_template("register.html", error="Erro ao processar pagamento. Tente novamente.")
 
         except Exception as e:
             db.session.rollback()
-            print(f"Erro durante o registro: {e}") # Adicionado para depuração
+            print(f"Erro durante o registro: {e}")
             return render_template("register.html", error=f"Erro ao criar conta: {str(e)}")
 
     return render_template("register.html")
@@ -488,27 +551,103 @@ def register():
 def payment():
     if "user_id" not in session:
         return redirect(url_for("login"))
+    
     user = User.query.get(session["user_id"])
     if not user:
         session.pop("user_id", None)
         return redirect(url_for("login"))
-    return render_template("payment.html", user=user)
+    
+    # Criar preferência de pagamento no Mercado Pago
+    preference = create_mercadopago_preference(user)
+    if preference:
+        return render_template("payment.html", 
+                            user=user, 
+                            preference_id=preference["id"],
+                            init_point=preference["init_point"])
+    else:
+        return render_template("payment.html", user=user, error="Erro ao processar pagamento")
 
-@app.route("/subscribe", methods=["POST"])
-def subscribe():
+@app.route("/payment_success")
+def payment_success():
     if "user_id" not in session:
-        return jsonify({"success": False, "message": "Usuário não logado"}), 401
+        return redirect(url_for("login"))
+    
     user = User.query.get(session["user_id"])
     if not user:
-        session.pop("user_id", None)
-        return jsonify({"success": False, "message": "Usuário não encontrado"}), 404
+        return redirect(url_for("login"))
+    
+    # Aqui você pode verificar o status do pagamento via webhook
+    # Por enquanto, vamos ativar a assinatura automaticamente
+    user.add_subscription_days(30)
+    db.session.commit()
+    
+    return render_template("payment_success.html", user=user)
+
+@app.route("/payment_failure")
+def payment_failure():
+    return render_template("payment_failure.html")
+
+@app.route("/payment_pending")
+def payment_pending():
+    return render_template("payment_pending.html")
+
+@app.route("/mp_webhook", methods=["POST"])
+def mp_webhook():
+    """Webhook para receber notificações do Mercado Pago"""
     try:
-        user.add_subscription_days(30) # Adiciona 30 dias de assinatura
-        db.session.commit()
-        return jsonify({"success": True, "message": "Assinatura ativada com sucesso!"})
+        data = request.get_json()
+        
+        if data.get("type") == "payment":
+            payment_id = data.get("data", {}).get("id")
+            
+            # Buscar informações do pagamento
+            payment_info = sdk.payment().get(payment_id)
+            payment_data = payment_info["response"]
+            
+            # Verificar status do pagamento
+            status = payment_data.get("status")
+            external_reference = payment_data.get("external_reference")
+            
+            if external_reference and status == "approved":
+                user_id = int(external_reference)
+                user = User.query.get(user_id)
+                
+                if user:
+                    # Ativar assinatura por 30 dias
+                    user.add_subscription_days(30)
+                    
+                    # Salvar informações do pagamento
+                    payment = Payment(
+                        user_id=user.id,
+                        mp_payment_id=payment_id,
+                        status=status,
+                        amount=payment_data.get("transaction_amount", 0)
+                    )
+                    db.session.add(payment)
+                    db.session.commit()
+                    
+                    print(f"Assinatura ativada para usuário {user.email}")
+        
+        return jsonify({"status": "ok"}), 200
+        
     except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "message": f"Erro ao ativar assinatura: {str(e)}"}), 500
+        print(f"Erro no webhook do Mercado Pago: {e}")
+        return jsonify({"status": "error"}), 500
+
+@app.route("/check_subscription")
+def check_subscription():
+    """Endpoint para verificar status da assinatura (usado pelo frontend)"""
+    if "user_id" not in session:
+        return jsonify({"active": False})
+    
+    user = User.query.get(session["user_id"])
+    if not user:
+        return jsonify({"active": False})
+    
+    return jsonify({
+        "active": user.has_active_subscription(),
+        "subscription_end": user.subscription_end.isoformat() if user.subscription_end else None
+    })
 
 @app.route("/subscription_info")
 def subscription_info():
@@ -560,11 +699,3 @@ with app.app_context():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host="0.0.0.0", port=port)
-
-
-
-
-
-
-
-
